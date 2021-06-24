@@ -1,0 +1,39 @@
+<project>
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- more https://github.com/cko/predefined_maven_properties/blob/master/README.md   -->
+    <properties>
+        <name>${project.name}</name>
+        <version>${project.version}</version>
+    </properties>
+
+    <groupId>lphy</groupId>
+    <!-- ${project.name}   -->
+    <artifactId>toroidalDiffusion</artifactId>
+    <!-- ${project.version}   -->
+    <version>0.0.1</version>
+
+    <dependencies>
+        <dependency>
+            <groupId>lphy</groupId>
+            <artifactId>lphy</artifactId>
+            <version>0.0.6</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.ejml</groupId>
+            <artifactId>ejml-core</artifactId>
+            <version>0.38</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ejml</groupId>
+            <artifactId>ejml-ddense</artifactId>
+            <version>0.38</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ejml</groupId>
+            <artifactId>ejml-simple</artifactId>
+            <version>0.38</version>
+        </dependency>
+    </dependencies>
+</project>
