@@ -13,19 +13,15 @@ import java.util.Map;
  */
 public class DihedralAngleDiffusionMatrix extends DeterministicFunction<Double[][]> {
 
-    String lengthParamName;
-    String phiVarParamName;
-    String psiVarParamName;
-    String covarParamName;
+    public static final String lengthParamName = "length";
+    public static final String phiVarParamName = "phiVariance";
+    public static final String psiVarParamName = "psiVariance";
+    public static final String covarParamName = "covariance";
 
-    public DihedralAngleDiffusionMatrix(@ParameterInfo(name = "length", description = "the length of the peptide backbone to model the angular diffusion of.") Value<Integer> length,
-                                        @ParameterInfo(name = "phiVariance", description = "the variance of the phi angles.") Value<Double> phiVariance,
-                                        @ParameterInfo(name = "psiVariance", description = "the variance of the psi angles.") Value<Double> psiVariance,
-                                        @ParameterInfo(name = "covariance", description = "the covariance between phi and psi angles.") Value<Double> covariance) {
-        lengthParamName = getParamName(0);
-        phiVarParamName = getParamName(1);
-        psiVarParamName = getParamName(2);
-        covarParamName = getParamName(3);
+    public DihedralAngleDiffusionMatrix(@ParameterInfo(name = lengthParamName, description = "the length of the peptide backbone to model the angular diffusion of.") Value<Integer> length,
+                                        @ParameterInfo(name = phiVarParamName, description = "the variance of the phi angles.") Value<Double> phiVariance,
+                                        @ParameterInfo(name = psiVarParamName, description = "the variance of the psi angles.") Value<Double> psiVariance,
+                                        @ParameterInfo(name = covarParamName, description = "the covariance between phi and psi angles.") Value<Double> covariance) {
 
         setParam(lengthParamName, length);
         setParam(phiVarParamName, phiVariance);

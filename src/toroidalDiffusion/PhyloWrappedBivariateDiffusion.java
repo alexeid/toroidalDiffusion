@@ -3,7 +3,7 @@ package toroidalDiffusion;
 import lphy.evolution.tree.TimeTree;
 import lphy.evolution.tree.TimeTreeNode;
 import lphy.core.StringDoubleArrayMap;
-import lphy.core.distributions.Utils;
+import lphy.util.RandomUtils;
 import lphy.graphicalModel.GenerativeDistribution;
 import lphy.graphicalModel.ParameterInfo;
 import lphy.graphicalModel.RandomVariable;
@@ -32,29 +32,23 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ma
     Value<Double[]> y;
     RandomGenerator random;
 
-    String treeParamName;
-    String muParamName;
-    String sigmaParamName;
-    String alphaParamName;
-    String y0RateParam;
+    public static final String treeParamName = "tree";
+    public static final String muParamName = "mu";
+    public static final String sigmaParamName = "sigma";
+    public static final String alphaParamName = "alpha";
+    public static final String y0RateParam = "y0";
 
-    public PhyloWrappedBivariateDiffusion(@ParameterInfo(name = "tree", description = "the time tree.") Value<TimeTree> tree,
-                                          @ParameterInfo(name = "mu", description = "the mean of the stationary distribution.") Value<Double[]> mu,
-                                          @ParameterInfo(name = "sigma", description = "the two variance terms.") Value<Double[]> sigma,
-                                          @ParameterInfo(name = "alpha", description = "the three drift terms.") Value<Double[]> alpha,
-                                          @ParameterInfo(name = "y0", description = "the value of multivariate traits at the root.") Value<Double[]> y) {
+    public PhyloWrappedBivariateDiffusion(@ParameterInfo(name = treeParamName, description = "the time tree.") Value<TimeTree> tree,
+                                          @ParameterInfo(name = muParamName, description = "the mean of the stationary distribution.") Value<Double[]> mu,
+                                          @ParameterInfo(name = sigmaParamName, description = "the two variance terms.") Value<Double[]> sigma,
+                                          @ParameterInfo(name = alphaParamName, description = "the three drift terms.") Value<Double[]> alpha,
+                                          @ParameterInfo(name = y0RateParam, description = "the value of multivariate traits at the root.") Value<Double[]> y) {
         this.tree = tree;
         this.mu = mu;
         this.sigma = sigma;
         this.alpha = alpha;
         this.y = y;
-        this.random = Utils.getRandom();
-
-        treeParamName = getParamName(0);
-        muParamName = getParamName(1);
-        sigmaParamName = getParamName(2);
-        alphaParamName = getParamName(3);
-        y0RateParam = getParamName(4);
+        this.random = RandomUtils.getRandom();
     }
 
     @Override

@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
-import lphy.core.distributions.Utils;
+import lphy.util.RandomUtils;
 import org.apache.commons.math3.optim.InitialGuess;
 import org.apache.commons.math3.optim.MaxEval;
 import org.apache.commons.math3.optim.PointValuePair;
@@ -216,7 +216,7 @@ public class WrappedBivariateDiffusion {
 
         double maxP = Math.exp(pvp.getValue()) * 1.01;
 
-        RandomGenerator random = Utils.getRandom();
+        RandomGenerator random = RandomUtils.getRandom();
         while (count < samples.length) {
 
             double ph = random.nextDouble() * 2.0 * Math.PI;
