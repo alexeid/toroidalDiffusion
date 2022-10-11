@@ -1,0 +1,4 @@
+# ejml cannot use Java module
+# So embed META-INF/services/ into jar to trigger SPI
+
+toroidaldiffusion.lphy.spi.ToroidalDiffusion

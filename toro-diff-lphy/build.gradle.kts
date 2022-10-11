@@ -2,7 +2,7 @@ plugins {
     `java-library`
 }
 
-base.archivesName.set("toroidaldiffusion-lphy")
+//base.archivesName.set("toroidaldiffusion-lphy")
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -11,19 +11,18 @@ java {
 }
 
 dependencies {
-    api("io.github.linguaphylo:lphy:1.3.1")
+    api("io.github.linguaphylo:lphy:1.3.2")
 
-    implementation("org.ejml:ejml-core:0.38")
-    implementation("org.ejml:ejml-ddense:0.38")
-    implementation("org.ejml:ejml-simple:0.38")
+    implementation("org.ejml:ejml-core:0.41")
+    implementation("org.ejml:ejml-ddense:0.41")
+    implementation("org.ejml:ejml-simple:0.41")
 }
 
 tasks.jar {
     manifest {
         // shared attr in the root build
         attributes(
-            "Implementation-Title" to "Toroidal diffusion",
-            "Implementation-Vendor" to "LPhy developer team",
+            "Implementation-Title" to "Toroidal diffusion"
         )
     }
 }

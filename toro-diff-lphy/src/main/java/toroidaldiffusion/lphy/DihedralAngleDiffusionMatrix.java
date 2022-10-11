@@ -1,4 +1,4 @@
-package toroidalDiffusion;
+package toroidaldiffusion.lphy;
 
 import lphy.graphicalModel.DeterministicFunction;
 import lphy.graphicalModel.GeneratorInfo;

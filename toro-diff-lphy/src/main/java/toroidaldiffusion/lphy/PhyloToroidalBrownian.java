@@ -1,7 +1,7 @@
-package toroidalDiffusion;
+package toroidaldiffusion.lphy;
 
-import lphy.evolution.tree.TimeTree;
 import lphy.evolution.continuous.PhyloMultivariateBrownian;
+import lphy.evolution.tree.TimeTree;
 import lphy.graphicalModel.ParameterInfo;
 import lphy.graphicalModel.Value;
 

@@ -1,12 +1,12 @@
-package toroidalDiffusion.spi;
+package toroidaldiffusion.lphy.spi;
 
 import jebl.evolution.sequences.SequenceType;
 import lphy.graphicalModel.Func;
 import lphy.graphicalModel.GenerativeDistribution;
 import lphy.spi.LPhyExtension;
-import toroidalDiffusion.DihedralAngleDiffusionMatrix;
-import toroidalDiffusion.PhyloToroidalBrownian;
-import toroidalDiffusion.PhyloWrappedBivariateDiffusion;
+import toroidaldiffusion.lphy.DihedralAngleDiffusionMatrix;
+import toroidaldiffusion.lphy.PhyloToroidalBrownian;
+import toroidaldiffusion.lphy.PhyloWrappedBivariateDiffusion;
 
 import java.util.Arrays;
 import java.util.Collections;

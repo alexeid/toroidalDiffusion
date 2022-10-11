@@ -3,8 +3,8 @@
 
 rootProject.name = "toroidalDiffusion"
 
-include("lphy")
-include("lphy-studio")
+include("toro-diff-lphy")
+//include("toro-diff-studio")
 
 pluginManagement {
     // the repos to load Gradle plugins

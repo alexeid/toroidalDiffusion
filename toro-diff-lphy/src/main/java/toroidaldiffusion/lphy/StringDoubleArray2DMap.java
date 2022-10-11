@@ -1,4 +1,4 @@
-package toroidalDiffusion;
+package toroidaldiffusion.lphy;
 
 import java.util.Arrays;
 import java.util.Map;

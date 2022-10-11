@@ -9,7 +9,7 @@ import java.util.*
 
 plugins {
     `java-library`
-    `maven-publish`
+//    `maven-publish`
 }
 
 // Configures this project and each of its sub-projects.
@@ -57,6 +57,7 @@ subprojects {
             attributes(
                 "Implementation-Version" to archiveVersion,
                 "Implementation-URL" to web,
+                "Implementation-Vendor" to "Alexei Drummond",
                 "Built-By" to "Alexei Drummond", //System.getProperty("user.name"),
                 "Build-Jdk" to JavaVersion.current().majorVersion.toInt(),
                 "Built-Date" to formatter.format(calendar?.time)
@@ -72,58 +73,58 @@ subprojects {
     }
 
     // configure the shared contents in MavenPublication especially POM
-    afterEvaluate{
-        // exclude subproject beast2, publish both in lphybeast
-        if (!project.name.equals("toroidaldiffusion-beast")) {
-            extensions.configure<PublishingExtension> {
-                publications {
-                    withType<MavenPublication>().all() {
-                        // only for name.contains("lphy")
-                        if (name.contains("lphy")) {
-                            // Configures the version mapping strategy
-                            versionMapping {
-                                usage("java-api") {
-                                    fromResolutionOf("runtimeClasspath")
-                                }
-                                usage("java-runtime") {
-                                    fromResolutionResult()
-                                }
-                            }
-                            pom {
-                                name.set(project.name)
-//                        description.set("...")
-                                // compulsory
-                                url.set(homepage)
-//                            packaging = "jar"
-                                properties.set(
-                                    mapOf(
-                                        "maven.compiler.source" to java.sourceCompatibility.majorVersion,
-                                        "maven.compiler.target" to java.targetCompatibility.majorVersion
-                                    )
-                                )
-                                licenses {
-                                    license {
-                                        name.set("GNU Lesser General Public License, version 3")
-                                        url.set("https://www.gnu.org/licenses/lgpl-3.0.txt")
-                                    }
-                                }
-//                        developers {
-// ...
+//    afterEvaluate{
+//        // exclude subproject beast2, publish both in lphybeast
+//        if (!project.name.equals("toroidaldiffusion-beast")) {
+//            extensions.configure<PublishingExtension> {
+//                publications {
+//                    withType<MavenPublication>().all() {
+//                        // only for name.contains("lphy")
+//                        if (name.contains("lphy")) {
+//                            // Configures the version mapping strategy
+//                            versionMapping {
+//                                usage("java-api") {
+//                                    fromResolutionOf("runtimeClasspath")
+//                                }
+//                                usage("java-runtime") {
+//                                    fromResolutionResult()
+//                                }
+//                            }
+//                            pom {
+//                                name.set(project.name)
+////                        description.set("...")
+//                                // compulsory
+//                                url.set(homepage)
+////                            packaging = "jar"
+//                                properties.set(
+//                                    mapOf(
+//                                        "maven.compiler.source" to java.sourceCompatibility.majorVersion,
+//                                        "maven.compiler.target" to java.targetCompatibility.majorVersion
+//                                    )
+//                                )
+//                                licenses {
+//                                    license {
+//                                        name.set("GNU Lesser General Public License, version 3")
+//                                        url.set("https://www.gnu.org/licenses/lgpl-3.0.txt")
+//                                    }
+//                                }
+////                        developers {
+//// ...
+////                        }
+//                                // https://central.sonatype.org/publish/requirements/
+//                                scm {
+//                                    connection.set("scm:git:git://${webSteam}.git")
+//                                    developerConnection.set("scm:git:ssh://${webSteam}.git")
+//                                    url.set(web)
+//                                }
+//                            }
+//                            println("Define MavenPublication ${name} and set shared contents in POM")
 //                        }
-                                // https://central.sonatype.org/publish/requirements/
-                                scm {
-                                    connection.set("scm:git:git://${webSteam}.git")
-                                    developerConnection.set("scm:git:ssh://${webSteam}.git")
-                                    url.set(web)
-                                }
-                            }
-                            println("Define MavenPublication ${name} and set shared contents in POM")
-                        }
-                    }
-                }
-            }
-        }
-    }
+//                    }
+//                }
+//            }
+//        }
+//    }
 
 }
 

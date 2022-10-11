@@ -1,4 +1,4 @@
-package toroidalDiffusion;
+package toroidaldiffusion.lphy;
 
 public class ToroidalUtils {
     public static double wrapToMaxAngle(double rawAngle, double MAX_ANGLE_VALUE) {

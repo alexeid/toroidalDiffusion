@@ -1,8 +1,12 @@
 /**
  * @author Walter Xie
  */
-module toroidaldiffusion.lphy {
-    requires transitive lphy;
+module toro.diff.lphy {
+    requires lphy;
+
+    requires ejml.core;
+    requires ejml.simple;
+    requires ejml.ddense;
 
     exports toroidaldiffusion.lphy;
 
