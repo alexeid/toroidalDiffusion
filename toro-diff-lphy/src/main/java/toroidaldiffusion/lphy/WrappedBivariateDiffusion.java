@@ -29,7 +29,7 @@ public class WrappedBivariateDiffusion {
     int lk = 1;
     SimpleMatrix x = new SimpleMatrix(4, 1);
     double t = 1.0;
-    SimpleMatrix mu = new SimpleMatrix(2, 1);
+    public SimpleMatrix mu = new SimpleMatrix(2, 1);
     SimpleMatrix alpha = new SimpleMatrix(3, 1);
     SimpleMatrix sigma = new SimpleMatrix(2, 1);
     int maxK = 1;

@@ -1,4 +1,4 @@
-package toroidaldiffusion.lphy;
+package toroidaldiffusion.studio;
 
 import javax.swing.*;
 import java.awt.*;

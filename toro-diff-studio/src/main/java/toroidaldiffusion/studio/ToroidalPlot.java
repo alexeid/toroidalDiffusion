@@ -1,4 +1,6 @@
-package toroidaldiffusion.lphy;
+package toroidaldiffusion.studio;
+
+import toroidaldiffusion.lphy.WrappedBivariateDiffusion;
 
 import javax.swing.*;
 import java.awt.*;

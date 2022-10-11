@@ -4,8 +4,9 @@
 rootProject.name = "toroidalDiffusion"
 
 include("toro-diff-lphy")
-//include("toro-diff-studio")
+include("toro-diff-studio")
 
+// declare the location(s) to download the jars
 pluginManagement {
     // the repos to load Gradle plugins
     repositories {
