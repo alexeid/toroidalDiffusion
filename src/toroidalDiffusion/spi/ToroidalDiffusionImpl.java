@@ -1,6 +1,5 @@
 package toroidalDiffusion.spi;
 
-import jebl.evolution.sequences.SequenceType;
 import lphy.core.model.BasicFunction;
 import lphy.core.model.GenerativeDistribution;
 import lphy.core.spi.LPhyCoreImpl;
@@ -9,7 +8,6 @@ import toroidalDiffusion.PhyloToroidalBrownian;
 import toroidalDiffusion.PhyloWrappedBivariateDiffusion;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  *
@@ -17,12 +15,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * It requires a public no-args constructor.
  * @author Walter Xie
  */
-public class ToroidalDiffusion extends LPhyCoreImpl {
+public class ToroidalDiffusionImpl extends LPhyCoreImpl {
 
     /**
      * Required by ServiceLoader.
      */
-    public ToroidalDiffusion() {
+    public ToroidalDiffusionImpl() {
         //TODO print package or classes info here?
     }
 
