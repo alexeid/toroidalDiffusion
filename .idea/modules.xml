@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/../linguaPhylo/lphy/lphy.iml" filepath="$PROJECT_DIR$/../linguaPhylo/lphy/lphy.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../linguaPhylo/lphy-base/lphy-base.iml" filepath="$PROJECT_DIR$/../linguaPhylo/lphy-base/lphy-base.iml" />
+      <module fileurl="file://$PROJECT_DIR$/toroidalDiffusion.iml" filepath="$PROJECT_DIR$/toroidalDiffusion.iml" />
+    </modules>
+  </component>
+</project>
