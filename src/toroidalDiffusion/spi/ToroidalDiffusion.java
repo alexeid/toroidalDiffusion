@@ -1,17 +1,14 @@
 package toroidalDiffusion.spi;
 
 import jebl.evolution.sequences.SequenceType;
-import lphy.graphicalModel.Func;
-import lphy.graphicalModel.GenerativeDistribution;
-import lphy.spi.LPhyExtension;
+import lphy.core.model.BasicFunction;
+import lphy.core.model.GenerativeDistribution;
+import lphy.core.spi.LPhyCoreImpl;
 import toroidalDiffusion.DihedralAngleDiffusionMatrix;
 import toroidalDiffusion.PhyloToroidalBrownian;
 import toroidalDiffusion.PhyloWrappedBivariateDiffusion;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -20,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * It requires a public no-args constructor.
  * @author Walter Xie
  */
-public class ToroidalDiffusion implements LPhyExtension {
+public class ToroidalDiffusion extends LPhyCoreImpl {
 
     /**
      * Required by ServiceLoader.
@@ -30,18 +27,17 @@ public class ToroidalDiffusion implements LPhyExtension {
     }
 
     @Override
-    public List<Class<? extends GenerativeDistribution>> getDistributions() {
+    public List<Class<? extends GenerativeDistribution>> declareDistributions() {
         return Arrays.asList(PhyloToroidalBrownian.class,
                 PhyloWrappedBivariateDiffusion.class);
     }
 
     @Override
-    public List<Class<? extends Func>> getFunctions() {
+    public List<Class<? extends BasicFunction>> declareFunctions() {
         return Collections.singletonList(DihedralAngleDiffusionMatrix.class);
     }
 
-    @Override
-    public Map<String, ? extends SequenceType> getSequenceTypes() {
-        return new ConcurrentHashMap<>();
+    public String getExtensionName() {
+        return "Toroidal diffusion";
     }
 }

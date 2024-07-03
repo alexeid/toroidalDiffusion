@@ -1,9 +1,9 @@
 package toroidalDiffusion;
 
-import lphy.evolution.tree.TimeTree;
-import lphy.evolution.continuous.PhyloOU;
-import lphy.graphicalModel.ParameterInfo;
-import lphy.graphicalModel.Value;
+import lphy.base.evolution.tree.TimeTree;
+import lphy.base.evolution.continuous.PhyloOU;
+import lphy.core.model.annotation.ParameterInfo;
+import lphy.core.model.Value;
 
 import static toroidalDiffusion.ToroidalUtils.wrapToMaxAngle;
 

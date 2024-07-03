@@ -9,5 +9,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="totDiff-lib" level="project" />
+    <orderEntry type="module" module-name="lphy-studio" exported="" />
   </component>
 </module>

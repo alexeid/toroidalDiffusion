@@ -1,12 +1,12 @@
 package toroidalDiffusion;
 
-import lphy.evolution.alignment.ContinuousCharacterData;
-import lphy.evolution.tree.TimeTree;
-import lphy.evolution.continuous.PhyloBrownian;
-import lphy.graphicalModel.GeneratorInfo;
-import lphy.graphicalModel.ParameterInfo;
-import lphy.graphicalModel.RandomVariable;
-import lphy.graphicalModel.Value;
+import lphy.base.evolution.alignment.ContinuousCharacterData;
+import lphy.base.evolution.tree.TimeTree;
+import lphy.base.evolution.continuous.PhyloBrownian;
+import lphy.core.model.annotation.GeneratorInfo;
+import lphy.core.model.annotation.ParameterInfo;
+import lphy.core.model.RandomVariable;
+import lphy.core.model.Value;
 
 import static toroidalDiffusion.ToroidalUtils.wrapToMaxAngle;
 
