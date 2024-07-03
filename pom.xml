@@ -1,27 +1,26 @@
 <project>
     <modelVersion>4.0.0</modelVersion>
+
+    <properties>
+        <maven.compiler.release>17</maven.compiler.release>
+        <!-- more https://github.com/cko/predefined_maven_properties/blob/master/README.md   -->
+        <name>${project.name}</name>
+        <version>${project.version}</version>
+    </properties>
+
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>7</source>
-                    <target>7</target>
-                </configuration>
+                <version>3.13.0</version>
             </plugin>
         </plugins>
     </build>
 
-    <!-- more https://github.com/cko/predefined_maven_properties/blob/master/README.md   -->
-    <properties>
-        <name>${project.name}</name>
-        <version>${project.version}</version>
-    </properties>
-
-    <groupId>lphy</groupId>
+    <groupId>io.github.linguaphylo</groupId>
     <!-- ${project.name}   -->
-    <artifactId>toroidalDiffusion</artifactId>
+    <artifactId>toroidaldiffusion</artifactId>
     <!-- ${project.version}   -->
     <version>0.0.1</version>
 
