@@ -1,12 +1,12 @@
-package toroidalDiffusion.spi;
+package toroidaldiffusion.spi;
 
 import lphy.core.model.BasicFunction;
 import lphy.core.model.GenerativeDistribution;
 import lphy.core.spi.LPhyCoreImpl;
-import toroidalDiffusion.DihedralAngleDiffusionMatrix;
-import toroidalDiffusion.PhyloCircularBrownian;
-import toroidalDiffusion.PhyloToroidalBrownian;
-import toroidalDiffusion.PhyloWrappedBivariateDiffusion;
+import toroidaldiffusion.DihedralAngleDiffusionMatrix;
+import toroidaldiffusion.PhyloCircularBrownian;
+import toroidaldiffusion.PhyloToroidalBrownian;
+import toroidaldiffusion.PhyloWrappedBivariateDiffusion;
 
 import java.util.Arrays;
 import java.util.List;

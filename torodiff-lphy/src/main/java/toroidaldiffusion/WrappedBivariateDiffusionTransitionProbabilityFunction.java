@@ -1,4 +1,4 @@
-package toroidalDiffusion;
+package toroidaldiffusion;
 
 import org.apache.commons.math3.analysis.MultivariateFunction;
 

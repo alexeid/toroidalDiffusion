@@ -13,8 +13,8 @@ module toroidaldiffusion {
     requires biojava.structure;
     requires jaxb.core;
 
-    exports toroidalDiffusion;
-    exports toroidalDiffusion.spi;
+    exports toroidaldiffusion;
+    exports toroidaldiffusion.spi;
 
     // ViewerRegister loads all Viewers
 //    uses lphystudio.app.graphicalmodelpanel.viewer.Viewer;

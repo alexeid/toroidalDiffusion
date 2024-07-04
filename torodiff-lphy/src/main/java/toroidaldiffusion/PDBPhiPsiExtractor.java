@@ -1,9 +1,7 @@
-package toroidalDiffusion;
+package toroidaldiffusion;
 
 import org.biojava.nbio.structure.*;
 import org.biojava.nbio.structure.io.PDBFileReader;
-import org.biojava.nbio.structure.jama.Matrix;
-import org.biojava.nbio.structure.geometry.*;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;

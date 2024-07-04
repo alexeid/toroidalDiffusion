@@ -1,9 +1,9 @@
-package toroidalDiffusion;
+package toroidaldiffusion;
 
-import lphy.base.evolution.tree.TimeTree;
 import lphy.base.evolution.continuous.PhyloMultivariateBrownian;
-import lphy.core.model.annotation.ParameterInfo;
+import lphy.base.evolution.tree.TimeTree;
 import lphy.core.model.Value;
+import lphy.core.model.annotation.ParameterInfo;
 
 /**
  * Created by alexpopinga on 2/02/20.

@@ -1,13 +1,13 @@
-package toroidalDiffusion;
+package toroidaldiffusion;
 
 import lphy.base.evolution.tree.TimeTree;
 import lphy.base.evolution.tree.TimeTreeNode;
-import lphy.core.model.datatype.DoubleArray2DValue;
-import lphy.core.simulator.RandomUtils;
 import lphy.core.model.GenerativeDistribution;
-import lphy.core.model.annotation.ParameterInfo;
 import lphy.core.model.RandomVariable;
 import lphy.core.model.Value;
+import lphy.core.model.annotation.ParameterInfo;
+import lphy.core.model.datatype.DoubleArray2DValue;
+import lphy.core.simulator.RandomUtils;
 import org.apache.commons.math3.random.RandomGenerator;
 
 import java.util.Map;
