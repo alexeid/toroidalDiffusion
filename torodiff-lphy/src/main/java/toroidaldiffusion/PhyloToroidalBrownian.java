@@ -1,12 +1,17 @@
 package toroidaldiffusion;
 
+import lphy.base.evolution.alignment.ContinuousCharacterData;
 import lphy.base.evolution.continuous.PhyloMultivariateBrownian;
 import lphy.base.evolution.tree.TimeTree;
+import lphy.core.model.RandomVariable;
 import lphy.core.model.Value;
+import lphy.core.model.annotation.GeneratorCategory;
+import lphy.core.model.annotation.GeneratorInfo;
 import lphy.core.model.annotation.ParameterInfo;
 
 /**
  * Created by alexpopinga on 2/02/20.
+ * TODO Alex P needs to check
  */
 public class PhyloToroidalBrownian extends PhyloMultivariateBrownian {
 
@@ -29,5 +34,13 @@ public class PhyloToroidalBrownian extends PhyloMultivariateBrownian {
             newValues[i] = ToroidalUtils.wrapToMaxAngle(rawValues[i], MAX_ANGLE_VALUE);
         }
         return newValues;
+    }
+
+    @GeneratorInfo(name = "PhyloToroidalBrownian", verbClause = "is assumed to have evolved under",
+            narrativeName = "phylogenetic toroidal Brownian motion process",
+            category = GeneratorCategory.PHYLO_LIKELIHOOD, examples = {"simplePhyloToroidalBrownian.lphy"},
+            description = "The phylogenetic toroidal Brownian motion distribution.")
+    public RandomVariable<ContinuousCharacterData> sample() {
+        return super.sample();
     }
 }
