@@ -5,6 +5,8 @@ import lphy.base.evolution.tree.TimeTreeNode;
 import lphy.core.model.GenerativeDistribution;
 import lphy.core.model.RandomVariable;
 import lphy.core.model.Value;
+import lphy.core.model.annotation.GeneratorCategory;
+import lphy.core.model.annotation.GeneratorInfo;
 import lphy.core.model.annotation.ParameterInfo;
 import lphy.core.model.datatype.DoubleArray2DValue;
 import lphy.core.simulator.RandomUtils;
@@ -71,6 +73,10 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ma
         else throw new RuntimeException("Unrecognised parameter name: " + paramName);
     }
 
+    @GeneratorInfo(name = "PhyloWrappedBivariateDiffusion", verbClause = "is assumed to have evolved under",
+            narrativeName = "phylogenetic bivariate wrapped normal distribution",
+            category = GeneratorCategory.PHYLO_LIKELIHOOD, examples = {"simplePhyloWrappedBivariateDiffusion.lphy"},
+            description = "The phylogenetic A bivariate wrapped normal distribution distribution.")
     public RandomVariable<Map<String, Double[][]>> sample() {
 
         SortedMap<String, Integer> idMap = new TreeMap<>();
