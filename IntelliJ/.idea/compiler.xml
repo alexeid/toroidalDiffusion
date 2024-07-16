@@ -9,7 +9,6 @@
         <module name="lphy-studio" />
         <module name="toroidaldiffusion" />
         <module name="lphybeast" />
-        <module name="lblauncher" />
         <module name="lphy-base" />
         <module name="lphy" />
       </profile>

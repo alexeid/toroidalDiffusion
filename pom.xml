@@ -21,11 +21,11 @@
 
     <modules>
         <module>../linguaPhylo</module>
-        <module>../linguaPhylo/lphy</module>
-        <module>../linguaPhylo/lphy-base</module>
-        <module>../linguaPhylo/lphy-studio</module>
+<!--        <module>../linguaPhylo/lphy</module>-->
+<!--        <module>../linguaPhylo/lphy-base</module>-->
+<!--        <module>../linguaPhylo/lphy-studio</module>-->
         <module>../LPhyBeast</module>
-        <module>../LPhyBeast/lphybeast</module>
+<!--        <module>../LPhyBeast/lphybeast</module>-->
         <module>torodiff-lphy</module>
     </modules>
 
