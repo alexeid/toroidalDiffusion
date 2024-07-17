@@ -8,7 +8,6 @@
         <outputRelativeToContentRoot value="true" />
         <module name="lphy-studio" />
         <module name="toroidaldiffusion" />
-        <module name="lphybeast" />
         <module name="lphy-base" />
         <module name="lphy" />
       </profile>
