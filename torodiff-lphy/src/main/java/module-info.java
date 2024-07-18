@@ -11,7 +11,7 @@ module toroidaldiffusion {
     requires biojava.core;
     requires biojava.alignment;
     requires biojava.structure;
-    requires jaxb.core;
+    requires org.glassfish.jaxb.core;
 
     exports toroidaldiffusion;
     exports toroidaldiffusion.spi;
