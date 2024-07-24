@@ -129,7 +129,7 @@ public class PDBPhiPsiExtractor {
             e.printStackTrace();
         }
     }
-
+//convert angles to radians
     private static double degreesToRadians(double degrees) {
         return Math.PI + (degrees / 180.0) * Math.PI;
     }
