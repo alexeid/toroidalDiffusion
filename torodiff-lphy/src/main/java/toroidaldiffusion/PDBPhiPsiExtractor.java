@@ -110,8 +110,8 @@ public class PDBPhiPsiExtractor {
                                 chain.getId(),
                                 residueName,
                                 aminoAcid.getResidueNumber().toString(),
-                                phi,
-                                psi,
+                                degreesToRadians(phi),
+                                degreesToRadians(psi),
                                 hydrophobicity,
                                 secondaryStructure));
                     } catch (StructureException e) {
@@ -128,6 +128,10 @@ public class PDBPhiPsiExtractor {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static double degreesToRadians(double degrees) {
+        return Math.PI + (degrees / 180.0) * Math.PI;
     }
 
     private static Map<Group, String> getSecondaryStructureMap(Structure structure) {
