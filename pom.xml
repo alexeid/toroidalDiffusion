@@ -8,20 +8,22 @@
         <version>1.6.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>io.github.linguaphylo</groupId>
+<!--    <groupId>io.github.linguaphylo</groupId>-->
     <!-- ${project.name}   -->
     <artifactId>toroidaldiffusion-root</artifactId>
     <!-- ${project.version}   -->
-    <version>0.0.1</version>
+    <version>${revision}</version>
     <packaging>pom</packaging>
 
     <properties>
+        <lphy.vision>1.6.0-SNAPSHOT</lphy.vision>
+        <revision>0.0.1-SNAPSHOT</revision>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- more https://github.com/cko/predefined_maven_properties/blob/master/README.md   -->
-        <name>${project.name}</name>
-        <version>${project.version}</version>
+<!--        <name>${project.name}</name>-->
+<!--        <version>${project.version}</version>-->
         <url>https://github.com/alexeid/toroidalDiffusion</url>
     </properties>
 
@@ -29,6 +31,7 @@
         <module>../linguaPhylo</module>
 <!--        <module>../LPhyBeast</module>-->
         <module>torodiff-lphy</module>
+        <module>torodiff-studio</module>
     </modules>
 
     <build>

@@ -1,5 +1,7 @@
 package toroidaldiffusion;
 
+import lphy.base.evolution.Taxa;
+import lphy.base.evolution.alignment.TaxaCharacterMatrix;
 import lphy.base.evolution.tree.TimeTree;
 import lphy.base.evolution.tree.TimeTreeNode;
 import lphy.core.model.GenerativeDistribution;
@@ -8,7 +10,6 @@ import lphy.core.model.Value;
 import lphy.core.model.annotation.GeneratorCategory;
 import lphy.core.model.annotation.GeneratorInfo;
 import lphy.core.model.annotation.ParameterInfo;
-import lphy.core.model.datatype.DoubleArray2DValue;
 import lphy.core.simulator.RandomUtils;
 import org.apache.commons.math3.random.RandomGenerator;
 
@@ -19,7 +20,7 @@ import java.util.TreeMap;
 /**
  * @author Alexei Drummond
  */
-public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Map<String, Double[][]>> {
+public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<TaxaCharacterMatrix> {
 
     boolean anglesInRadians = true;
 
@@ -77,18 +78,20 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ma
             narrativeName = "phylogenetic bivariate wrapped normal distribution",
             category = GeneratorCategory.PHYLO_LIKELIHOOD, examples = {"simplePhyloWrappedBivariateDiffusion.lphy"},
             description = "The phylogenetic A bivariate wrapped normal distribution distribution.")
-    public RandomVariable<Map<String, Double[][]>> sample() {
+    public RandomVariable<TaxaCharacterMatrix> sample() {
 
         SortedMap<String, Integer> idMap = new TreeMap<>();
         fillIdMap(tree.value().getRoot(), idMap);
+        Taxa taxa = Taxa.createTaxa(idMap);
+        int nchar = y.value().length;
 
-        Map<String, Double[][]> tipValues = new StringDoubleArray2DMap();
+        TaxaCharacterMatrix tipValues = new DihedralAngleAlignment(taxa, nchar);
 
         WrappedBivariateDiffusion wrappedBivariateDiffusion = new WrappedBivariateDiffusion();
 
         wrappedBivariateDiffusion.setParameters(mu.value(), alpha.value(), sigma.value());
 
-        traverseTree(tree.value().getRoot(), y, tipValues, wrappedBivariateDiffusion, idMap);
+        traverseTree(tree.value().getRoot(), y.value(), tipValues, wrappedBivariateDiffusion, idMap);
 
         return new RandomVariable<>("x", tipValues, this);
     }
@@ -110,19 +113,24 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ma
         }
     }
 
-    private void traverseTree(TimeTreeNode node, Value<Double[][]> nodeState, Map<String, Double[][]> tipValues, WrappedBivariateDiffusion diffusion, Map<String, Integer> idMap) {
+    private void traverseTree(TimeTreeNode node, Double[][] nodeStateArray, TaxaCharacterMatrix<Pair> tipValues, WrappedBivariateDiffusion diffusion, Map<String, Integer> idMap) {
         if (node.isLeaf()) {
-            tipValues.put(node.getId(), nodeState.value());
+            Taxa taxa = tipValues.getTaxa();
+            int taxonIndex = taxa.indexOfTaxon(node.getId());
+
+            for (int i = 0; i < nodeStateArray.length; i++) {
+                Pair pair = new Pair(nodeStateArray[i][0], nodeStateArray[i][1]);
+                tipValues.setState(taxonIndex, i, pair);
+            }
+
         } else {
             for (TimeTreeNode child : node.getChildren()) {
 
                 double branchLength = node.getAge() - child.getAge();
 
-                Double[][] newValue = getNewValue(nodeState.value(), diffusion, branchLength);
+                Double[][] newValue = getNewValue(nodeStateArray, diffusion, branchLength);
 
-                DoubleArray2DValue ns = new DoubleArray2DValue(null, newValue);
-
-                traverseTree(child, ns, tipValues, diffusion, idMap);
+                traverseTree(child, newValue, tipValues, diffusion, idMap);
             }
         }
     }

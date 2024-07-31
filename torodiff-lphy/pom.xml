@@ -3,12 +3,10 @@
     <parent>
         <groupId>io.github.linguaphylo</groupId>
         <artifactId>toroidaldiffusion-root</artifactId>
-        <version>0.0.1</version>
+        <version>${revision}</version>
     </parent>
 
-<!--    <groupId>io.github.linguaphylo</groupId>-->
     <artifactId>toroidaldiffusion</artifactId>
-<!--    <version>1.6.0-SNAPSHOT</version>-->
 
     <properties>
         <beastVersion>2.7.6</beastVersion>
@@ -17,10 +15,9 @@
     <dependencies>
         <dependency>
             <groupId>io.github.linguaphylo</groupId>
-            <artifactId>lphy-studio</artifactId>
-            <version>1.6.0-SNAPSHOT</version>
+            <artifactId>lphy-base</artifactId>
+            <version>${lphy.vision}</version>
         </dependency>
-
     </dependencies>
 
 

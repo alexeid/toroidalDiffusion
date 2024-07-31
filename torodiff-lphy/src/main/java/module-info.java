@@ -1,9 +1,9 @@
+
 /**
  * @author Walter Xie
  */
 module toroidaldiffusion {
-//    requires lphy.base;
-    requires lphystudio;
+    requires lphy.base;
 
     // TODO review, some libs seem not used
     requires ejml.core;
@@ -16,14 +16,8 @@ module toroidaldiffusion {
     exports toroidaldiffusion;
     exports toroidaldiffusion.spi;
 
-    // ViewerRegister loads all Viewers
-//    uses lphystudio.app.graphicalmodelpanel.viewer.Viewer;
+    // LPhy extensions
+    uses lphy.core.spi.Extension;
     // declare what service interface the provider intends to use
-
-    // the core uses hard core to register all internal Viewers,
-    // but extensions need to declare what service interface the provider intends to use for new Viewers.
-//    provides lphystudio.app.graphicalmodelpanel.viewer.Viewer with lphystudio.viewer.PopSizeFuncViewer;
-
-    // Note: to adapt with the system not using Java module but using class path,
-    // they need to be declared inside META-INF/services/lphystudio.app.graphicalmodelpanel.viewer.Viewer as well.
+    provides lphy.core.spi.Extension with toroidaldiffusion.spi.ToroidalDiffusionImpl;
 }

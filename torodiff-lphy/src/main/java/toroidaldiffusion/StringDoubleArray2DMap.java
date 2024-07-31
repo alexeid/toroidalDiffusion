@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.TreeMap;
 
+@Deprecated
 public class StringDoubleArray2DMap extends TreeMap<String, Double[][]>  {
 
     public String toString() {
