@@ -1,0 +1,26 @@
+<project>
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.linguaphylo</groupId>
+        <artifactId>toroidaldiffusion-root</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>toroidaldiffusion-studio</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.linguaphylo</groupId>
+            <artifactId>toroidaldiffusion</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.linguaphylo</groupId>
+            <artifactId>lphy-studio</artifactId>
+            <version>${lphy.vision}</version>
+        </dependency>
+    </dependencies>
+
+
+</project>
