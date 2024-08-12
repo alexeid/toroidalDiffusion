@@ -28,10 +28,11 @@
     </properties>
 
     <modules>
-        <module>../linguaPhylo</module>
-<!--        <module>../LPhyBeast</module>-->
+        <module>../LPhyBeast</module>
         <module>torodiff-lphy</module>
         <module>torodiff-studio</module>
+        <module>torodiff-beast</module>
+        <module>torodiff-lphybeast</module>
     </modules>
 
     <build>
