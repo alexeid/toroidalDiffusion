@@ -9,6 +9,22 @@
     <artifactId>torodiff-lphybeast</artifactId>
 
     <dependencies>
+        <dependency>
+            <groupId>io.github.linguaphylo</groupId>
+            <artifactId>lphybeast</artifactId>
+            <version>${lphybeast.vision}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.linguaphylo</groupId>
+            <artifactId>torodiff-beast</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.linguaphylo</groupId>
+            <artifactId>toroidaldiffusion</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
     </dependencies>
 
