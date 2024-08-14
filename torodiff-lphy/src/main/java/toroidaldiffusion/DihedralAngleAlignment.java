@@ -51,7 +51,7 @@ public class DihedralAngleAlignment implements TaxaCharacterMatrix<Pair> {
         StringBuilder builder = new StringBuilder();
         builder.append("{\n");
         for (int i = 0; i < Objects.requireNonNull(taxa).ntaxa(); i++) {
-            builder.append("  ").append(taxa.getTaxon(i));
+            builder.append("  ").append(taxa.getTaxon(i)); //getname not tostring
             builder.append(" = ").append(Arrays.toString(pairs[i]));
 //            if (i < n()-1)
             builder.append(",");
@@ -68,6 +68,50 @@ public class DihedralAngleAlignment implements TaxaCharacterMatrix<Pair> {
     }
 
     public String toHTML() {
-        return "";
+            StringBuilder builder = new StringBuilder();
+
+            builder.append("<html>\n");
+            builder.append("<body>\n");
+            builder.append("<table border='1'>\n");
+
+            // Add table headers
+            builder.append("<tr>");
+            builder.append("<th>Taxon</th>");
+            for (int j = 0; j < nchar(); j++) {
+                builder.append("<th>Site ").append(j + 1).append("</th>");
+            }
+            builder.append("</tr>\n");
+
+            // Add table rows for each taxon
+//            for (int i = 0; i < taxa.ntaxa(); i++) {
+//                builder.append("<tr>");
+//                builder.append("<td>").append(taxa.getTaxon(i)).append("</td>");
+//                for (int j = 0; j < nchar(); j++) {
+//                    builder.append("<td>").append(pairs[i][j] != null ? pairs[i][j].toString() : "").append("</td>");
+//                }
+//                builder.append("</tr>\n");
+//            }
+
+        String[] taxaNames = taxa.getTaxaNames();
+        for (int i = 0; i < taxaNames.length; i++) {
+            builder.append("<tr>");
+            builder.append("<td>").append(taxaNames[i]).append("</td>");
+            for (int j = 0; j < nchar(); j++) {
+                if (pairs[i][j] != null) {
+                    builder.append("<td>").append(pairs[i][j].toString()).append("</td>");
+                } else {
+                    builder.append("<td></td>"); // Empty cell for null pairs
+                }
+            }
+            builder.append("</tr>\n");
+        }
+
+        builder.append("</table>\n");
+            builder.append("<p>ntax = ").append(taxa.ntaxa()).append("</p>\n");
+            builder.append("</body>\n");
+            builder.append("</html>");
+
+            return builder.toString();
+        }
     }
-}
+

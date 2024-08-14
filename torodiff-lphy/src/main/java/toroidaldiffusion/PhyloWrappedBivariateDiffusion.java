@@ -83,7 +83,14 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
         SortedMap<String, Integer> idMap = new TreeMap<>();
         fillIdMap(tree.value().getRoot(), idMap);
         Taxa taxa = Taxa.createTaxa(idMap);
-        int nchar = y.value().length;
+
+        Double[][] y0 = y.value();
+
+        int nchar = y0.length;
+        int length = y0[0].length; // should be 2, because each element in this array is an angle pair
+
+        if (length != 2)
+            throw new RuntimeException("Dimensions of y0 should be L by 2, but found: " + nchar + " by " + length);
 
         TaxaCharacterMatrix tipValues = new DihedralAngleAlignment(taxa, nchar);
 
@@ -91,7 +98,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
 
         wrappedBivariateDiffusion.setParameters(mu.value(), alpha.value(), sigma.value());
 
-        traverseTree(tree.value().getRoot(), y.value(), tipValues, wrappedBivariateDiffusion, idMap);
+        traverseTree(tree.value().getRoot(), y0, tipValues, wrappedBivariateDiffusion, idMap);
 
         return new RandomVariable<>("x", tipValues, this);
     }
@@ -114,6 +121,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
     }
 
     private void traverseTree(TimeTreeNode node, Double[][] nodeStateArray, TaxaCharacterMatrix<Pair> tipValues, WrappedBivariateDiffusion diffusion, Map<String, Integer> idMap) {
+
         if (node.isLeaf()) {
             Taxa taxa = tipValues.getTaxa();
             int taxonIndex = taxa.indexOfTaxon(node.getId());
