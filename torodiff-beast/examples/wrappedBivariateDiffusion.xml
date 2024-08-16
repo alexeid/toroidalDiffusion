@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<beast namespace="beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.evolution.alignment:beast.base.evolution.tree.coalescent:beast.base.util:beast.base.math:beast.evolution.nuc:beast.base.evolution.operator:beast.base.inference.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood:beast.base.evolution.speciation" required="BEAST v2.5.0" version="2.5">
+
+    <!-- minordimension = nsite * 2 (angles) -->
+    <parameter id="dihedralAngles" keys="t1 t2 t3 t4"
+               minordimension="6"
+               value=""/>
+    <parameter id="internalNodesAngles"
+               minordimension="6"
+               value=""/>
+
+
+    <run id="mcmc" spec="MCMC" chainLength="60000000">
+        <state id="state" storeEvery="60000">
+<!--            <tree idref="FixedTree" name="stateNode"/>-->
+
+        </state>
+
+        <!-- START posterior -->
+        <distribution id="posterior" spec="beast.base.inference.CompoundDistribution">
+
+            <!-- START prior -->
+            <distribution id="prior" spec="beast.base.inference.CompoundDistribution">
+                <distribution id="FBD" spec="beast.evolution.speciation.SABirthDeathModel" conditionOnRhoSampling="true" birthRate="@FBDbirthRate" deathRate="@FBDdeathRate" samplingRate="@FBDsamplingRate" origin="@FBDorigin" tree="@TheTree">
+                    <parameter id="FBDremovalProb" lower="0.0" name="removalProbability" upper="1.0">0.0</parameter>
+                    <parameter id="FBDrho" estimate="false" lower="0.0" name="rho" upper="1.0">1.0</parameter>
+                </distribution>
+
+            </distribution>
+            <!-- END prior -->
+
+            <!-- START likelihood -->
+            <distribution id="likelihood" spec="beast.base.inference.CompoundDistribution" useThreads="false">
+
+                <tree id="FixedTree" spec="beast.base.evolution.tree.TreeParser" IsLabelledNewick="true"
+                      adjustTipHeights="false"  offset="0" singlechild="false" binarizeMultifurcations="true"
+                      newick="(((sp1:1.0,sp2:1.0):1.0,sp3:2.0):1.0,sp4:3.0);">
+                    <taxonset id="TaxonSet" spec="TaxonSet">
+                        <taxon id="t1" spec="Taxon"/>
+                        <taxon id="t2" spec="Taxon"/>
+                        <taxon id="t3" spec="Taxon"/>
+                        <taxon id="t4" spec="Taxon"/>
+                    </taxonset>
+                </tree>
+
+
+            </distribution> <!-- END Likelihood -->
+        </distribution> <!-- END Posterior -->
+
+
+        <logger id="tracelog" fileName="WBD_fixedtree.log" logEvery="60000" model="@posterior" sanitiseHeaders="true" sort="smart">
+            <log idref="posterior"/>
+            <log idref="likelihood"/>
+            <log idref="prior"/>
+
+        </logger>
+
+        <logger id="screenlog" logEvery="30000">
+            <log idref="posterior"/>
+            <log id="ESS.0" spec="util.ESS" arg="@posterior"/>
+            <log idref="likelihood"/>
+            <log idref="prior"/>
+        </logger>
+
+<!--        <logger id="treelog.t:firsthalf" fileName="WBD_fixedtree.trees" logEvery="5000" mode="tree">-->
+<!--            <log id="TreeWithMetaDataLogger" spec="beast.base.evolution.tree.TreeWithMetaDataLogger" tree="@FixedTree"/>-->
+<!--        </logger>-->
+    </run>
+</beast>
