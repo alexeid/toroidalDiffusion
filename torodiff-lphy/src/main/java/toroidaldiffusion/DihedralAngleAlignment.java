@@ -2,14 +2,16 @@ package toroidaldiffusion;
 
 import lphy.base.evolution.Taxa;
 import lphy.base.evolution.alignment.TaxaCharacterMatrix;
+import lphy.core.logger.TextFileFormatted;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 /**
  *
  */
-public class DihedralAngleAlignment implements TaxaCharacterMatrix<Pair> {
+public class DihedralAngleAlignment implements TaxaCharacterMatrix<Pair>, TextFileFormatted {
 
     // 1st[] is taxa, index is same order as Taxa
     // 2nd[] is the site 
@@ -68,21 +70,21 @@ public class DihedralAngleAlignment implements TaxaCharacterMatrix<Pair> {
     }
 
     public String toHTML() {
-            StringBuilder builder = new StringBuilder();
+        StringBuilder builder = new StringBuilder();
 
-            builder.append("<html>\n");
-            builder.append("<body>\n");
-            builder.append("<table border='1'>\n");
+        builder.append("<html>\n");
+        builder.append("<body>\n");
+        builder.append("<table border='1'>\n");
 
-            // Add table headers
-            builder.append("<tr>");
-            builder.append("<th>Taxon</th>");
-            for (int j = 0; j < nchar(); j++) {
-                builder.append("<th>Site ").append(j + 1).append("</th>");
-            }
-            builder.append("</tr>\n");
+        // Add table headers
+        builder.append("<tr>");
+        builder.append("<th>Taxon</th>");
+        for (int j = 0; j < nchar(); j++) {
+            builder.append("<th>Site ").append(j + 1).append("</th>");
+        }
+        builder.append("</tr>\n");
 
-            // Add table rows for each taxon
+        // Add table rows for each taxon
 //            for (int i = 0; i < taxa.ntaxa(); i++) {
 //                builder.append("<tr>");
 //                builder.append("<td>").append(taxa.getTaxon(i)).append("</td>");
@@ -107,11 +109,23 @@ public class DihedralAngleAlignment implements TaxaCharacterMatrix<Pair> {
         }
 
         builder.append("</table>\n");
-            builder.append("<p>ntax = ").append(taxa.ntaxa()).append("</p>\n");
-            builder.append("</body>\n");
-            builder.append("</html>");
+        builder.append("<p>ntax = ").append(taxa.ntaxa()).append("</p>\n");
+        builder.append("</body>\n");
+        builder.append("</html>");
 
-            return builder.toString();
-        }
+        return builder.toString();
     }
+
+    //*** for logging to file ***//
+
+    @Override
+    public List<String> getTextForFile() {
+        return List.of();
+    }
+
+    @Override
+    public String getFileType() {
+        return ".tsv";
+    }
+}
 
