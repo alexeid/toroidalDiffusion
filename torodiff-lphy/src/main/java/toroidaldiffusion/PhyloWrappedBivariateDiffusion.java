@@ -13,7 +13,6 @@ import lphy.core.model.annotation.ParameterInfo;
 import lphy.core.simulator.RandomUtils;
 import org.apache.commons.math3.random.RandomGenerator;
 
-import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -32,6 +31,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
     Value<Double[]> sigma;
     Value<Double[]> alpha;
     Value<Double[][]> y;
+    Value<Boolean> addIntNodeSeq;
     RandomGenerator random;
 
     public static final String treeParamName = "tree";
@@ -39,17 +39,20 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
     public static final String sigmaParamName = "sigma";
     public static final String alphaParamName = "alpha";
     public static final String y0RateParam = "y0";
+    public static final String ADD_INT_NODE_SEQ = "addIntNodeSeq";
 
     public PhyloWrappedBivariateDiffusion(@ParameterInfo(name = treeParamName, description = "the time tree.") Value<TimeTree> tree,
                                           @ParameterInfo(name = muParamName, description = "the mean of the stationary distribution.") Value<Double[]> mu,
                                           @ParameterInfo(name = sigmaParamName, description = "the two variance terms.") Value<Double[]> sigma,
                                           @ParameterInfo(name = alphaParamName, description = "the three drift terms.") Value<Double[]> alpha,
-                                          @ParameterInfo(name = y0RateParam, description = "the value of [phi,psi] angle pairs for each carbon backbone bond of the molecule at the root of the phylogeny.") Value<Double[][]> y) {
+                                          @ParameterInfo(name = y0RateParam, description = "the value of [phi,psi] angle pairs for each carbon backbone bond of the molecule at the root of the phylogeny.") Value<Double[][]> y,
+                                          @ParameterInfo(name = ADD_INT_NODE_SEQ, optional = true, description = "the three drift terms.") Value<Boolean> addIntNodeSeq) {
         this.tree = tree;
         this.mu = mu;
         this.sigma = sigma;
         this.alpha = alpha;
         this.y = y;
+        this.addIntNodeSeq = addIntNodeSeq;
         this.random = RandomUtils.getRandom();
     }
 
@@ -61,6 +64,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
         map.put(sigmaParamName, sigma);
         map.put(alphaParamName, alpha);
         map.put(y0RateParam, y);
+        if (addIntNodeSeq != null) map.put(ADD_INT_NODE_SEQ, addIntNodeSeq);
         return map;
     }
 
@@ -71,6 +75,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
         else if (paramName.equals(sigmaParamName)) sigma = value;
         else if (paramName.equals(alphaParamName)) alpha = value;
         else if (paramName.equals(y0RateParam)) y = value;
+        else if (paramName.equals(ADD_INT_NODE_SEQ)) addIntNodeSeq = value;
         else throw new RuntimeException("Unrecognised parameter name: " + paramName);
     }
 
@@ -82,7 +87,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
 
         SortedMap<String, Integer> idMap = new TreeMap<>();
         fillIdMap(tree.value().getRoot(), idMap);
-        Taxa taxa = Taxa.createTaxa(idMap);
+        Taxa taxa = Taxa.createTaxa(idMap); // TODO Alexei: why not tree.value().getTaxa() ?
 
         Double[][] y0 = y.value();
 
@@ -92,15 +97,16 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
         if (length != 2)
             throw new RuntimeException("Dimensions of y0 should be L by 2, but found: " + nchar + " by " + length);
 
-        TaxaCharacterMatrix tipValues = new DihedralAngleAlignment(taxa, nchar);
+        boolean add = addIntNodeSeq != null && addIntNodeSeq.value();
+        TaxaCharacterMatrix nodeValues = new DihedralAngleAlignment(taxa, nchar, add);
 
         WrappedBivariateDiffusion wrappedBivariateDiffusion = new WrappedBivariateDiffusion();
 
         wrappedBivariateDiffusion.setParameters(mu.value(), alpha.value(), sigma.value());
 
-        traverseTree(tree.value().getRoot(), y0, tipValues, wrappedBivariateDiffusion, idMap);
+        traverseTree(tree.value().getRoot(), y0, nodeValues, wrappedBivariateDiffusion, add);
 
-        return new RandomVariable<>("x", tipValues, this);
+        return new RandomVariable<>("x", nodeValues, this);
     }
 
     private void fillIdMap(TimeTreeNode node, SortedMap<String, Integer> idMap) {
@@ -120,15 +126,17 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
         }
     }
 
-    private void traverseTree(TimeTreeNode node, Double[][] nodeStateArray, TaxaCharacterMatrix<Pair> tipValues, WrappedBivariateDiffusion diffusion, Map<String, Integer> idMap) {
+    private void traverseTree(TimeTreeNode node, Double[][] nodeStateArray, TaxaCharacterMatrix<Pair> nodeValues,
+                              WrappedBivariateDiffusion diffusion, boolean addIntNodeSeq) {
 
         if (node.isLeaf()) {
-            Taxa taxa = tipValues.getTaxa();
+            Taxa taxa = nodeValues.getTaxa();
             int taxonIndex = taxa.indexOfTaxon(node.getId());
 
             for (int i = 0; i < nodeStateArray.length; i++) {
                 Pair pair = new Pair(nodeStateArray[i][0], nodeStateArray[i][1]);
-                tipValues.setState(taxonIndex, i, pair);
+                // tips
+                nodeValues.setState(taxonIndex, i, pair);
             }
 
         } else {
@@ -137,8 +145,16 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
                 double branchLength = node.getAge() - child.getAge();
 
                 Double[][] newValue = getNewValue(nodeStateArray, diffusion, branchLength);
+                if (addIntNodeSeq) {
+                    int nodeIndex = node.getIndex();
+                    for (int i = 0; i < newValue.length; i++) {
+                        Pair pair = new Pair(newValue[i][0], newValue[i][1]);
+                        // internal nodes
+                        nodeValues.setState(nodeIndex, i, pair);
+                    }
+                }
 
-                traverseTree(child, newValue, tipValues, diffusion, idMap);
+                traverseTree(child, newValue, nodeValues, diffusion, addIntNodeSeq);
             }
         }
     }

@@ -13,14 +13,18 @@ import java.util.Objects;
  */
 public class DihedralAngleAlignment implements TaxaCharacterMatrix<Pair>, TextFileFormatted {
 
-    // 1st[] is taxa, index is same order as Taxa
+    // 1st[] is taxa, index is same order as Taxa. When incl. internal nodes, idx is ntaxa * 2 - 1
     // 2nd[] is the site 
     Pair[][] pairs;
     Taxa taxa;
 
-    public DihedralAngleAlignment(Taxa taxa, int nchar) {
+    public DihedralAngleAlignment(Taxa taxa, int nchar, boolean addIntNodeSeq) {
         this.taxa = taxa;
-        this.pairs = new Pair[taxa.ntaxa()][nchar];
+        if (addIntNodeSeq)
+            // include internal nodes
+            this.pairs = new Pair[2 * taxa.ntaxa() - 1][nchar];
+        else
+            this.pairs = new Pair[taxa.ntaxa()][nchar];
     }
 
     @Override
@@ -52,7 +56,8 @@ public class DihedralAngleAlignment implements TaxaCharacterMatrix<Pair>, TextFi
     public String toJSON() {
         StringBuilder builder = new StringBuilder();
         builder.append("{\n");
-        for (int i = 0; i < Objects.requireNonNull(taxa).ntaxa(); i++) {
+        // Objects.requireNonNull(taxa).ntaxa()
+        for (int i = 0; i < Objects.requireNonNull(pairs).length; i++) {
             builder.append("  ").append(taxa.getTaxon(i)); //getname not tostring
             builder.append(" = ").append(Arrays.toString(pairs[i]));
 //            if (i < n()-1)
@@ -98,6 +103,19 @@ public class DihedralAngleAlignment implements TaxaCharacterMatrix<Pair>, TextFi
         for (int i = 0; i < taxaNames.length; i++) {
             builder.append("<tr>");
             builder.append("<td>").append(taxaNames[i]).append("</td>");
+            for (int j = 0; j < nchar(); j++) {
+                if (pairs[i][j] != null) {
+                    builder.append("<td>").append(pairs[i][j].toString()).append("</td>");
+                } else {
+                    builder.append("<td></td>"); // Empty cell for null pairs
+                }
+            }
+            builder.append("</tr>\n");
+        }
+        // internal nodes
+        for (int i = taxaNames.length; i < pairs.length; i++) {
+            builder.append("<tr>");
+            builder.append("<td style=\"color:#ADD8E6;\">").append(i).append("</td>");
             for (int j = 0; j < nchar(); j++) {
                 if (pairs[i][j] != null) {
                     builder.append("<td>").append(pairs[i][j].toString()).append("</td>");
