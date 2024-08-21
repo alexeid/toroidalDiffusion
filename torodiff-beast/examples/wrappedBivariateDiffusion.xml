@@ -10,10 +10,9 @@
                value=""/>
 
 
-    <run id="mcmc" spec="MCMC" chainLength="60000000">
-        <state id="state" storeEvery="60000">
-<!--            <tree idref="FixedTree" name="stateNode"/>-->
-
+    <run id="mcmc" spec="MCMC" chainLength="1000000">
+        <state id="state" storeEvery="10000">
+            <parameter id="lambda" spec="parameter.RealParameter" name="stateNode">0.1</parameter>
         </state>
 
         <!-- START posterior -->
@@ -21,9 +20,12 @@
 
             <!-- START prior -->
             <distribution id="prior" spec="beast.base.inference.CompoundDistribution">
-                <distribution id="FBD" spec="beast.evolution.speciation.SABirthDeathModel" conditionOnRhoSampling="true" birthRate="@FBDbirthRate" deathRate="@FBDdeathRate" samplingRate="@FBDsamplingRate" origin="@FBDorigin" tree="@TheTree">
-                    <parameter id="FBDremovalProb" lower="0.0" name="removalProbability" upper="1.0">0.0</parameter>
-                    <parameter id="FBDrho" estimate="false" lower="0.0" name="rho" upper="1.0">1.0</parameter>
+
+                <distribution id="lambda.prior" spec="distribution.Prior" x="@lambda">
+                    <distr id="LogNormalDistributionModel" spec="distribution.LogNormalDistributionModel">
+                        <parameter id="RealParameter" spec="parameter.RealParameter" name="M">3.0</parameter>
+                        <parameter id="RealParameter1" spec="parameter.RealParameter" name="S">1.0</parameter>
+                    </distr>
                 </distribution>
 
             </distribution>
@@ -43,19 +45,23 @@
                     </taxonset>
                 </tree>
 
+                <parameter id="mu" spec="parameter.RealParameter" dimension="2" name="stateNode">2.0 2.5</parameter>
+                <parameter id="alpha" spec="parameter.RealParameter" dimension="3" name="stateNode">1.0 1.0 0.5</parameter>
+                <parameter id="sigma" spec="parameter.RealParameter" dimension="2" name="stateNode">0.5 0.75</parameter>
+
 
             </distribution> <!-- END Likelihood -->
         </distribution> <!-- END Posterior -->
 
 
-        <logger id="tracelog" fileName="WBD_fixedtree.log" logEvery="60000" model="@posterior" sanitiseHeaders="true" sort="smart">
+        <logger id="tracelog" fileName="WBD_fixedtree.log" logEvery="10000" model="@posterior" sanitiseHeaders="true" sort="smart">
             <log idref="posterior"/>
             <log idref="likelihood"/>
             <log idref="prior"/>
 
         </logger>
 
-        <logger id="screenlog" logEvery="30000">
+        <logger id="screenlog" logEvery="100000">
             <log idref="posterior"/>
             <log id="ESS.0" spec="util.ESS" arg="@posterior"/>
             <log idref="likelihood"/>
