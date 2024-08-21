@@ -57,9 +57,12 @@ public class DihedralAngleAlignment implements TaxaCharacterMatrix<Pair>, TextFi
         StringBuilder builder = new StringBuilder();
         builder.append("{\n");
         // Objects.requireNonNull(taxa).ntaxa()
-        for (int i = 0; i < Objects.requireNonNull(pairs).length; i++) {
-            builder.append("  ").append(taxa.getTaxon(i)); //getname not tostring
-            builder.append(" = ").append(Arrays.toString(pairs[i]));
+        String[] taxaNames = taxa.getTaxaNames();
+        for (int i = 0; i < Objects.requireNonNull(taxaNames).length; i++) {
+            builder.append("  ").append(taxaNames[i]); //getname not tostring
+            // taxonIndex may not be same as i
+            int taxonIndex = taxa.indexOfTaxon(taxaNames[i]);
+            builder.append(" = ").append(Arrays.toString(pairs[taxonIndex]));
 //            if (i < n()-1)
             builder.append(",");
             builder.append("\n");
@@ -104,8 +107,9 @@ public class DihedralAngleAlignment implements TaxaCharacterMatrix<Pair>, TextFi
             builder.append("<tr>");
             builder.append("<td>").append(taxaNames[i]).append("</td>");
             for (int j = 0; j < nchar(); j++) {
-                if (pairs[i][j] != null) {
-                    builder.append("<td>").append(pairs[i][j].toString()).append("</td>");
+                // taxonIndex may not be same as i, use getState(taxaNames[i], j)
+                if (getState(taxaNames[i], j) != null) {
+                    builder.append("<td>").append(getState(taxaNames[i], j).toString()).append("</td>");
                 } else {
                     builder.append("<td></td>"); // Empty cell for null pairs
                 }
