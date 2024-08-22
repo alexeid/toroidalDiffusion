@@ -18,6 +18,18 @@ public class Pair {
         return "(" + df.format(one) + ", " + df.format(two) + ")";
     }
 
+    public Double getPhi() {
+        // Round the 'phi' value (one) to three decimal places and return it
+        DecimalFormat df = new DecimalFormat("#.###");
+        return Double.valueOf(df.format(one));
+    }
+
+    public Double getPsi() {
+        // Round the 'psi' value (two) to three decimal places and return it
+        DecimalFormat df = new DecimalFormat("#.###");
+        return Double.valueOf(df.format(two));
+    }
+
     public Double[] getPair() {
         return new Double[]{one, two};
     }

@@ -4,6 +4,7 @@ import lphy.base.evolution.Taxa;
 import lphy.base.evolution.alignment.TaxaCharacterMatrix;
 import lphy.core.logger.TextFileFormatted;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -142,7 +143,37 @@ public class DihedralAngleAlignment implements TaxaCharacterMatrix<Pair>, TextFi
 
     @Override
     public List<String> getTextForFile() {
-        return List.of();
+        List<String> lines = new ArrayList<>();
+
+        // Create the header line
+        StringBuilder header = new StringBuilder();
+        header.append("Taxon");
+        for (int j = 0; j < nchar(); j++) {
+            header.append("\tsite ").append(j + 1).append("_phi");
+            header.append("\tsite ").append(j + 1).append("_psi");
+        }
+        lines.add(header.toString());
+
+        // Create the data rows for each taxon
+        String[] taxaNames = taxa.getTaxaNames();
+        for (int i = 0; i < taxaNames.length; i++) {
+            StringBuilder row = new StringBuilder();
+            row.append(taxaNames[i]);  // Add the taxon name
+            for (int j = 0; j < nchar(); j++) {
+                if (pairs[i][j] != null) {
+                    row.append("\t").append(pairs[i][j].getPhi() != null ? pairs[i][j].getPhi().toString() : "");
+                    row.append("\t").append(pairs[i][j].getPsi() != null ? pairs[i][j].getPsi().toString() : "");
+                } else {
+                    row.append("\t").append("");  // Empty for null phi
+                    row.append("\t").append("");  // Empty for null psi
+                }
+            }
+            lines.add(row.toString());
+        }
+
+        return lines;
+
+        //return List.of();
     }
 
     @Override
