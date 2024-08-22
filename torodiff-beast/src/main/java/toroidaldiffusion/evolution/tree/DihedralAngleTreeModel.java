@@ -9,7 +9,7 @@ import beast.base.inference.State;
 import java.util.List;
 import java.util.Random;
 
-public class DihedralAngleTreeModel extends Distribution {
+public class DihedralAngleTreeModel extends Distribution implements DATreeModel {
     final public Input<TreeInterface> treeInput = new Input<>("tree", "tree over which to calculate a prior or likelihood");
     final public Input<Function> tipValuesInput = new Input<>("tipValues", "");
     final public Input<Function> internalNodesValuesInput = new Input<>("internalNodesValues", "");
@@ -34,4 +34,17 @@ public class DihedralAngleTreeModel extends Distribution {
 //    protected boolean requiresRecalculation() {
 //        return treeInput.get().somethingIsDirty();
 //    }
+
+
+    public TreeInterface getTree() {
+        return treeInput.get();
+    }
+
+    public Function getTipValues() {
+        return tipValuesInput.get();
+    }
+
+    public Function getInternalNodesValues() {
+        return internalNodesValuesInput.get();
+    }
 }

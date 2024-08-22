@@ -50,7 +50,18 @@
             <!-- START likelihood -->
             <distribution id="likelihood" spec="beast.base.inference.CompoundDistribution" useThreads="false">
 
-                <tree id="FixedTree" spec="beast.base.evolution.tree.TreeParser" IsLabelledNewick="true"
+                <distribution id="DA.treeLikelihood" spec="toroidaldiffusion.evolution.likelihood.PhyloWrappedBivariateDiffusion">
+                    <daTreeModel id="daTreeModel" spec="toroidaldiffusion.evolution.tree.DihedralAngleTreeModel">
+                        <tree idref="psi"/>
+                        <parameter idref="dihedralAngles"/>
+                        <parameter idref="internalNodesAngles"/>
+                    </daTreeModel>
+                    <!--                    <branchRateModel id="StrictClockModel" spec="beast.base.evolution.branchratemodel.StrictClockModel">-->
+                    <!--                        <parameter id="RealParameter6" spec="parameter.RealParameter" name="clock.rate">1.0</parameter>-->
+                    <!--                    </branchRateModel>-->
+                </distribution>
+
+                <tree id="psi" spec="beast.base.evolution.tree.TreeParser" IsLabelledNewick="true"
                       adjustTipHeights="false"  offset="0" singlechild="false" binarizeMultifurcations="true"
                       newick="(8:0.11314847358688301,((7:0.049633595857848656,(9:0.004882105343337117,1:0.004882105343337117)10:0.044751490514511535)11:0.012622152817484397,((2:0.010302113848007562,(5:0.0028753405860985205,6:0.0028753405860985205)12:0.007426773261909041)13:0.04015208286761772,(0:0.012283669670503974,(3:0.01187261131609086,4:0.01187261131609086)14:4.1105835441311404E-4)15:0.038170527045121305)16:0.011801551959707772)17:0.05089272491154996)18:0.0;;">
                     <taxonset id="TaxonSet" spec="TaxonSet">
@@ -80,6 +91,7 @@
             <log idref="posterior"/>
             <log idref="likelihood"/>
             <log idref="prior"/>
+            <log idref="lambda"/>
 
         </logger>
 
