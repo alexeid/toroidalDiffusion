@@ -173,8 +173,20 @@ public class DihedralAngleAlignment implements TaxaCharacterMatrix<Pair>, TextFi
 
         // internal nodes
         for (int i = taxaNames.length; i < pairs.length; i++) {
-            lines.add("");
+            StringBuilder row = new StringBuilder();
+            row.append("Internal_Node_").append(i);  // Identifier for internal nodes
+            for (int j = 0; j < nchar(); j++) {
+                if (pairs[i][j] != null) {
+                    row.append("\t").append(pairs[i][j].getPhi() != null ? pairs[i][j].getPhi().toString() : "");
+                    row.append("\t").append(pairs[i][j].getPsi() != null ? pairs[i][j].getPsi().toString() : "");
+                } else {
+                    row.append("\t").append("");  // Empty for null phi
+                    row.append("\t").append("");  // Empty for null psi
+                }
+            }
+            lines.add(row.toString());
         }
+            //lines.add("");
 
         return lines;
     }
