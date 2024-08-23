@@ -14,6 +14,14 @@
     </properties>
 
     <dependencies>
+<!--TODO only use likelihood -->
+        <dependency>
+            <groupId>io.github.linguaphylo</groupId>
+            <artifactId>toroidaldiffusion</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+
         <dependency>
             <groupId>beast2</groupId>
             <artifactId>beast-base</artifactId>

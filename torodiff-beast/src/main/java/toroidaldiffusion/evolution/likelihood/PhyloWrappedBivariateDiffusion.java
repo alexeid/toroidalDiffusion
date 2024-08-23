@@ -6,6 +6,7 @@ import beast.base.core.Log;
 import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.Tree;
 import beast.base.inference.State;
+import toroidaldiffusion.WrappedBivariateDiffusion;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,6 +30,8 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
 
     /****** calculation engine ******/
+    protected WrappedBivariateDiffusion diff = new WrappedBivariateDiffusion();
+
 //    protected BeagleTreeLikelihood beagle;
     /**
      * calculation engine for each branch, excl. root index, nrOfNodes-1
@@ -82,6 +85,14 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     public void initAndValidate() {
         // tree, and all nodes values
         super.initAndValidate();
+        double[] muarr = muInput.get().getDoubleValues(); // mean of the diffusion
+        double[] sigmaarr = sigmaInput.get().getDoubleValues(); // variance term
+        double[] alphaarr = alphaInput.get().getDoubleValues(); // drift term
+
+        // TODO validate dims
+
+        diff.setParameters(muarr, alphaarr, sigmaarr);
+
 
         // no pattern, use getSiteCount()
         final int siteCount = daTreeModel.getSiteCount();
@@ -148,10 +159,6 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
         // exclude root node, branches = nodes - 1
         final int rootIndex = getRootIndex();
-
-        final double[] frequencies = substitutionModel.getFrequencies();
-        NodeStates rootStates = nodesStates.getNodeStates(rootIndex);
-
         // branch likelihoods indexes excludes root index
         for (int n = 0; n < rootIndex; n++) {
             final Node node = tree.getNode(n);
@@ -167,9 +174,11 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
                 return Double.NEGATIVE_INFINITY;
             }
         } // end n loop
+
         // root special
+        double[] rootValues = daTreeModel.getRootValues();
         this.branchLogLikelihoods[rootIndex] =
-                daRootLdCores.calculateRootLogLikelihood(rootStates, frequencies);
+                daRootLdCores.calculateRootLogLikelihood(rootValues, diff);
 
         // sum logP
         logP =0;
@@ -194,15 +203,15 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
         // if tips, always false
         //TODO cache per site to avoid recalculation, when only sequence at a site is changed
-        boolean seqUpdate = nodesStates.isNodeStatesDirty(nodeNr) || nodesStates.isNodeStatesDirty(parentNum);
+//        boolean seqUpdate = nodesStates.isNodeStatesDirty(nodeNr) || nodesStates.isNodeStatesDirty(parentNum);
+        boolean seqUpdate = false;
 
         int nodeUpdate = node.isDirty() | parent.isDirty();
 
-        final double branchRate = branchRateModel.getRateForBranch(node);
+        final double branchRate = 1.0; //TODO branchRateModel.getRateForBranch(node);
         // do not use getLength, code below to save time
         final double branchTime = (parent.getHeight() - node.getHeight()) * branchRate;
 
-//TODO deal with 0 branch length, such as SA
         if (branchTime == 0)
             throw new UnsupportedOperationException("0 branch length, such as SA, not supported !");
         if (branchTime < 1e-10)
@@ -215,6 +224,8 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         // ====== 1. update the transition probability matrix(ices) if the branch len changes ======
         if (seqUpdate || nodeUpdate != Tree.IS_CLEAN || branchTime != branchLengths[nodeNr]) {
             this.branchLengths[nodeNr] = branchTime;
+
+            /*TODO
             daBranchLdCore.setNodeMatrixForUpdate(); // TODO review the index
             // rate category
             for (int i = 0; i < siteModel.getCategoryCount(); i++) {
@@ -228,17 +239,10 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
                         jointBranchRate, iexp, probabilities);
                 //System.out.println(node.getNr() + " " + Arrays.toString(probabilities));
 
-//                for (int j=0; j < probabilities.length; j++)
-//                    //TODO P(t) cannot be 0, but short branch causes numeric precision error.
-//                    if (probabilities[j] <= 0) {
-////                        System.err.println(Arrays.toString(probabilities));
-//                        throw new ArithmeticException("Select " + probabilities[j] + " probability in P(t) matrix " +
-//                                ", possibly caused by a short branch ! " + "matrix index = " + j +
-//                                ", branch Nr = " + nodeNr + ", branchTime = " + branchTime);
-//                    }
-
                 daBranchLdCore.setNodeMatrix(i, probabilities); //cannot rm arraycopy
             }
+            */
+
             nodeUpdate |= Tree.IS_DIRTY;
         }
 // TODO only some sites are changed
@@ -246,15 +250,11 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
         // ====== 2. recalculate likelihood if either child node wasn't clean ======
         if (nodeUpdate != Tree.IS_CLEAN) {
-            // code in SiteModel, node is not used
-            final double[] proportions = siteModel.getCategoryProportions(node);
-            final int[] nodeStates = nodesStates.getStates(nodeNr);
-            final int[] parentNodeStates = nodesStates.getStates(parentNum);
 
             // brLD is linked to the child node index down
             daBranchLdCore.setBranchLdForUpdate();
             // populate branchLd[][excl. root], nodeIndex is child
-            daBranchLdCore.calculateBranchLd(parentNodeStates, nodeStates, proportions);
+            daBranchLdCore.calculateBranchLd(parent, node, daTreeModel, diff);
         }
 
         return nodeUpdate;
@@ -284,27 +284,28 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
         @Override
         public Double call() throws Exception {
+            throw new UnsupportedOperationException("TODO");
 //            try {
-            double logP = 0;
-            for (DABranchLikelihoodCore core : brLDCores) {
-                final int branchNr = core.getBranchNr();
-                final Node node = tree.getNode(branchNr);
-
-                final int rootIndex = getRootIndex();
-                if (branchNr == rootIndex) {
-                    final double[] freqs = substitutionModel.getFrequencies();
-                    NodeStates rootStates = nodesStates.getNodeStates(rootIndex);
-
-                    branchLogLikelihoods[rootIndex] = core.calculateRootLogLikelihood(rootStates, freqs);
-                    logP += branchLogLikelihoods[rootIndex];
-                } else {
-                    // caching branchLogLikelihoods[nodeNr]
-                    if (updateBranch(core, node) != Tree.IS_CLEAN)
-                        branchLogLikelihoods[branchNr] = core.calculateBranchLogLikelihood();
-
-                    logP += branchLogLikelihoods[branchNr];
-                }
-            }
+//            double logP = 0;
+//            for (DABranchLikelihoodCore core : brLDCores) {
+//                final int branchNr = core.getBranchNr();
+//                final Node node = tree.getNode(branchNr);
+//
+//                final int rootIndex = getRootIndex();
+//                if (branchNr == rootIndex) {
+//                    final double[] freqs = substitutionModel.getFrequencies();
+//                    NodeStates rootStates = nodesStates.getNodeStates(rootIndex);
+//
+//                    branchLogLikelihoods[rootIndex] = core.calculateRootLogLikelihood(rootStates, freqs);
+//                    logP += branchLogLikelihoods[rootIndex];
+//                } else {
+//                    // caching branchLogLikelihoods[nodeNr]
+//                    if (updateBranch(core, node) != Tree.IS_CLEAN)
+//                        branchLogLikelihoods[branchNr] = core.calculateBranchLogLikelihood();
+//
+//                    logP += branchLogLikelihoods[branchNr];
+//                }
+//            }
 //            } catch (Exception e) {
 //                System.err.println("Something wrong to calculate branch likelihood above node " +
 //                        branchNr + " during multithreading !");
@@ -312,7 +313,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 //                System.exit(0);
 //            }
 //            System.out.println("Branch likelihood logP = " + branchLogLikelihoods[branchNr] + " above node " + branchNr);
-            return logP;
+//            return logP;
         }
 
     }
@@ -330,18 +331,18 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 //        }
 //        hasDirt = Tree.IS_CLEAN;
 // TODO check isDirtyCalculation()?
-        if (nodesStates.somethingIsDirty()) {
-//            hasDirt = Tree.IS_FILTHY;
-            return true;
-        }
-        if (siteModel.isDirtyCalculation()) {
-//            hasDirt = Tree.IS_DIRTY;
-            return true;
-        }
-        if (branchRateModel != null && branchRateModel.isDirtyCalculation()) {
-            //m_nHasDirt = Tree.IS_DIRTY;
-            return true;
-        }
+//        if (nodesStates.somethingIsDirty()) {
+////            hasDirt = Tree.IS_FILTHY;
+//            return true;
+//        }
+//        if (siteModel.isDirtyCalculation()) {
+////            hasDirt = Tree.IS_DIRTY;
+//            return true;
+//        }
+//        if (branchRateModel != null && branchRateModel.isDirtyCalculation()) {
+//            //m_nHasDirt = Tree.IS_DIRTY;
+//            return true;
+//        }
         return tree.somethingIsDirty();
     }
 

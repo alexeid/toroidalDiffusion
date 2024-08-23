@@ -1,6 +1,7 @@
 package toroidaldiffusion.evolution.tree;
 
 import beast.base.core.Input;
+import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.TreeInterface;
 import beast.base.inference.Distribution;
 import beast.base.inference.State;
@@ -11,12 +12,13 @@ import java.util.Random;
 
 public class DihedralAngleTreeModel extends Distribution implements DATreeModel {
     final public Input<TreeInterface> treeInput = new Input<>("tree", "tree over which to calculate a prior or likelihood");
+
     // minor dimension 1 is sites, dim 2 is 2 (angles), dim = 2 * sites
     final public Input<RealParameter> tipValuesInput = new Input<>("tipValues", "");
     // assuming the root values are at the last
     final public Input<RealParameter> internalNodesValuesInput = new Input<>("internalNodesValues", "");
 
-    // TODO shall this y0 in internalNodesValues, or separate?
+    // TODO use XOR rule to add y0 separately?
 //    final public Input<RealParameter> rootValuesInput = new Input<>("rootValues", "y0, the value of [phi,psi] angle pairs for each carbon backbone bond of the molecule at the root of the phylogeny.");
 
     public final static int PAIR = 2;
@@ -67,7 +69,10 @@ public class DihedralAngleTreeModel extends Distribution implements DATreeModel 
         return treeInput.get();
     }
 
-    public double[][] getTipValues() {
+    //TODO values array uses node.getNr() as index, need to check
+    //
+
+    public double[][] getTipsValues() {
         double[] values = tipValuesInput.get().getDoubleValues();
         int nrows = this.getLeafNodeCount();
         int ncols = this.getSiteCount();
@@ -98,6 +103,14 @@ public class DihedralAngleTreeModel extends Distribution implements DATreeModel 
         return getTree().getLeafNodeCount();
     }
 
+    @Override
+    public double[] getNodeValue(Node node) {
+        if (node.isLeaf())
+            return getTipsValues()[node.getNr()];
+        // TODO check: beast Nr starts ?
+        return getInternalNodesValues()[node.getNr() - getLeafNodeCount()];
+    }
+
 
     private double[][] convertTo2D(double[] flatArray, int nrows, int ncols) {
         if (flatArray.length != nrows * ncols)
@@ -113,5 +126,5 @@ public class DihedralAngleTreeModel extends Distribution implements DATreeModel 
         }
         return twoDArray;
     }
-f
+
 }
