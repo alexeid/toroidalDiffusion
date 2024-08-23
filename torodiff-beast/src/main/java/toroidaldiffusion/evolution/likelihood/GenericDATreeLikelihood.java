@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Random;
 
 @Description("Generic data augmentation tree likelihood for data in all nodes " +
-        "given a beast tree and sequences in all nodes")
+        "given a beast // 2 values")
 public class GenericDATreeLikelihood extends Distribution {
 
     final public Input<DATreeModel> daTreeModelInput = new Input<>("daTreeModel",
@@ -47,7 +47,6 @@ public class GenericDATreeLikelihood extends Distribution {
         // data
         tipValues = daTreeModel.getTipValues();
         internalNodesValues = daTreeModel.getInternalNodesValues();
-
     }
 
 
