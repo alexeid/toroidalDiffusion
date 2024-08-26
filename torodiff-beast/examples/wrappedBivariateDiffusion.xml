@@ -13,6 +13,7 @@
                       2.995	2.893	2.848	2.773	3.102	2.86	2.758	2.796	3.081	2.833	2.814	3.318	2.53	2.461	2.457	2.936	2.886	3.156	3.222	2.822
                       3.04	2.897	2.933	2.773	3.107	2.828	2.723	2.775	3.145	2.81	2.826	3.47	2.636	2.178	2.562	2.778	2.836	3.149	3.054	2.714
                       2.955	2.843	2.968	3.086	3.151	2.828	2.646	2.682	3.172	2.74	2.796	3.583	2.541	2.27	2.474	2.881	2.817	3.061	3.223	3.028"/>
+<!-- TODO keys?   -->
     <parameter id="internalNodesAngles"
                minordimension="20"
                value="2.883	2.499	2.878	2.6	3.115	2.5	2.718	3.008	2.818	3.388	2.7	3.104	2.954	2.805	2.569	2.687	2.826	2.732	2.608	3.298
@@ -29,6 +30,11 @@
     <run id="mcmc" spec="MCMC" chainLength="1000000">
         <state id="state" storeEvery="10000">
             <parameter id="lambda" spec="parameter.RealParameter" name="stateNode">31.938590842525898</parameter>
+<!-- lower="0.0" upper="2pi" -->
+            <parameter id="mu" spec="parameter.RealParameter" dimension="2" name="stateNode">2.0 2.5</parameter>
+            <parameter id="alpha" spec="parameter.RealParameter" dimension="3" name="stateNode">1.0 1.0 0.5</parameter>
+            <parameter id="sigma" spec="parameter.RealParameter" dimension="2" name="stateNode">0.5 0.75</parameter>
+
         </state>
 
         <!-- START posterior -->
@@ -42,6 +48,10 @@
                         <parameter id="RealParameter" spec="parameter.RealParameter" name="M">3.0</parameter>
                         <parameter id="RealParameter1" spec="parameter.RealParameter" name="S">1.0</parameter>
                     </distr>
+                </distribution>
+
+                <distribution id="lambda.prior" spec="distribution.Prior" x="@lambda">
+
                 </distribution>
 
             </distribution>
@@ -72,13 +82,13 @@
                         <parameter idref="internalNodesAngles"/>
                     </daTreeModel>
 
-                    <parameter id="mu" spec="parameter.RealParameter" dimension="2" name="stateNode">2.0 2.5</parameter>
-                    <parameter id="alpha" spec="parameter.RealParameter" dimension="3" name="stateNode">1.0 1.0 0.5</parameter>
-                    <parameter id="sigma" spec="parameter.RealParameter" dimension="2" name="stateNode">0.5 0.75</parameter>
+                    <parameter idref="mu"/>
+                    <parameter idref="alpha"/>
+                    <parameter idref="sigma"/>
 
-                    <!--                    <branchRateModel id="StrictClockModel" spec="beast.base.evolution.branchratemodel.StrictClockModel">-->
-                    <!--                        <parameter id="RealParameter6" spec="parameter.RealParameter" name="clock.rate">1.0</parameter>-->
-                    <!--                    </branchRateModel>-->
+                    <!-- <branchRateModel id="StrictClockModel" spec="beast.base.evolution.branchratemodel.StrictClockModel">-->
+                    <!--     <parameter id="clock.rate" spec="parameter.RealParameter" name="clock.rate">1.0</parameter>-->
+                    <!-- </branchRateModel>-->
                 </distribution>
 
             </distribution> <!-- END Likelihood -->
@@ -90,7 +100,9 @@
             <log idref="likelihood"/>
             <log idref="prior"/>
             <log idref="lambda"/>
-
+            <log idref="mu"/>
+            <log idref="alpha"/>
+            <log idref="sigma"/>
         </logger>
 
         <logger id="screenlog" logEvery="100000">
