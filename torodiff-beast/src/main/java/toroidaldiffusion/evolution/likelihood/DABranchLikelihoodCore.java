@@ -123,7 +123,13 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
 
         for (int k = 0; k < nrOfSites; k++) {
 
-//            branchLd[currentBrLdIndex][k] = diff.loglikwndtpd(phi0, psi0, phit, psit);
+            double phi0 = parentNodeValues[k];
+            double psi0 = parentNodeValues[k + 1];
+
+            double phit = childNodeValues[k];
+            double psit = childNodeValues[k + 1];
+
+            branchLd[currentBrLdIndex][k] = diff.loglikwndtpd(phi0, psi0, phit, psit);
 
 
             if (branchLd[currentBrLdIndex][k] == 0) {

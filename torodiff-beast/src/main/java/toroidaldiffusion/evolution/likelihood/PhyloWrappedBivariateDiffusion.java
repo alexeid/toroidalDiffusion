@@ -26,7 +26,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     // 2 values
     final public Input<Function> sigmaInput = new Input<>("sigma", "the two variance terms.");
     // 3 values
-    final public Input<Function> alphaInput = new Input<>("sigma", "the three drift terms.");
+    final public Input<Function> alphaInput = new Input<>("alpha", "the three drift terms.");
 
 
     /****** calculation engine ******/
@@ -91,8 +91,8 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
         // TODO validate dims
 
+        // init WrappedBivariateDiffusion, use diff.loglikwndtpd(phi0, psi0, phit, psit); to get the likelihood
         diff.setParameters(muarr, alphaarr, sigmaarr);
-
 
         // no pattern, use getSiteCount()
         final int siteCount = daTreeModel.getSiteCount();
