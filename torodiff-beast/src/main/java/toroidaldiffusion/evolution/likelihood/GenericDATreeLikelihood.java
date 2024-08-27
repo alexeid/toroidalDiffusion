@@ -5,6 +5,7 @@ import beast.base.core.Input;
 import beast.base.evolution.tree.TreeInterface;
 import beast.base.inference.Distribution;
 import beast.base.inference.State;
+import beast.base.inference.parameter.RealParameter;
 import toroidaldiffusion.evolution.tree.DATreeModel;
 
 import java.util.List;
@@ -28,11 +29,11 @@ public class GenericDATreeLikelihood extends Distribution {
     /**
      * tip values
      */
-    protected double[][] tipValues;
+    protected RealParameter tipValuesParam;
     /**
      * internal nodes values
      */
-    protected double[][] internalNodesValues;
+    protected RealParameter internalNodesParam;
 
 
 
@@ -44,8 +45,8 @@ public class GenericDATreeLikelihood extends Distribution {
         // tree
         tree = daTreeModel.getTree();
         // data
-        tipValues = daTreeModel.getTipsValues();
-        internalNodesValues = daTreeModel.getInternalNodesValues();
+        tipValuesParam = daTreeModel.getTipsValuesParam();
+        internalNodesParam = daTreeModel.getInternalNodesValuesParam();
     }
 
 

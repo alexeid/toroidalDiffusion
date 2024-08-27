@@ -9,6 +9,7 @@ import beast.base.inference.parameter.RealParameter;
 
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Stream;
 
 public class DihedralAngleTreeModel extends Distribution implements DATreeModel {
     final public Input<TreeInterface> treeInput = new Input<>("tree", "tree over which to calculate a prior or likelihood");
@@ -70,15 +71,16 @@ public class DihedralAngleTreeModel extends Distribution implements DATreeModel 
     }
 
     //TODO values array uses node.getNr() as index, need to check
-    //
 
-    public double[][] getTipsValues() {
-        double[] values = tipValuesInput.get().getDoubleValues();
-        int nrows = this.getLeafNodeCount();
-        int ncols = this.getSiteCount();
-        return convertTo2D(values, nrows, ncols);
+    public RealParameter getTipsValuesParam() {
+        return tipValuesInput.get();
     }
 
+    public RealParameter getInternalNodesValuesParam() {
+        return internalNodesValuesInput.get();
+    }
+
+    // TODO no keys?
     public double[][] getInternalNodesValues() {
         double[] values = internalNodesValuesInput.get().getDoubleValues();
         int nrows = this.getLeafNodeCount();
@@ -86,12 +88,12 @@ public class DihedralAngleTreeModel extends Distribution implements DATreeModel 
         return convertTo2D(values, nrows, ncols);
     }
 
-    @Override
-    public double[] getRootValues() {
-        int len = getInternalNodesValues().length;
-        // assuming the root values are at the last
-        return getInternalNodesValues()[len-1];
-    }
+//    @Override
+//    public double[] getRootValues() {
+//        int len = getInternalNodesValues().length;
+//        // assuming the root values are at the last
+//        return getInternalNodesValues()[len-1];
+//    }
 
     @Override
     public int getSiteCount() {
@@ -105,8 +107,15 @@ public class DihedralAngleTreeModel extends Distribution implements DATreeModel 
 
     @Override
     public double[] getNodeValue(Node node) {
-        if (node.isLeaf())
-            return getTipsValues()[node.getNr()];
+        if (node.isLeaf()) {
+            String key = node.getID();
+
+            Double[] values = getTipsValuesParam().getRowValues(key);
+            return Stream.of(values).mapToDouble(Double::doubleValue).toArray();
+
+        }
+//            return getTipsValues()[node.getNr()];
+
         // TODO check: beast Nr starts ?
         return getInternalNodesValues()[node.getNr() - getLeafNodeCount()];
     }

@@ -176,7 +176,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         } // end n loop
 
         // root special
-        double[] rootValues = daTreeModel.getRootValues();
+        double[] rootValues = daTreeModel.getNodeValue(tree.getRoot());
         this.branchLogLikelihoods[rootIndex] =
                 daRootLdCores.calculateRootLogLikelihood(rootValues, diff);
 
@@ -266,14 +266,6 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
     // ArithmeticException if branch time < 1e-10
     class DABranchLikelihoodCallable implements Callable<Double> {
-//        private final DABranchLikelihoodCore brLDCore;
-//        private final int branchNr; // used to make thread safe
-//
-//        // per branch
-//        public DABranchLikelihoodCallable(DABranchLikelihoodCore brLDCore, int branchNr) {
-//            this.brLDCore = brLDCore;
-//            this.branchNr = branchNr;
-//        }
 
         private final List<DABranchLikelihoodCore> brLDCores;
 
@@ -284,28 +276,18 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
         @Override
         public Double call() throws Exception {
-            throw new UnsupportedOperationException("TODO");
 //            try {
-//            double logP = 0;
-//            for (DABranchLikelihoodCore core : brLDCores) {
-//                final int branchNr = core.getBranchNr();
-//                final Node node = tree.getNode(branchNr);
-//
-//                final int rootIndex = getRootIndex();
-//                if (branchNr == rootIndex) {
-//                    final double[] freqs = substitutionModel.getFrequencies();
-//                    NodeStates rootStates = nodesStates.getNodeStates(rootIndex);
-//
-//                    branchLogLikelihoods[rootIndex] = core.calculateRootLogLikelihood(rootStates, freqs);
-//                    logP += branchLogLikelihoods[rootIndex];
-//                } else {
-//                    // caching branchLogLikelihoods[nodeNr]
-//                    if (updateBranch(core, node) != Tree.IS_CLEAN)
-//                        branchLogLikelihoods[branchNr] = core.calculateBranchLogLikelihood();
-//
-//                    logP += branchLogLikelihoods[branchNr];
-//                }
-//            }
+            double logP = 0;
+            for (DABranchLikelihoodCore core : brLDCores) {
+                final int branchNr = core.getBranchNr();
+                final Node node = tree.getNode(branchNr);
+
+                // caching branchLogLikelihoods[nodeNr]
+                if (updateBranch(core, node) != Tree.IS_CLEAN)
+                    branchLogLikelihoods[branchNr] = core.calculateBranchLogLikelihood();
+
+                logP += branchLogLikelihoods[branchNr];
+            }
 //            } catch (Exception e) {
 //                System.err.println("Something wrong to calculate branch likelihood above node " +
 //                        branchNr + " during multithreading !");
@@ -313,7 +295,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 //                System.exit(0);
 //            }
 //            System.out.println("Branch likelihood logP = " + branchLogLikelihoods[branchNr] + " above node " + branchNr);
-//            return logP;
+            return logP;
         }
 
     }
@@ -331,14 +313,12 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 //        }
 //        hasDirt = Tree.IS_CLEAN;
 // TODO check isDirtyCalculation()?
-//        if (nodesStates.somethingIsDirty()) {
-////            hasDirt = Tree.IS_FILTHY;
-//            return true;
-//        }
-//        if (siteModel.isDirtyCalculation()) {
-////            hasDirt = Tree.IS_DIRTY;
-//            return true;
-//        }
+        if (daTreeModel.getTipsValuesParam().somethingIsDirty()) {
+            return true;
+        }
+        if (daTreeModel.getInternalNodesValuesParam().somethingIsDirty()) {
+            return true;
+        }
 //        if (branchRateModel != null && branchRateModel.isDirtyCalculation()) {
 //            //m_nHasDirt = Tree.IS_DIRTY;
 //            return true;
