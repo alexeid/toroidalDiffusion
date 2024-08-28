@@ -9,7 +9,6 @@ import beast.base.inference.State;
 import toroidaldiffusion.WrappedBivariateDiffusion;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
@@ -74,10 +73,6 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     protected double[] branchLogLikelihoods; // length = nodeCount
     protected double[] storedBranchLogLikelihoods;
 
-    /****** TODO rest ******/
-    // dealing with proportion of site being invariant
-    double proportionInvariant = 0;
-
 
     public PhyloWrappedBivariateDiffusion(){}
 
@@ -91,23 +86,24 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
         // TODO validate dims
 
-        // init WrappedBivariateDiffusion, use diff.loglikwndtpd(phi0, psi0, phit, psit); to get the likelihood
+        // init WrappedBivariateDiffusion here, setParameters(muarr, alphaarr, sigmaarr) once.
+        // use diff.loglikwndtpd(phi0, psi0, phit, psit) later when compute likelihood
         diff.setParameters(muarr, alphaarr, sigmaarr);
 
         // no pattern, use getSiteCount()
         final int siteCount = daTreeModel.getSiteCount();
 
-        // init DALikelihoodCore
-        final int leafNodeCount = tree.getLeafNodeCount();
+        // nodeCount = 2 * ntips - 1
+        final int nodeCount = tree.getNodeCount();
         // caching branch lengths and log likelihoods for each of branch,
-        branchLengths = new double[leafNodeCount-1];
-        storedBranchLengths = new double[leafNodeCount-1];
+        branchLengths = new double[nodeCount-1];
+        storedBranchLengths = new double[nodeCount-1];
         // root index is used to store frequencies prior at root
-        branchLogLikelihoods = new double[leafNodeCount];
-        storedBranchLogLikelihoods = new double[leafNodeCount];
+        branchLogLikelihoods = new double[nodeCount];
+        storedBranchLogLikelihoods = new double[nodeCount];
 
         // branch Likelihood excl. root index
-        daBranchLdCores = new DABranchLikelihoodCore[leafNodeCount-1];
+        daBranchLdCores = new DABranchLikelihoodCore[nodeCount-1];
         // init likelihood core using branch index (child node index below the branch)
         for (int n = 0; n < getRootIndex(); n++) {
             final Node node = tree.getNode(n);
@@ -115,20 +111,22 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
             // make every node dirty
             node.makeDirty(Tree.IS_FILTHY);
             // init by the node below the branch
-            daBranchLdCores[n] = new DABranchLikelihoodCore(n, siteCount);
+            daBranchLdCores[n] = new DABranchLikelihoodCore(n, siteCount, diff);
         }
         tree.getRoot().makeDirty(Tree.IS_FILTHY);
         // root special
-        daRootLdCores = new DABranchLikelihoodCore(getRootIndex(), siteCount);
+        daRootLdCores = new DABranchLikelihoodCore(getRootIndex(), siteCount, diff);
 
-        for (int n = 0; n < getRootIndex(); n++) { // n is branchNr
-            List<DABranchLikelihoodCore> cores = new ArrayList<>();
-            cores.add(daBranchLdCores[n]);
-            likelihoodCallers.add(new DABranchLikelihoodCallable(cores));
-        }
-        // add root special calculation method
-        List<DABranchLikelihoodCore> cores = Collections.singletonList(daRootLdCores);
-        likelihoodCallers.add(new DABranchLikelihoodCallable(cores));
+        //TODO  multi-threading uses likelihoodCallers
+
+//        for (int n = 0; n < getRootIndex(); n++) { // n is branchNr
+//            List<DABranchLikelihoodCore> cores = new ArrayList<>();
+//            cores.add(daBranchLdCores[n]);
+//            likelihoodCallers.add(new DABranchLikelihoodCallable(cores));
+//        }
+//        // add root special calculation method
+//        List<DABranchLikelihoodCore> cores = Collections.singletonList(daRootLdCores);
+//        likelihoodCallers.add(new DABranchLikelihoodCallable(cores));
     }
 
 
@@ -145,10 +143,6 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
      *
      * @return the log likelihood.
      */
-    double m_fScale = 1.01;
-    int m_nScale = 0;
-    int X = 100;
-
     @Override
     public double calculateLogP() {
         //TODO beagle
@@ -253,8 +247,11 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
             // brLD is linked to the child node index down
             daBranchLdCore.setBranchLdForUpdate();
+
+            double[] parentNodeValues = daTreeModel.getNodeValue(parent);
+            double[] childNodeValues = daTreeModel.getNodeValue(node);
             // populate branchLd[][excl. root], nodeIndex is child
-            daBranchLdCore.calculateBranchLd(parent, node, daTreeModel, diff);
+            daBranchLdCore.calculateBranchLd(parentNodeValues, childNodeValues);
         }
 
         return nodeUpdate;

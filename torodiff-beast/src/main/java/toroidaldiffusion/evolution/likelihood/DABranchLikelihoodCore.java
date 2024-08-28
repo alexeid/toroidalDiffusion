@@ -1,8 +1,6 @@
 package toroidaldiffusion.evolution.likelihood;
 
-import beast.base.evolution.tree.Node;
 import toroidaldiffusion.WrappedBivariateDiffusion;
-import toroidaldiffusion.evolution.tree.DATreeModel;
 
 /**
  * data augmentation likelihood core based on a branch for multithreading.
@@ -34,14 +32,17 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
     static final public double SCALING_THRESHOLD = 1.0E-150; // MAX_VALUE 1.7*10^308
     double SCALE = 2;
 
+    final WrappedBivariateDiffusion diff;
+
     /**
      * no initialization, for calculating site likelihoods at the root.
      * @param branchNr       the node Nr of child node below the branch
      * @param nrOfSites      number of sites (codon)
      */
-    public DABranchLikelihoodCore(int branchNr, int nrOfSites) {
+    public DABranchLikelihoodCore(int branchNr, int nrOfSites, WrappedBivariateDiffusion diff) {
         this.branchNr = branchNr;
         this.nrOfSites = nrOfSites; // TODO impl data range to multithreading by sites
+        this.diff = diff;
 
         initialize();
     }
@@ -53,9 +54,10 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
     @Override
     protected void initialize() {
         // the branch above the node
-        // merged likelihood for all categories
+        // 1st dimension is matrix index (current, stored),
         branchLd = new double[2][nrOfSites];
         siteLd = new double[nrOfSites];
+        //TODO diff.setParameters(muarr, alphaarr, sigmaarr); ?
     }
 
     /**
@@ -106,7 +108,7 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
     //============ branch likelihood ============
 
     /**
-     * use before {@link #calculateBranchLd(int[], int[], double[])}
+     * use before {@link #calculateBranchLd(double[], double[])}
      */
     public void setBranchLdForUpdate() {
         currentBrLdIndex = 1 - currentBrLdIndex; // 0 or 1
@@ -114,12 +116,7 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
 
 
     //TODO need to cache per site to avoid recalculation, when only the sequence at a site is changed
-    public void calculateBranchLd(final Node parentNode, final Node childNode,
-                                  DATreeModel daTreeModel, WrappedBivariateDiffusion diff) {
-
-
-        double[] parentNodeValues = daTreeModel.getNodeValue(parentNode);
-        double[] childNodeValues = daTreeModel.getNodeValue(childNode);
+    public void calculateBranchLd(final double[] parentNodeValues, final double[] childNodeValues) {
 
         for (int k = 0; k < nrOfSites; k++) {
 
@@ -129,12 +126,13 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
             double phit = childNodeValues[k];
             double psit = childNodeValues[k + 1];
 
+            // diff.setParameters(muarr, alphaarr, sigmaarr), only once in the init method
             branchLd[currentBrLdIndex][k] = diff.loglikwndtpd(phi0, psi0, phit, psit);
 
 
             if (branchLd[currentBrLdIndex][k] == 0) {
                 throw new RuntimeException("\nBranch above node " + getBranchNr() + " likelihood = 0 !\n" +
-                        "At site " + k + ", child node = " + childNode + ", parent node = " + parentNode);
+                        "At site " + k); //+ ", child node = " + childNode + ", parent node = " + parentNode);
             }
 
         } // end k  nrOfSites
