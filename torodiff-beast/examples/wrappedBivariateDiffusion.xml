@@ -5,6 +5,7 @@
     <parameter id="dihedralAngles" keys="8 7 9 1 2 5 6 0 3 4"
                minordimension="20"
                value="2.69	2.92	2.922	2.828	3.116	2.583	3.116	2.829	3.229	2.649	2.905	3.36	2.735	3.087	2.978	2.512	2.905	2.748	2.592	3.392
+                      2.796	2.407	2.697	2.759	2.749	2.361	2.6	3.039	3.215	3.078	2.823	3.148	2.903	2.772	2.357	3.034	2.582	2.86	2.937	3.046
                       2.912	2.506	3.034	2.627	3.123	2.476	2.817	2.98	2.829	3.467	2.782	3.165	2.969	2.881	2.547	2.615	2.664	2.786	2.565	3.402
                       2.883	2.499	2.878	2.6  3.115	2.5	2.718	3.008	2.818	3.388	2.7	3.104	2.954	2.805	2.569	2.687	2.826	2.732	2.608	3.298
                       2.765	2.723	3.002	3.198	2.807	2.411	2.65	2.696	3.237	3.065	2.905	3.058	2.762	2.823	2.663	2.561	2.437	3.14	2.829	2.99
@@ -50,7 +51,31 @@
                     </distr>
                 </distribution>
 
-<!--                <distribution id="lambda.prior" spec="distribution.Prior" x="@lambda">-->
+                <!-- Prior for mu -->
+                <distribution id="mu.prior" spec="distribution.Prior" x="@mu">
+                    <distr id="NormalDistributionModel" spec="distribution.Normal">
+                        <parameter id="mu.mean" spec="parameter.RealParameter" name="M">-1.0</parameter>
+                        <parameter id="mu.sd" spec="parameter.RealParameter" name="S">1.0</parameter>
+                    </distr>
+                </distribution>
+
+                <!-- Prior for alpha -->
+                <distribution id="alpha.prior" spec="distribution.Prior" x="@alpha">
+                    <distr id="LogNormalDistributionModel" spec="distribution.LogNormalDistributionModel">
+                        <parameter id="alpha.meanlog" spec="parameter.RealParameter" name="mean">0.0</parameter>
+                        <parameter id="alpha.sdlog" spec="parameter.RealParameter" name="sigma">0.25</parameter>
+                    </distr>
+                </distribution>
+
+                <!-- Prior for sigma -->
+                <distribution id="sigma.prior" spec="distribution.Prior" x="@sigma">
+                    <distr id="BetaDistributionModel" spec="distribution.Beta">
+                        <parameter id="sigma.alpha" spec="parameter.RealParameter" name="alpha">0.5</parameter>
+                        <parameter id="sigma.beta" spec="parameter.RealParameter" name="beta">1</parameter>
+                    </distr>
+                </distribution>
+
+                <!--                <distribution id="lambda.prior" spec="distribution.Prior" x="@lambda">-->
 
 <!--                </distribution>-->
 
