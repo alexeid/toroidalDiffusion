@@ -83,8 +83,8 @@ public class DihedralAngleTreeModel extends Distribution implements DATreeModel 
     // TODO no keys?
     public double[][] getInternalNodesValues() {
         double[] values = internalNodesValuesInput.get().getDoubleValues();
-        int nrows = this.getLeafNodeCount();
-        int ncols = this.getSiteCount();
+        int nrows = this.getLeafNodeCount() - 1;
+        int ncols = this.getSiteCount() * PAIR; // a pair
         return convertTo2D(values, nrows, ncols);
     }
 
@@ -105,6 +105,11 @@ public class DihedralAngleTreeModel extends Distribution implements DATreeModel 
         return getTree().getLeafNodeCount();
     }
 
+    /**
+     *
+     * @param node
+     * @return  an array of pairs of values, dimension is 2 (angles) * N_sites
+     */
     @Override
     public double[] getNodeValue(Node node) {
         if (node.isLeaf()) {

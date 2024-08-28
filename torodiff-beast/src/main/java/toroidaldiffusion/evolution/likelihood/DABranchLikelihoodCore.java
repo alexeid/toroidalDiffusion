@@ -14,7 +14,7 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
     // to store branch likelihood calculation per site:
     // 1st dimension is matrix index (current, stored),
     // 2nd is nrOfSites, Ld across categories are integrated
-    protected double[][] branchLd;
+    protected double[][] branchLogLd;
 
     protected int currentBrLdIndex = 0;
     protected int storedBrLdIndex = 0;
@@ -55,7 +55,7 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
     protected void initialize() {
         // the branch above the node
         // 1st dimension is matrix index (current, stored),
-        branchLd = new double[2][nrOfSites];
+        branchLogLd = new double[2][nrOfSites];
         siteLd = new double[nrOfSites];
         //TODO diff.setParameters(muarr, alphaarr, sigmaarr); ?
     }
@@ -89,7 +89,7 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
      */
     @Override
     public void finalize() throws Throwable {
-        branchLd = null;
+        branchLogLd = null;
         currentBrLdIndex = -1;
         storedBrLdIndex = -1;
 
@@ -119,7 +119,7 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
     public void calculateBranchLd(final double[] parentNodeValues, final double[] childNodeValues) {
 
         for (int k = 0; k < nrOfSites; k++) {
-
+            // pairs of values, dimension is 2 (angles) * N_sites
             double phi0 = parentNodeValues[k];
             double psi0 = parentNodeValues[k + 1];
 
@@ -127,10 +127,9 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
             double psit = childNodeValues[k + 1];
 
             // diff.setParameters(muarr, alphaarr, sigmaarr), only once in the init method
-            branchLd[currentBrLdIndex][k] = diff.loglikwndtpd(phi0, psi0, phit, psit);
+            branchLogLd[currentBrLdIndex][k] = diff.loglikwndtpd(phi0, psi0, phit, psit);
 
-
-            if (branchLd[currentBrLdIndex][k] == 0) {
+            if (branchLogLd[currentBrLdIndex][k] == 0) {
                 throw new RuntimeException("\nBranch above node " + getBranchNr() + " likelihood = 0 !\n" +
                         "At site " + k); //+ ", child node = " + childNode + ", parent node = " + parentNode);
             }
@@ -146,58 +145,30 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
     }
 
     /**
-     * Log likelihood calculation engine.
+     * Calculates log likelihood at this branch.
      * Multiple given site likelihoods, and then log the product.
      * The likelihood input has been integrated across categories.
      * It can be also used for the site likelihoods at the root.
-     * @param siteLd     likelihoods (not logged) by sites (codons).
-    //     * @param scalingThreshold   threshold for the product to call {@link Math#log(double)}.
      * @return           logged likelihood
      */
-    public double logIntegratedLikelihood(double[] siteLd) {
+    public double calculateBranchLogLikelihood() {
+        final double[] siteLd = branchLogLd[currentBrLdIndex];
 
-        double product = 1.0;
         double logP = 0;
 
         // siteLd.length == nrOfSites
         for (int k = 0; k < siteLd.length; k++) {
-            // multiple (not logged) site likelihoods
-            product *= siteLd[k];
-
-            // hard code to log when product is too small, Double.MAX_VALUE 1.79...e+308
-            if (product < SCALING_THRESHOLD ) { // || siteLd[k] < SCALING_THRESHOLD
-                // important check before implement log scaling
-                if (product == 0)
-                    throw new RuntimeException("Likelihood product -Inf ! " +
-                            "\nlikelihood = " + siteLd[k] + " at site " + k);
-
-                logP += Math.log(product); //+ getLogScalingFactor(k); TODO
-                product = 1.0;
-            } // if
-
+            // diff.loglikwndtpd returns log likelihood
+            logP += siteLd[k];
         } // end k
 
-        // log the rest
-        if (product < 1.0)
-            logP += Math.log(product); //+ getLogScalingFactor(k); TODO
-
         return logP;
-    }
-
-
-    /**
-     * Calculates log likelihood at this branch, excluding root frequency prior.
-     * The input branch likelihoods here have been integrated across categories.
-     * frequency[] need to be added later in DATreeLikelihood
-     */
-    public double calculateBranchLogLikelihood() {
-        return logIntegratedLikelihood(branchLd[currentBrLdIndex]);
     }
 
     // log likelihood at root given codon frequencies
     public double calculateRootLogLikelihood(double[] rootValues, WrappedBivariateDiffusion diff) {
         // TODO
-        return Double.NaN;
+        throw new UnsupportedOperationException("in dev");
     }
 
     /**
@@ -227,7 +198,7 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
 
     // suppose only used by unit test
     public void getBranchLikelihoods(double[] branchLdOut) {
-        System.arraycopy(branchLd[currentBrLdIndex], 0, branchLdOut, 0, branchLdOut.length);
+        System.arraycopy(branchLogLd[currentBrLdIndex], 0, branchLdOut, 0, branchLdOut.length);
     }
 
     // ======= getters =======
@@ -243,6 +214,6 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
     // = nrOfSites, for unit test
     public int getBranchLdSize() {
         // branchLd[][root] == null
-        return branchLd[0].length;
+        return branchLogLd[0].length;
     }
 } // class

@@ -169,10 +169,10 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
             }
         } // end n loop
 
-        // root special
-        double[] rootValues = daTreeModel.getNodeValue(tree.getRoot());
-        this.branchLogLikelihoods[rootIndex] =
-                daRootLdCores.calculateRootLogLikelihood(rootValues, diff);
+        // TODO have any root special ?
+//        double[] rootValues = daTreeModel.getNodeValue(tree.getRoot());
+//        this.branchLogLikelihoods[rootIndex] =
+//                daRootLdCores.calculateRootLogLikelihood(rootValues, diff);
 
         // sum logP
         logP =0;
@@ -248,6 +248,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
             // brLD is linked to the child node index down
             daBranchLdCore.setBranchLdForUpdate();
 
+            // pairs of values, dimension is 2 (angles) * N_sites
             double[] parentNodeValues = daTreeModel.getNodeValue(parent);
             double[] childNodeValues = daTreeModel.getNodeValue(node);
             // populate branchLd[][excl. root], nodeIndex is child
@@ -320,6 +321,9 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 //            //m_nHasDirt = Tree.IS_DIRTY;
 //            return true;
 //        }
+        // TODO check
+        if (tree.getRoot().isDirty() > 0)
+            return true;
         return tree.somethingIsDirty();
     }
 
