@@ -143,5 +143,9 @@
 <!--        <logger id="treelog.t:firsthalf" fileName="WBD_fixedtree.trees" logEvery="5000" mode="tree">-->
 <!--            <log id="TreeWithMetaDataLogger" spec="beast.base.evolution.tree.TreeWithMetaDataLogger" tree="@FixedTree"/>-->
 <!--        </logger>-->
+
+<!--        <logger id="internalNodesLog" fileName="WBD_fixedtree.log" logEvery="10000" mode="?">-->
+<!--            <parameter idref="internalNodesAngles"/>-->
+<!--        </logger>-->
     </run>
 </beast>
