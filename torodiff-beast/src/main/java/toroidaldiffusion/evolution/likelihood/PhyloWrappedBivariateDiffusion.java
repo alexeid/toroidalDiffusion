@@ -80,15 +80,8 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     public void initAndValidate() {
         // tree, and all nodes values
         super.initAndValidate();
-        double[] muarr = muInput.get().getDoubleValues(); // mean of the diffusion
-        double[] sigmaarr = sigmaInput.get().getDoubleValues(); // variance term
-        double[] alphaarr = alphaInput.get().getDoubleValues(); // drift term
-
         // TODO validate dims
-
-        // init WrappedBivariateDiffusion here, setParameters(muarr, alphaarr, sigmaarr) once.
-        // use diff.loglikwndtpd(phi0, psi0, phit, psit) later when compute likelihood
-        diff.setParameters(muarr, alphaarr, sigmaarr);
+        setDiffusionParams();
 
         // no pattern, use getSiteCount()
         final int siteCount = daTreeModel.getSiteCount();
@@ -151,6 +144,8 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 //            return logP;
 //        }
 
+        setDiffusionParams();
+
         // exclude root node, branches = nodes - 1
         final int rootIndex = getRootIndex();
         // branch likelihoods indexes excludes root index
@@ -187,6 +182,18 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         return logP;
     }
 
+    // refresh muarr, alphaarr, sigmaarr for computing likelihood
+    protected void setDiffusionParams() {
+        final double[] muarr = muInput.get().getDoubleValues(); // mean of the diffusion
+        final double[] sigmaarr = sigmaInput.get().getDoubleValues(); // variance term
+        final double[] alphaarr = alphaInput.get().getDoubleValues(); // drift term
+
+        // TODO validate dims
+
+        // init WrappedBivariateDiffusion here, setParameters(muarr, alphaarr, sigmaarr) once.
+        // use diff.loglikwndtpd(phi0, psi0, phit, psit) later when compute likelihood
+        diff.setParameters(muarr, alphaarr, sigmaarr);
+    }
 
     protected int updateBranch(final DABranchLikelihoodCore daBranchLdCore, final Node node) {
         // the branch between node and parent

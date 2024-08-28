@@ -33,8 +33,8 @@
             <parameter id="lambda" spec="parameter.RealParameter" name="stateNode">31.938590842525898</parameter>
 <!-- TODO lower="0.0" upper="2pi" -->
             <parameter id="mu" spec="parameter.RealParameter" dimension="2" name="stateNode">2.0 2.5</parameter>
-            <parameter id="alpha" spec="parameter.RealParameter" dimension="3" name="stateNode">1.0 1.0 0.5</parameter>
             <parameter id="sigma" spec="parameter.RealParameter" dimension="2" name="stateNode">0.5 0.75</parameter>
+            <parameter id="alpha" spec="parameter.RealParameter" dimension="3" name="stateNode">1.0 1.0 0.5</parameter>
 
         </state>
 
@@ -105,8 +105,8 @@
                     </daTreeModel>
 
                     <mu idref="mu"/>
-                    <alpha idref="alpha"/>
                     <sigma idref="sigma"/>
+                    <alpha idref="alpha"/>
 
                     <!-- <branchRateModel id="StrictClockModel" spec="beast.base.evolution.branchratemodel.StrictClockModel">-->
                     <!--     <parameter id="clock.rate" spec="parameter.RealParameter" name="clock.rate">1.0</parameter>-->
@@ -118,19 +118,21 @@
 
         <operator id="lambda.scale" spec="kernel.BactrianScaleOperator" parameter="@lambda" upper="100.0" weight="1.0"/>
 
-<!--        <operator id="mu.randomWalk" spec="kernel." parameter="@mu" weight="1.0"/>-->
-<!--        <operator id="sigma.randomWalk" spec="kernel." parameter="@sigma" weight="1.0"/>-->
-<!--        <operator id="alpha.randomWalk" spec="kernel." parameter="@alpha" weight="1.0"/>-->
+        <operator id="mu.randomWalk" spec="kernel.BactrianRandomWalkOperator" parameter="@mu" scaleFactor="0.1" weight="1.0"/>
+        <operator id="sigma.randomWalk" spec="kernel.BactrianRandomWalkOperator" parameter="@sigma" scaleFactor="0.01" weight="2.0"/>
+        <operator id="alpha.randomWalk" spec="kernel.BactrianRandomWalkOperator" parameter="@alpha" scaleFactor="0.05" weight="2.0"/>
+        <!-- internal nodes angles WrappedRandomWalkOperator -->
+        <!-- AVMN -->
+        <!-- tree operators -->
 
-
-        <logger id="tracelog" fileName="WBD_fixedtree.log" logEvery="10000" model="@posterior" sanitiseHeaders="true" sort="smart">
+        <logger id="tracelog" fileName="WBD_fixedtree.log" logEvery="1000" model="@posterior" sanitiseHeaders="true" sort="smart">
             <log idref="posterior"/>
             <log idref="likelihood"/>
             <log idref="prior"/>
             <log idref="lambda"/>
             <log idref="mu"/>
-            <log idref="alpha"/>
             <log idref="sigma"/>
+            <log idref="alpha"/>
         </logger>
 
         <logger id="screenlog" logEvery="100000">
@@ -138,13 +140,16 @@
             <log id="ESS.0" spec="util.ESS" arg="@posterior"/>
             <log idref="likelihood"/>
             <log idref="prior"/>
+            <log idref="mu"/>
+            <log idref="sigma"/>
+            <log idref="alpha"/>
         </logger>
 
-<!--        <logger id="treelog.t:firsthalf" fileName="WBD_fixedtree.trees" logEvery="5000" mode="tree">-->
+<!--        <logger id="treelog.t:firsthalf" fileName="WBD_fixedtree.trees" logEvery="1000" mode="tree">-->
 <!--            <log id="TreeWithMetaDataLogger" spec="beast.base.evolution.tree.TreeWithMetaDataLogger" tree="@FixedTree"/>-->
 <!--        </logger>-->
 
-<!--        <logger id="internalNodesLog" fileName="WBD_fixedtree.log" logEvery="10000" mode="?">-->
+<!--        <logger id="internalNodesLog" fileName="WBD_fixedtree.log" logEvery="1000" mode="?">-->
 <!--            <parameter idref="internalNodesAngles"/>-->
 <!--        </logger>-->
     </run>

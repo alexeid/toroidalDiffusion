@@ -5,6 +5,7 @@
  */
 package toroidaldiffusion;
 
+import lphy.core.logger.LoggerUtils;
 import lphy.core.simulator.RandomUtils;
 import org.apache.commons.math3.optim.InitialGuess;
 import org.apache.commons.math3.optim.MaxEval;
@@ -117,8 +118,8 @@ public class WrappedBivariateDiffusion {
             twokpi.set(i, 0, twokpiarr.get(i));
         }
 
-        System.out.println("2kπ");
-        twokpi.print();
+        LoggerUtils.log.fine("2kπ");
+//        twokpi.print(); // if debug
 
         oneoverSigmamat.set(0, 0, 1.0 / sigma.get(0, 0));
         oneoverSigmamat.set(1, 1, 1.0 / sigma.get(1, 0));
@@ -141,8 +142,8 @@ public class WrappedBivariateDiffusion {
                 vstores.set((wek1) * lk + wek2, 0, v);
             }
         }
-        System.out.println("vstores");
-        vstores.print();
+        LoggerUtils.log.fine("vstores");
+//        vstores.print(); // if debug
 
         double tempt = this.t;
         this.t = -2.0;
