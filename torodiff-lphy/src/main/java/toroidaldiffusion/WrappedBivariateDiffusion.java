@@ -261,37 +261,7 @@ public class WrappedBivariateDiffusion {
         for (int wek1 = 0; wek1 < lk; wek1++) {
             twokepivec.set(0, 0, twokpi.get(wek1, 0));
             for (int wek2 = 0; wek2 < lk; wek2++) {
-                int index = wek1 * lk + wek2;
 
-                double exponent = xmuinvSigmaAxmudivtwo + (xmuinvSigmaA.get(0, 0) * twokpi.get(wek1, 0) + xmuinvSigmaA.get(1, 0) * twokpi.get(wek2, 0) + vstores.get(index, 0) - lognormconstSigmaA);
-
-                if (exponent <= etrunc) {
-                    logweightswindsinitial.set(index, 0, -exponent);
-                } else {
-                    logweightswindsinitial.set(index, 0, Double.NEGATIVE_INFINITY);
-                }
-
-                if (logweightswindsinitial.get(index, 0) > Double.NEGATIVE_INFINITY) {
-                    twokepivec.set(1, 0, twokpi.get(wek2, 0));
-                    SimpleMatrix mut = mu.plus(ExptA.mult(x0.plus(twokepivec).minus(mu)));
-                    SimpleMatrix xmut = new SimpleMatrix(2, 1);
-                    xmut.set(0, 0, x.get(2, 0) - mut.get(0, 0));
-                    xmut.set(1, 0, x.get(3, 0) - mut.get(1, 0));
-
-                    SimpleMatrix xmutinvGammat = invGammat.mult(xmut);
-                    double xmutinvGammatxmutdiv2 = (xmutinvGammat.get(0, 0) * xmut.get(0, 0) + xmutinvGammat.get(1, 0) * xmut.get(1, 0)) / 2.0;
-
-                    double logtpdintermediate = Double.NEGATIVE_INFINITY;
-                    for (int wak1 = 0; wak1 < lk; wak1++) {
-                        for (int wak2 = 0; wak2 < lk; wak2++) {
-                            exponent = xmutinvGammatxmutdiv2 + (xmutinvGammat.get(0, 0) * twokpi.get(wak1, 0) + xmutinvGammat.get(1, 0) * twokpi.get(wak2, 0)) + vstoret.get(wak1 * lk + wak2) - lognormconstGammat;
-
-                            logtpdintermediate = logsumexp(logtpdintermediate, -exponent);
-                        }
-                    }
-
-                    logtpdfinal = logsumexp(logtpdfinal, logtpdintermediate + logweightswindsinitial.get(index, 0));
-                }
 
             }
         }
