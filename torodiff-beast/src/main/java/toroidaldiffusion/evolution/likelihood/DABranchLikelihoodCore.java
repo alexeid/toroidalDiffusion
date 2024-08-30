@@ -25,13 +25,6 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
      */
     protected double[] siteLd;
 
-    protected boolean useScaling = false;
-
-    protected double[][] scalingFactors; //TODO
-
-    static final public double SCALING_THRESHOLD = 1.0E-150; // MAX_VALUE 1.7*10^308
-    double SCALE = 2;
-
     final WrappedBivariateDiffusion diff;
 
     /**
@@ -92,18 +85,8 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
         branchLogLd = null;
         currentBrLdIndex = -1;
         storedBrLdIndex = -1;
-
-        scalingFactors = null;
     }
 
-    @Override
-    public void setUseScaling(double scale) {
-        useScaling = (scale != 1.0);
-
-        if (useScaling) {
-            scalingFactors = new double[2][nrOfSites];
-        }
-    }
 
     //============ branch likelihood ============
 
@@ -136,12 +119,6 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
 
         } // end k  nrOfSites
 
-
-        if (useScaling) {
-            throw new UnsupportedOperationException("in dev");
-//            scaleBranchLds(nodeParent);
-        }
-
     }
 
     /**
@@ -164,37 +141,6 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
 
         return logP;
     }
-
-    // log likelihood at root given codon frequencies
-    public double calculateRootLogLikelihood(double[] rootValues, WrappedBivariateDiffusion diff) {
-        // TODO
-        throw new UnsupportedOperationException("in dev");
-    }
-
-    /**
-     * This function returns the scaling factor for that pattern by summing over
-     * the log scalings used at each node. If scaling is off then this just returns
-     * a 0.
-     *
-     * @return the log scaling factor
-     */
-    @Override
-    public double getLogScalingFactor(int patternIndex_) {
-//    	if (m_bUseScaling) {
-//    		return -(m_nNodeCount/2) * Math.log(SCALE);
-//    	} else {
-//    		return 0;
-//    	}
-        double logScalingFactor = 0.0;
-        if (useScaling) {
-            throw new UnsupportedOperationException("in development");
-//            for (int i = 0; i < nrOfNodes; i++) {
-//                logScalingFactor += scalingFactors[currentBrLdIndex[i]][i][patternIndex_];
-//            }
-        }
-        return logScalingFactor;
-    }
-
 
     // suppose only used by unit test
     public void getBranchLikelihoods(double[] branchLdOut) {

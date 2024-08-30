@@ -144,6 +144,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 //            return logP;
 //        }
 
+        // set diffusion params before computing likelihood
         setDiffusionParams();
 
         // exclude root node, branches = nodes - 1

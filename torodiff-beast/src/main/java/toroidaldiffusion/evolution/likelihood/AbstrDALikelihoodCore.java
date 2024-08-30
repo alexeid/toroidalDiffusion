@@ -20,24 +20,6 @@ abstract public class AbstrDALikelihoodCore {
 
 
     /**
-     * flag to indicate whether scaling should be used in the
-     * likelihood calculation. Scaling can help in dealing with
-     * numeric issues (underflow).
-     */
-    boolean m_bUseScaling = false;
-
-    abstract public void setUseScaling(double scale);
-
-    public boolean getUseScaling() {
-        return m_bUseScaling;
-    }
-    /**
-     * return the cumulative scaling effect. Should be zero if no scaling is used *
-     */
-    abstract public double getLogScalingFactor(int patternIndex_);
-
-
-    /**
      * store current state *
      */
     abstract public void store();
