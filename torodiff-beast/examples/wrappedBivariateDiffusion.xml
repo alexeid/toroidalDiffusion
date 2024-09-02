@@ -31,7 +31,7 @@
     <run id="mcmc" spec="MCMC" chainLength="1000000">
         <state id="state" storeEvery="10000">
             <parameter id="lambda" spec="parameter.RealParameter" name="stateNode">20.974734</parameter>
-<!-- TODO lower="-pi" upper="pi" -->
+<!-- TODO lower="-pi" upper="pi" 3.14159265358979323846 -->
 <!-- mu: c(0.025, 0.5, 0.975) = (-2.95996 , -1, 0.95996) -->
 <!-- sigma: c(0.025, 0.5, 0.975) = (0.00063, 0.25, 0.95062) -->
 <!-- alpha: c(0.025, 0.5, 0.975) = (0.61263, 1, 1.6323) -->
