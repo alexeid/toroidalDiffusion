@@ -37,7 +37,7 @@
 <!-- alpha: c(0.025, 0.5, 0.975) = (0.61263, 1, 1.6323) -->
             <parameter id="mu" spec="parameter.RealParameter" dimension="2" name="stateNode">-0.575091 -1.096108</parameter>
             <parameter id="sigma" spec="parameter.RealParameter" lower="0.0" dimension="2" name="stateNode">0.615748 0.636005</parameter>
-            <parameter id="alpha" spec="parameter.RealParameter" dimension="3" name="stateNode">1.05717 0.982953 0.805078</parameter>
+            <parameter id="alpha" spec="parameter.RealParameter" lower="0.0" dimension="3" name="stateNode">1.05717 0.982953 0.805078</parameter>
 
         </state>
 
