@@ -55,7 +55,7 @@ public class WrappedRandomWalkOperator extends RealRandomWalkOperator {
         /* compiled code */
     }
 
-    private double wrapAngles(double angle) {
+    public static double wrapAngles(double angle) {
         while (angle > Math.PI) {
             angle -= 2 * Math.PI;
         }

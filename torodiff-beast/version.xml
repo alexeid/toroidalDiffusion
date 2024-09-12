@@ -12,6 +12,8 @@
         <provider classname="toroidaldiffusion.evolution.likelihood.PhyloWrappedBivariateDiffusion"/>
         <provider classname="toroidaldiffusion.evolution.tree.DATreeModel"/>
         <provider classname="toroidaldiffusion.evolution.tree.DihedralAngleTreeModel"/>
+        <provider classname="toroidaldiffusion.operator.WrappedRandomWalkOperator"/>
+
     </service>
 
 
