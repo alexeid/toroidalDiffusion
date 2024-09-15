@@ -122,7 +122,7 @@
 
         <operator id="lambda.scale" spec="kernel.BactrianScaleOperator" parameter="@lambda" upper="100.0" weight="1.0"/>
 
-        <operator id="mu.randomWalk" spec="toroidaldiffusion.operator.WrappedRandomWalkOperator" parameter="@mu" scaleFactor="0.1" weight="1.0"/>
+        <operator id="mu.randomWalk" spec="toroidaldiffusion.operator.WrappedRandomWalkOperator" parameter="@mu" windowSize="0.1" weight="1.0"/>
         <operator id="sigma.randomWalk" spec="kernel.BactrianRandomWalkOperator" parameter="@sigma" scaleFactor="0.01" weight="2.0"/>
         <operator id="alpha.randomWalk" spec="kernel.BactrianRandomWalkOperator" parameter="@alpha" scaleFactor="0.05" weight="2.0"/>
         <!-- internal nodes angles WrappedRandomWalkOperator -->
