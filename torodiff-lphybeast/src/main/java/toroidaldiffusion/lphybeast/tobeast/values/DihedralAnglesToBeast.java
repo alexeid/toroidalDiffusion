@@ -1,4 +1,4 @@
-package tobeast.values;
+package toroidaldiffusion.lphybeast.tobeast.values;
 
 import beast.base.inference.parameter.RealParameter;
 import lphy.core.model.Value;
