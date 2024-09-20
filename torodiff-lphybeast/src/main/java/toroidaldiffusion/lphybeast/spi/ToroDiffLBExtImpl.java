@@ -2,10 +2,12 @@ package toroidaldiffusion.lphybeast.spi;
 
 import beast.base.evolution.datatype.DataType;
 import jebl.evolution.sequences.SequenceType;
+import lphy.base.function.tree.InternalNodesID;
 import lphy.core.model.Generator;
 import lphybeast.GeneratorToBEAST;
 import lphybeast.ValueToBEAST;
 import lphybeast.spi.LPhyBEASTExt;
+import toroidaldiffusion.lphybeast.tobeast.values.DihedralAnglesToBeast;
 
 import java.util.Arrays;
 import java.util.List;
@@ -24,7 +26,7 @@ public class ToroDiffLBExtImpl implements LPhyBEASTExt {
     // the first matching converter is used.
     @Override
     public List<Class<? extends ValueToBEAST>> getValuesToBEASTs() {
-        return Arrays.asList(  );
+        return Arrays.asList( DihedralAnglesToBeast.class );
     }
 
     // the first matching converter is used.
@@ -43,7 +45,7 @@ public class ToroDiffLBExtImpl implements LPhyBEASTExt {
 
     @Override
     public List<Class<? extends Generator>> getExcludedGenerator() {
-        return List.of(  );
+        return List.of(InternalNodesID.class);
     }
 
     @Override
