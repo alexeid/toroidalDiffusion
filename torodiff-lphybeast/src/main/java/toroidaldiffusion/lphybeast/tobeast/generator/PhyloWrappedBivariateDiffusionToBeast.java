@@ -42,6 +42,9 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
 //        dihedralAngleTreeModel.setInternalNodesValuesParam(internalNodesValuesParam);
 
         phyloWrappedBivariateDiffusion.setInputValue("daTreeModel", dihedralAngleTreeModel);
+        phyloWrappedBivariateDiffusion.setInputValue("mu", context.getAsRealParameter(generator.getParams().get("mu")));
+        phyloWrappedBivariateDiffusion.setInputValue("sigma", context.getAsRealParameter(generator.getParams().get("sigma")));
+        phyloWrappedBivariateDiffusion.setInputValue("alpha", context.getAsRealParameter(generator.getParams().get("alpha")));
 
 
         return phyloWrappedBivariateDiffusion;
