@@ -173,4 +173,24 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
         return newValues;
     }
 
+    public Value<TimeTree> getTree() {
+        return tree;
+    }
+
+    public Value<Double[][]> getY() {
+        return y;
+    }
+
+    public Value<Double[]> getMu() {
+        return mu;
+    }
+
+    public Value<Double[]> getSigma() {
+        return sigma;
+    }
+
+    public Value<Double[]> getAlpha() {
+        return alpha;
+    }
+
 }
