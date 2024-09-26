@@ -1,11 +1,15 @@
 package toroidaldiffusion.lphybeast.tobeast.values;
 
 import beast.base.inference.parameter.RealParameter;
+import lphy.base.evolution.alignment.ContinuousCharacterData;
 import lphy.core.model.Value;
 import lphybeast.BEASTContext;
 import lphybeast.ValueToBEAST;
 import toroidaldiffusion.DihedralAngleAlignment;
 import toroidaldiffusion.Pair;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class DihedralAnglesToBeast implements ValueToBEAST<DihedralAngleAlignment, RealParameter>{
@@ -16,27 +20,11 @@ public class DihedralAnglesToBeast implements ValueToBEAST<DihedralAngleAlignmen
 
         // Get taxa names
         String[] taxaNames = dihedralAngleAlignment.getTaxa().getTaxaNames();
-
-        // DihedralAngles alignment
         StringBuilder builder = new StringBuilder();
-        for (String taxon : taxaNames) {
-            for (int j = 0; j < dihedralAngleAlignment.nchar(); j++) {
-                // Get the dihedral angles pair (phi, psi) for the current taxon and position
-                Pair pair = dihedralAngleAlignment.getState(taxon, j);
-                if (pair != null) {
-                    if (pair.getPhi() != null) {
-                        builder.append(pair.getPhi()).append("\t");
-                    }
-                    if (pair.getPsi() != null) {
-                        builder.append(pair.getPsi()).append("\t");
-                    }
-                }
-            }
-            // Remove the trailing tab character and add a newline after each row
-            if (!builder.isEmpty() && builder.charAt(builder.length() - 1) == '\t') {
-                builder.deleteCharAt(builder.length() - 1);
-            }
-            builder.append("\n");
+        builder.append(taxaNames[0]);
+        for (int i = 1; i < taxaNames.length; i++) {
+            builder.append(" ");
+            builder.append(taxaNames[i]);
         }
 
         //Internal nodes
@@ -63,10 +51,29 @@ public class DihedralAnglesToBeast implements ValueToBEAST<DihedralAngleAlignmen
 //
 //            }
 
+        List<Double> angles = new ArrayList<>();
+
+        int minordimension = dihedralAngleAlignment.nchar()*2;
+
+        // Extract dihedral angles
+        for (String taxon : taxaNames) {
+            for (int j = 0; j < dihedralAngleAlignment.nchar(); j++) {
+                Pair pair = dihedralAngleAlignment.getState(taxon, j);
+                if (pair != null) {
+                    if (pair.getPhi() != null) {
+                        angles.add(pair.getPhi());
+                    }
+                    if (pair.getPsi() != null) {
+                        angles.add(pair.getPsi());
+                    }
+                }
+            }
+        }
+
         RealParameter dihedralAngles = new RealParameter();
-        dihedralAngles.setInputValue("keys", taxaNames);
-        dihedralAngles.setInputValue("values", Double.parseDouble(builder.toString()));
-        dihedralAngles.setInputValue("minordimension", dihedralAngleAlignment.nchar());
+        dihedralAngles.setInputValue("keys", builder.toString());
+        dihedralAngles.setInputValue("value", angles);
+        dihedralAngles.setInputValue("minordimension", minordimension);
         dihedralAngles.initAndValidate();
 
 //        RealParameter internalNodesAngles = new RealParameter();
@@ -82,3 +89,4 @@ public class DihedralAnglesToBeast implements ValueToBEAST<DihedralAngleAlignmen
         return DihedralAngleAlignment.class;
     }
 }
+

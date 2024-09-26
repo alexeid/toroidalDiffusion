@@ -20,7 +20,6 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
 
         toroidaldiffusion.evolution.likelihood.PhyloWrappedBivariateDiffusion phyloWrappedBivariateDiffusion = new toroidaldiffusion.evolution.likelihood.PhyloWrappedBivariateDiffusion();
 
-        //RealParameter dihedralAnglesAlignment = (RealParameter) value;
         //create DA model
         DihedralAngleTreeModel dihedralAngleTreeModel = new DihedralAngleTreeModel();
 
@@ -46,6 +45,7 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
         phyloWrappedBivariateDiffusion.setInputValue("sigma", context.getAsRealParameter(generator.getParams().get("sigma")));
         phyloWrappedBivariateDiffusion.setInputValue("alpha", context.getAsRealParameter(generator.getParams().get("alpha")));
 
+        phyloWrappedBivariateDiffusion.initAndValidate();
 
         return phyloWrappedBivariateDiffusion;
     }
