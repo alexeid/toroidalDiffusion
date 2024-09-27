@@ -1,7 +1,6 @@
 package toroidaldiffusion.lphybeast.tobeast.values;
 
 import beast.base.inference.parameter.RealParameter;
-import lphy.base.evolution.alignment.ContinuousCharacterData;
 import lphy.core.model.Value;
 import lphybeast.BEASTContext;
 import lphybeast.ValueToBEAST;
