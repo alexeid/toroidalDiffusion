@@ -68,6 +68,7 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
         DihedralAngleAlignment dihedralAngleAlignmentValue = (DihedralAngleAlignment) value; //TODO: can we cast realparameter -> DihedralAngleAlignment?
         String [] taxaNames = dihedralAngleAlignmentValue.getTaxa().getTaxaNames();
 
+        //if the number of taxa equals to the taxaNames length, tipsValues == dihedralAngleAlignment stored values
         if (taxa == taxaNames.length) {
             dihedralAngleTreeModel.setInputValue("tipValues", dihedralAngleAlignment);
         }
@@ -92,8 +93,11 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
 //            //todo: context.addBEASTObject() required inputs are the arguments of a function or distribution or the function/distribution
 //        }
 
-        else if (taxa < taxaNames.length) {
-            for (int i = 0; i < taxa; i++) {
+        //if the number of taxa is greater than taxaNames length, then:
+        //1. from index 0 to index to (taxaNames.length * site * 2) == tips values
+        //2. from index (taxaNames.length * site * 2) to index realparameter dimension == internal nodes values
+        else if (taxa > taxaNames.length) {
+            for (int i = 0; i < (taxaNames.length * site * 2); i++) {
                 double angle = dihedralAngleAlignment.getValue(i);
                 dihedralAngleAlignment.setValue(i, angle);
             }
@@ -107,6 +111,8 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
             context.addBEASTObject(dihedralAngleTreeModel, (GraphicalModelNode) internalnodes);
             //todo: context.addBEASTObject() required inputs are the arguments of a function or distribution or the function/distribution
         }
+
+        //if is neither of the conditions above, the dihedralAngleAlignment fails
         else {
             throw new IllegalStateException("Unexpected condition: 'taxa' is less than expected or invalid.");
         }
