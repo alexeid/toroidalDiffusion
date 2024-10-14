@@ -16,7 +16,7 @@ public class DihedralAngleAlignment implements TaxaCharacterMatrix<Pair>, TextFi
 
     // 1st[] is taxa, index is same order as Taxa. When incl. internal nodes, idx is ntaxa * 2 - 1
     // 2nd[] is the site 
-    Pair[][] pairs;
+    public Pair[][] pairs;
     Taxa taxa;
 
     public DihedralAngleAlignment(Taxa taxa, int nchar, boolean addIntNodeSeq) {
