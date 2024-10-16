@@ -1,7 +1,8 @@
 package toroidaldiffusion;
 
 import lphy.base.evolution.Taxa;
-import lphy.base.evolution.alignment.TaxaCharacterMatrix;
+import lphy.base.evolution.alignment.AugmentedAlignment;
+import lphy.base.evolution.tree.TimeTreeNode;
 import lphy.core.logger.TextFileFormatted;
 
 import java.util.ArrayList;
@@ -10,32 +11,52 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- *
+ * This alignment could contain the internal node sequences.
+ * If {@link #internalNodes} is null, then this only contains the tips sequences.
+ * If it is not null, then this alignment also contains internal nodes sequences.
+ * In this case, the sequence indices for tips range from 0 to (ntaxa - 1),
+ * internal node indices follow after the tips, the root node is assigned the final index.
  */
-public class DihedralAngleAlignment implements TaxaCharacterMatrix<Pair>, TextFileFormatted {
+public class DihedralAngleAlignment implements AugmentedAlignment<Pair>, TextFileFormatted {
 
     // 1st[] is taxa, index is same order as Taxa. When incl. internal nodes, idx is ntaxa * 2 - 1
     // 2nd[] is the site 
     public Pair[][] pairs;
     Taxa taxa;
+    List<TimeTreeNode> internalNodes;
 
-    public DihedralAngleAlignment(Taxa taxa, int nchar, boolean addIntNodeSeq) {
+    public DihedralAngleAlignment(Taxa taxa, int nchar, List<TimeTreeNode> internalNodes) {
         this.taxa = taxa;
-        if (addIntNodeSeq)
+        if (internalNodes == null)
+            this.pairs = new Pair[taxa.ntaxa()][nchar];
+        else if (internalNodes.size() == taxa.ntaxa() - 1) {
             // include internal nodes
             this.pairs = new Pair[2 * taxa.ntaxa() - 1][nchar];
-        else
-            this.pairs = new Pair[taxa.ntaxa()][nchar];
+            this.internalNodes = internalNodes;
+        } else
+            throw new IllegalArgumentException("The number of internal nodes " + internalNodes.size() +
+                    " should be the number of taxa " + taxa.ntaxa() + " - 1 !");
+    }
+
+    /**
+     * @param sequenceName   check if it is taxon name, if not found, then try the internal node ID,
+     *                       if still not found, throw an exception.
+     * @param column         site position
+     * @return               the state for the given sequence name.
+     */
+    @Override
+    public Pair getState(String sequenceName, int column) {
+        return pairs[taxa.indexOfTaxon(sequenceName)][column];
     }
 
     @Override
-    public Pair getState(String taxonName, int column) {
-        return pairs[taxa.indexOfTaxon(taxonName)][column];
+    public Pair getState(int sequenceId, int position) {
+        return null;
     }
 
     @Override
-    public void setState(int taxon, int position, Pair state) {
-        pairs[taxon][position] = state;
+    public void setState(int sequenceId, int position, Pair state) {
+        pairs[sequenceId][position] = state;
     }
 
     @Override
@@ -195,5 +216,6 @@ public class DihedralAngleAlignment implements TaxaCharacterMatrix<Pair>, TextFi
     public String getFileType() {
         return ".tsv";
     }
+
 }
 
