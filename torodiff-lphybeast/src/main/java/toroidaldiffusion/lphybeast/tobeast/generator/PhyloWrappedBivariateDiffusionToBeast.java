@@ -5,6 +5,8 @@ import beast.base.evolution.tree.TreeInterface;
 import beast.base.inference.parameter.RealParameter;
 import lphy.base.evolution.Taxa;
 import lphy.base.evolution.tree.TimeTree;
+import lphy.base.function.tree.InternalNodesID;
+import lphy.core.model.Generator;
 import lphy.core.model.Value;
 import lphybeast.BEASTContext;
 import lphybeast.GeneratorToBEAST;
@@ -120,6 +122,8 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
          * Get the Timetree
          */
         TreeInterface timeTree = (TreeInterface) context.getBEASTObject(generator.getTree());
+        removeNoIDTree(generator, context);
+
         dihedralAngleTreeModel.setInputValue("tree", timeTree);
         dihedralAngleTreeModel.initAndValidate();
 
@@ -165,6 +169,20 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
         }
 
         return internalNodes;
+    }
+
+
+    public void removeNoIDTree(PhyloWrappedBivariateDiffusion generator, BEASTContext context) {
+        // Get the tree from the generator
+        Value<TimeTree> tree = generator.getTree();
+
+        // Get the BEAST object associated with the tree
+        TreeInterface timeTree = (TreeInterface) context.getBEASTObject(tree);
+
+        // if the tree's generator is not InternalNodesID (phi tree), then remove the tree
+        if (!(tree.getGenerator() instanceof InternalNodesID)) {
+            context.removeBEASTObject((BEASTInterface) timeTree);
+        }
     }
 
 
