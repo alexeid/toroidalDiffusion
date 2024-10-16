@@ -13,6 +13,7 @@ import lphy.core.model.annotation.ParameterInfo;
 import lphy.core.simulator.RandomUtils;
 import org.apache.commons.math3.random.RandomGenerator;
 
+import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -93,8 +94,12 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
             throw new RuntimeException("Dimensions of y0 should be L by 2, but found: " + nchar + " by " + length);
 
         // check if all internal nodes have their IDs
-        boolean addIntNodeSeq = timeTree.getInternalNodes().stream().allMatch(node -> node.getId() != null);
-        TaxaCharacterMatrix nodeValues = new DihedralAngleAlignment(taxa, nchar, addIntNodeSeq);
+        List<TimeTreeNode> internalNodes = timeTree.getInternalNodes();
+        boolean addIntNodeSeq = internalNodes.stream().allMatch(node -> node.getId() != null);
+        if (!addIntNodeSeq)
+            internalNodes = null; // if internal nodes have no ID, then only tips seqs
+
+        TaxaCharacterMatrix nodeValues = new DihedralAngleAlignment(taxa, nchar, internalNodes);
 
         WrappedBivariateDiffusion wrappedBivariateDiffusion = new WrappedBivariateDiffusion();
 
