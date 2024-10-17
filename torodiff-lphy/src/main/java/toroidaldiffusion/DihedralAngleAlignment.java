@@ -41,17 +41,20 @@ public class DihedralAngleAlignment implements AugmentedAlignment<Pair>, TextFil
     /**
      * @param sequenceName   check if it is taxon name, if not found, then try the internal node ID,
      *                       if still not found, throw an exception.
-     * @param column         site position
+     * @param position         site position
      * @return               the state for the given sequence name.
      */
     @Override
-    public Pair getState(String sequenceName, int column) {
-        return pairs[taxa.indexOfTaxon(sequenceName)][column];
+    public Pair getState(String sequenceName, int position) {
+        int sequenceId = indexOfSequence(sequenceName, taxa, internalNodes);
+        if (sequenceId < 0)
+            throw new IllegalArgumentException("The sequence name " + sequenceName + " does not exist !");
+        return pairs[sequenceId][position];
     }
 
     @Override
     public Pair getState(int sequenceId, int position) {
-        return null;
+        return pairs[sequenceId][position];
     }
 
     @Override
