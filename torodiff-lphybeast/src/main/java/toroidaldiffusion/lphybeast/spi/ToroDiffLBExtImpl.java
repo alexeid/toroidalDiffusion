@@ -6,7 +6,6 @@ import lphy.core.model.Generator;
 import lphybeast.GeneratorToBEAST;
 import lphybeast.ValueToBEAST;
 import lphybeast.spi.LPhyBEASTExt;
-import toroidaldiffusion.lphybeast.tobeast.generator.InternalNodesIDToBEAST;
 import toroidaldiffusion.lphybeast.tobeast.generator.PhyloWrappedBivariateDiffusionToBeast;
 import toroidaldiffusion.lphybeast.tobeast.values.DihedralAnglesToBeast;
 
@@ -33,7 +32,7 @@ public class ToroDiffLBExtImpl implements LPhyBEASTExt {
     // the first matching converter is used.
     @Override
     public List<Class<? extends GeneratorToBEAST>> getGeneratorToBEASTs() {
-        return Arrays.asList( PhyloWrappedBivariateDiffusionToBeast.class, InternalNodesIDToBEAST.class );
+        return Arrays.asList( PhyloWrappedBivariateDiffusionToBeast.class );
     }
 
     // LPhy SequenceType => BEAST DataType
