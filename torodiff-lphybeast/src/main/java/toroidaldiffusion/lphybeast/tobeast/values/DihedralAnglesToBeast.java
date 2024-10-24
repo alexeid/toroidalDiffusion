@@ -51,18 +51,13 @@ public class DihedralAnglesToBeast implements ValueToBEAST<DihedralAngleAlignmen
         }
 
         /**
-         * dihedralAngles Only contains tips values
+         * DihedralAngles Only contains tips values
          */
         RealParameter dihedralAngles = new RealParameter();
         dihedralAngles.setInputValue("keys", builder.toString());
         dihedralAngles.setInputValue("value", angles);
         dihedralAngles.setInputValue("minordimension", minordimension);
         dihedralAngles.initAndValidate();
-
-//        RealParameter internalNodesAngles = new RealParameter();
-//        internalNodesAngles.setInputValue("values", Double.parseDouble(builder.toString()));
-//        internalNodesAngles.setInputValue("minordimension", dihedralAngleAlignment.nchar());
-//        internalNodesAngles.initAndValidate();
 
         return dihedralAngles;
     }

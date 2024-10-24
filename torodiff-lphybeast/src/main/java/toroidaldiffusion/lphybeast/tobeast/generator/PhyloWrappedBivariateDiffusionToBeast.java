@@ -5,6 +5,7 @@ import beast.base.evolution.tree.TreeInterface;
 import beast.base.inference.parameter.RealParameter;
 import lphy.base.evolution.Taxa;
 import lphy.base.evolution.tree.TimeTree;
+import lphy.base.evolution.tree.TimeTreeNode;
 import lphy.base.function.tree.InternalNodesID;
 import lphy.core.model.Generator;
 import lphy.core.model.Value;
@@ -21,9 +22,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static beast.base.inference.Logger.LOGMODE.tree;
 import static lphybeast.BEASTContext.getOperatorWeight;
 
-public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<PhyloWrappedBivariateDiffusion, toroidaldiffusion.evolution.likelihood.PhyloWrappedBivariateDiffusion>{
+public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<PhyloWrappedBivariateDiffusion, toroidaldiffusion.evolution.likelihood.PhyloWrappedBivariateDiffusion> {
 
     //without internalnodes sequence - cannot calculate likelihood
     //the internalnodes involve the root initialised angles
@@ -57,12 +59,29 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
         TimeTree tree = generator.getTree().value();
         Taxa taxaNames = tree.getTaxa();
 
+        //Get internalnodes
+        List<TimeTreeNode> nodes = tree.getNodes();
+
+        //Get the dihedralAngleAlignmentLphy values
+        DihedralAngleAlignment dihedralAngleAlignmentLphy = (DihedralAngleAlignment) dihedralAngleAlignmentValue.value();
+
+        //pairsLength = tips + internalnodes
+        int pairsLength = 2 * dihedralAngleAlignmentLphy.getTaxa().ntaxa() - 1;
+
+        //Extract only internalnodes from List<TimeTreeNode> nodes
+        List<TimeTreeNode> internalNodesList = new ArrayList<>();
+        for (int i = dihedralAngleAlignmentLphy.getTaxa().getTaxaNames().length; i < pairsLength; i++) {
+            TimeTreeNode internalnode = nodes.get(i);
+            internalNodesList.add(internalnode);
+        }
+        //Get nodesID
+        String[] internalNodesID = getID(internalNodesList);
+
         //sites
         Value<Double[][]> array = generator.getY();
-        int site = (array.value().length)*2;
+        int site = (array.value().length) * 2;
 
         //value sampled from generator, with internal nodes + tips
-        DihedralAngleAlignment dihedralAngleAlignmentLphy = (DihedralAngleAlignment) dihedralAngleAlignmentValue.value();
         int taxa = dihedralAngleAlignmentLphy.pairs.length;
 
         /**
@@ -86,26 +105,26 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
         else if (taxa > taxaNames.length()) {
 
             tipValues = dihedralAngleAlignment;
-            List<Double> internalNodesValues = getInternalNodes(dihedralAngleAlignmentValue);
+            List<Double> internalNodesValues = getInternalNodes(dihedralAngleAlignmentValue, internalNodesID, internalNodesList);
 
-            // Convert the list to a string with spaces between each value
+            // Convert list to a string with spaces between each value for input values
             String internalNodesString = internalNodesValues.stream()
                     .map(String::valueOf)
                     .collect(Collectors.joining(" "));
+            // Convert string list to string for keys
+            String internalNodeskeys = String.join(" ", internalNodesID);
 
             RealParameter internalNodes = new RealParameter(internalNodesString);
-
             //internalNodes.setInputValue("value", internalNodesString);
             internalNodes.setInputValue("minordimension", site);
+            internalNodes.setInputValue("keys", internalNodeskeys);
             internalNodes.initAndValidate();
 
             context.addBEASTObject(internalNodes, dihedralAngleAlignmentValue);
 
             dihedralAngleTreeModel.setInputValue("tipValues", tipValues);
             dihedralAngleTreeModel.setInputValue("internalNodesValues", internalNodes);
-        }
-
-        else {
+        } else {
             throw new IllegalStateException("Unexpected condition: 'taxa' is less than expected or invalid.");
         }
 
@@ -125,7 +144,7 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
          * Get the Timetree
          */
         TreeInterface timeTree = (TreeInterface) context.getBEASTObject(generator.getTree());
-        removeNoIDTree(generator, context);
+        //removeNoIDTree(generator, context);
 
         dihedralAngleTreeModel.setInputValue("tree", timeTree);
         dihedralAngleTreeModel.initAndValidate();
@@ -160,23 +179,86 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
 
     }
 
-    public static List<Double> getInternalNodes(Value<DihedralAngleAlignment> dihedralAngleAlignmentValue) {
+//    public static List<TimeTreeNode> getInternalNodes(Value<DihedralAngleAlignment> dihedralAngleAlignmentValue) {
+//
+//        List<Double> internalNodes = new ArrayList<>();
+//
+//        DihedralAngleAlignment dihedralAngleAlignment = dihedralAngleAlignmentValue.value();
+//
+//        String[] taxaNames = dihedralAngleAlignment.getTaxa().getTaxaNames();
+//
+//        //pairsLength = tips + internalnodes
+//        int pairsLength = 2 * dihedralAngleAlignment.getTaxa().ntaxa() - 1;
+//
+//        // Extract dihedral angles
+//        for (int i = taxaNames.length; i < pairsLength; i++) {
+//            for (int j = 0; j < dihedralAngleAlignment.nchar(); j++) {
+//                Pair pair = dihedralAngleAlignment.pairs[i][j];
+//                if (pair != null) {
+//                    // Add phi and psi values to the internalNodes list if they are non-null
+//                    if (pair.getPhi() != null) {
+//                        internalNodes.add(pair.getPhi());
+//                    }
+//                    if (pair.getPsi() != null) {
+//                        internalNodes.add(pair.getPsi());
+//                    }
+//                }
+//            }
+//        }
+//
+//        return internalNodes;
+//    }
+
+//    public static String[] getID(List<TimeTreeNode> nodes) {
+//        StringBuilder builder = new StringBuilder();
+//
+//        for TimeTreeNode node : nodes {
+//            String id = node.getId();
+//            if (id != null) {
+//                builder.append(id);
+//            }
+//
+//        }
+//
+//        return null;
+//    }
+
+    public static String[] getID(List<TimeTreeNode> nodes) {
+        // Return empty array if the input list is null or empty
+        if (nodes == null || nodes.isEmpty()) {
+            return new String[0];
+        }
+
+        // Create an array of the same size as the list
+        String[] ids = new String[nodes.size()];
+
+        for (int i = 0; i < nodes.size(); i++) {
+            TimeTreeNode node = nodes.get(i);
+            String id = node.getId();
+            ids[i] = (id != null) ? id : "";
+        }
+
+        return ids;
+    }
+
+
+
+    public static List<Double> getInternalNodes(Value<DihedralAngleAlignment> dihedralAngleAlignmentValue, String[] nodeID, List<TimeTreeNode> nodes) {
+        DihedralAngleAlignment dihedralAngleAlignment = dihedralAngleAlignmentValue.value();
+
+        Taxa taxa = dihedralAngleAlignment.getTaxa();
+        //String[] taxaNames = dihedralAngleAlignment.getTaxa().getTaxaNames();
+        //pairsLength = tips + internalnodes
+        //int pairsLength = 2 * dihedralAngleAlignment.getTaxa().ntaxa() - 1;
 
         List<Double> internalNodes = new ArrayList<>();
 
-        DihedralAngleAlignment dihedralAngleAlignment = dihedralAngleAlignmentValue.value();
-
-        String[] taxaNames = dihedralAngleAlignment.getTaxa().getTaxaNames();
-
-        //pairsLength = tips + internalnodes
-        int pairsLength = 2 * dihedralAngleAlignment.getTaxa().ntaxa() - 1;
-
-        // Extract dihedral angles
-        for (int i = taxaNames.length; i < pairsLength; i++) {
+        for (int i = 0; i < nodes.size(); i++) {
+            int nodeIndex;
+            nodeIndex = dihedralAngleAlignment.indexOfSequence(nodeID[i], taxa, nodes);
             for (int j = 0; j < dihedralAngleAlignment.nchar(); j++) {
-                Pair pair = dihedralAngleAlignment.pairs[i][j];
+                Pair pair = dihedralAngleAlignment.getState(nodeIndex, j);
                 if (pair != null) {
-                    // Add phi and psi values to the internalNodes list if they are non-null
                     if (pair.getPhi() != null) {
                         internalNodes.add(pair.getPhi());
                     }
@@ -184,6 +266,7 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
                         internalNodes.add(pair.getPsi());
                     }
                 }
+
             }
         }
 
@@ -191,24 +274,13 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
     }
 
 
-    public void removeNoIDTree(PhyloWrappedBivariateDiffusion generator, BEASTContext context) {
-        // Get the tree from the generator
-        Value<TimeTree> tree = generator.getTree();
-
-        // Get the BEAST object associated with the tree
-        TreeInterface timeTree = (TreeInterface) context.getBEASTObject(tree);
-
-        // if the tree's generator is not InternalNodesID (phi tree), then remove the tree
-        if (!(tree.getGenerator() instanceof InternalNodesID)) {
-            context.removeBEASTObject((BEASTInterface) timeTree);
-        }
-    }
-
 
     @Override
     public Class getGeneratorClass() {
         return PhyloWrappedBivariateDiffusion.class;
     }
 }
+
+
 
 
