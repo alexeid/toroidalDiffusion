@@ -30,29 +30,48 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
     Value<TimeTree> tree;
     Value<Double[]> mu;
     Value<Double[]> sigma;
-    Value<Double[]> alpha;
+    Value<Double[]> drift;
+    Value<Number> driftCorr;
     Value<Double[][]> y;
     RandomGenerator random;
+//    Value<Double[]> alpha;
 
     public static final String treeParamName = "tree";
     public static final String muParamName = "mu";
     public static final String sigmaParamName = "sigma";
-    public static final String alphaParamName = "alpha";
+//    public static final String alphaParamName = "alpha";
     public static final String y0RateParam = "y0";
-    public static final String ADD_INT_NODE_SEQ = "addIntNodeSeq";
+    public static final String DRIFT_PARAM = "drift";
+    public static final String DRIFT_CORR_PARAM = "driftCorr";
 
     public PhyloWrappedBivariateDiffusion(@ParameterInfo(name = treeParamName, description = "the time tree.") Value<TimeTree> tree,
                                           @ParameterInfo(name = muParamName, description = "the mean of the stationary distribution.") Value<Double[]> mu,
                                           @ParameterInfo(name = sigmaParamName, description = "the two variance terms.") Value<Double[]> sigma,
-                                          @ParameterInfo(name = alphaParamName, description = "the three drift terms.") Value<Double[]> alpha,
+                                          @ParameterInfo(name = DRIFT_PARAM, description = "the two drift terms.") Value<Double[]> drift,
+                                          @ParameterInfo(name = DRIFT_CORR_PARAM, description = "the correlation of two drift terms.") Value<Number> driftCorr,
                                           @ParameterInfo(name = y0RateParam, description = "the value of [phi,psi] angle pairs for each carbon backbone bond of the molecule at the root of the phylogeny.") Value<Double[][]> y) {
         this.tree = tree;
         this.mu = mu;
         this.sigma = sigma;
-        this.alpha = alpha;
+        this.drift = drift;
+        this.driftCorr = driftCorr;
         this.y = y;
         this.random = RandomUtils.getRandom();
     }
+
+//    @Deprecated
+//    public PhyloWrappedBivariateDiffusion(@ParameterInfo(name = treeParamName, description = "the time tree.") Value<TimeTree> tree,
+//                                          @ParameterInfo(name = muParamName, description = "the mean of the stationary distribution.") Value<Double[]> mu,
+//                                          @ParameterInfo(name = sigmaParamName, description = "the two variance terms.") Value<Double[]> sigma,
+//                                          @ParameterInfo(name = alphaParamName, description = "the three drift terms.") Value<Double[]> alpha,
+//                                          @ParameterInfo(name = y0RateParam, description = "the value of [phi,psi] angle pairs for each carbon backbone bond of the molecule at the root of the phylogeny.") Value<Double[][]> y) {
+//        this.tree = tree;
+//        this.mu = mu;
+//        this.sigma = sigma;
+//        this.alpha = alpha;
+//        this.y = y;
+//        this.random = RandomUtils.getRandom();
+//    }
 
     @Override
     public SortedMap<String, Value> getParams() {
@@ -60,7 +79,9 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
         map.put(treeParamName, tree);
         map.put(muParamName, mu);
         map.put(sigmaParamName, sigma);
-        map.put(alphaParamName, alpha);
+//        map.put(alphaParamName, alpha); // overload
+        map.put(DRIFT_PARAM, drift);
+        map.put(DRIFT_CORR_PARAM, driftCorr);
         map.put(y0RateParam, y);
         return map;
     }
@@ -70,7 +91,9 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
         if (paramName.equals(treeParamName)) tree = value;
         else if (paramName.equals(muParamName)) mu = value;
         else if (paramName.equals(sigmaParamName)) sigma = value;
-        else if (paramName.equals(alphaParamName)) alpha = value;
+//        else if (paramName.equals(alphaParamName)) alpha = value; // overload
+        else if (paramName.equals(DRIFT_PARAM)) drift = value;
+        else if (paramName.equals(DRIFT_CORR_PARAM)) driftCorr = value;
         else if (paramName.equals(y0RateParam)) y = value;
         else throw new RuntimeException("Unrecognised parameter name: " + paramName);
     }
@@ -104,13 +127,32 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
 
         WrappedBivariateDiffusion wrappedBivariateDiffusion = new WrappedBivariateDiffusion();
 
-        wrappedBivariateDiffusion.setParameters(mu.value(), alpha.value(), sigma.value());
+        Double[] alpha = getAlpha(drift, driftCorr); // should be 3 numbers
+        /** how alpha is used:
+         * double quo = Math.sqrt(sigma.get(0, 0) / sigma.get(1, 0));
+         * A.set(0, 0, alpha.get(0, 0));
+         * A.set(1, 1, alpha.get(1, 0));
+         * A.set(0, 1, alpha.get(2, 0) * quo);
+         * A.set(1, 0, alpha.get(2, 0) / quo);
+         */
+        wrappedBivariateDiffusion.setParameters(mu.value(), alpha, sigma.value());
 
         // if any internal node id is not null and not empty string,
         // then add its sequence to the alignment.
         traverseTree(timeTree.getRoot(), y0, nodeValues, wrappedBivariateDiffusion);
 
         return new RandomVariable<>("x", nodeValues, this);
+    }
+
+    // compute A given two drifts and their correlation
+    private Double[] getAlpha(Value<Double[]> drift, Value<Number> driftCorr) {
+        Double[] twoDrifts = drift.value();
+        double corr = driftCorr.value().doubleValue();
+
+        //TODO
+        double alpha3 = 0.0;
+
+        return new Double[]{twoDrifts[0], twoDrifts[1], alpha3};
     }
 
     private void fillIdMap(TimeTreeNode node, SortedMap<String, Integer> idMap) {

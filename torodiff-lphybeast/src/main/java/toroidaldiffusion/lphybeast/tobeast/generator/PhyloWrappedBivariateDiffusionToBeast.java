@@ -18,6 +18,7 @@ import toroidaldiffusion.operator.WrappedRandomWalkOperator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import static lphybeast.BEASTContext.getOperatorWeight;
 
 public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<PhyloWrappedBivariateDiffusion, toroidaldiffusion.evolution.likelihood.PhyloWrappedBivariateDiffusion> {
@@ -131,8 +132,13 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
                 context.getAsRealParameter(generator.getParams().get(PhyloWrappedBivariateDiffusion.muParamName)));
         phyloWrappedBivariateDiffusion.setInputValue("sigma",
                 context.getAsRealParameter(generator.getParams().get(PhyloWrappedBivariateDiffusion.sigmaParamName)));
-        phyloWrappedBivariateDiffusion.setInputValue("alpha",
-                context.getAsRealParameter(generator.getParams().get(PhyloWrappedBivariateDiffusion.alphaParamName)));
+
+
+//TODO change to drift
+//        phyloWrappedBivariateDiffusion.setInputValue("alpha",
+//                context.getAsRealParameter(generator.getParams().get(PhyloWrappedBivariateDiffusion.alphaParamName)));
+
+
 
         WrappedRandomWalkOperator wrappedRandomWalkOperator = new WrappedRandomWalkOperator();
         RealParameter muParameter = context.getAsRealParameter(generator.getParams().get(PhyloWrappedBivariateDiffusion.muParamName));
