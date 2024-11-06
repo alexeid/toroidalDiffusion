@@ -28,7 +28,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     // 3 values
 //    final public Input<Function> alphaInput = new Input<>("alpha", "the three drift terms.");
     final public Input<Function> driftInput = new Input<>("drift", "the two drift terms.");
-    final public Input<Function> driftCorrInput = new Input<>("driftCorr", "the correlation of two drift terms.");
+    final public Input<Function> driftCorrInput = new Input<>("driftCorr", "the correlation of two drift terms, ranged from -1 to 1.");
 
 
     /****** calculation engine ******/
@@ -209,6 +209,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         double[] twoDrifts = driftInput.get().getDoubleValues(); // two drift terms
         // TODO validate dims
         double corr = driftCorrInput.get().getArrayValue();
+        // TODO check [-1, 1]
 
         //TODO
         double alpha3 = 0.0;

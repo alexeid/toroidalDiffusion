@@ -48,7 +48,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
                                           @ParameterInfo(name = muParamName, description = "the mean of the stationary distribution.") Value<Double[]> mu,
                                           @ParameterInfo(name = sigmaParamName, description = "the two variance terms.") Value<Double[]> sigma,
                                           @ParameterInfo(name = DRIFT_PARAM, description = "the two drift terms.") Value<Double[]> drift,
-                                          @ParameterInfo(name = DRIFT_CORR_PARAM, description = "the correlation of two drift terms.") Value<Number> driftCorr,
+                                          @ParameterInfo(name = DRIFT_CORR_PARAM, description = "the correlation of two drift terms, ranged from -1 to 1.") Value<Number> driftCorr,
                                           @ParameterInfo(name = y0RateParam, description = "the value of [phi,psi] angle pairs for each carbon backbone bond of the molecule at the root of the phylogeny.") Value<Double[][]> y) {
         this.tree = tree;
         this.mu = mu;
