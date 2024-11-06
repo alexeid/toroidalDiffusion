@@ -37,8 +37,9 @@
 <!-- alpha: c(0.025, 0.5, 0.975) = (0.61263, 1, 1.6323) -->
             <parameter id="mu" spec="parameter.RealParameter" dimension="2" name="stateNode">-0.575091 -1.096108</parameter>
             <parameter id="sigma" spec="parameter.RealParameter" lower="0.0" dimension="2" name="stateNode">0.615748 0.636005</parameter>
-            <parameter id="alpha" spec="parameter.RealParameter" lower="0.0" dimension="3" name="stateNode">1.05717 0.982953 0.805078</parameter>
-
+<!--            <parameter id="alpha" spec="parameter.RealParameter" lower="0.0" dimension="3" name="stateNode">1.05717 0.982953 0.805078</parameter>-->
+            <parameter id="drift" spec="parameter.RealParameter" lower="0.0" dimension="2" name="stateNode">1.05717 0.982953</parameter>
+            <parameter id="driftCorr" spec="parameter.RealParameter" lower="0.0" name="stateNode">0.805078</parameter>
         </state>
 
         <!-- START posterior -->
@@ -62,13 +63,20 @@
                     </distr>
                 </distribution>
 
-                <!-- Prior for alpha -->
-                <distribution id="alpha.prior" spec="distribution.Prior" x="@alpha">
-                    <distr id="alpha.LogNormalDistributionModel" spec="distribution.LogNormalDistributionModel">
-                        <parameter id="alpha.meanlog" spec="parameter.RealParameter" name="M">0.0</parameter>
-                        <parameter id="alpha.sdlog" spec="parameter.RealParameter" name="S">0.25</parameter>
+                <distribution id="drift.prior" spec="distribution.Prior" x="@drift">
+                    <distr id="drift.LogNormalDistributionModel" spec="distribution.LogNormalDistributionModel">
+                        <parameter id="drift.meanlog" spec="parameter.RealParameter" name="M">0.0</parameter>
+                        <parameter id="drift.sdlog" spec="parameter.RealParameter" name="S">0.25</parameter>
                     </distr>
                 </distribution>
+                <!-- TODO Prior for driftCorr -->
+                <distribution id="driftCorr.prior" spec="distribution.Prior" x="@driftCorr">
+<!--                    <distr id="drift.LogNormalDistributionModel" spec="distribution.LogNormalDistributionModel">-->
+<!--                        <parameter id="drift.meanlog" spec="parameter.RealParameter" name="M">0.0</parameter>-->
+<!--                        <parameter id="drift.sdlog" spec="parameter.RealParameter" name="S">0.25</parameter>-->
+<!--                    </distr>-->
+                </distribution>
+
 
                 <!-- Prior for sigma -->
                 <distribution id="sigma.prior" spec="distribution.Prior" x="@sigma">
@@ -110,7 +118,9 @@
 
                     <mu idref="mu"/>
                     <sigma idref="sigma"/>
-                    <alpha idref="alpha"/>
+                    <!-- <alpha idref="alpha"/>-->
+                    <drift idref="drift"/>
+                    <driftCorr idref="driftCorr"/>
 
                     <!-- <branchRateModel id="StrictClockModel" spec="beast.base.evolution.branchratemodel.StrictClockModel">-->
                     <!--     <parameter id="clock.rate" spec="parameter.RealParameter" name="clock.rate">1.0</parameter>-->
@@ -124,7 +134,10 @@
 
         <operator id="mu.randomWalk" spec="toroidaldiffusion.operator.WrappedRandomWalkOperator" parameter="@mu" windowSize="0.1" weight="1.0"/>
         <operator id="sigma.randomWalk" spec="kernel.BactrianRandomWalkOperator" parameter="@sigma" scaleFactor="0.01" weight="2.0"/>
-        <operator id="alpha.randomWalk" spec="kernel.BactrianRandomWalkOperator" parameter="@alpha" scaleFactor="0.05" weight="2.0"/>
+
+        <!-- TODO drift > 0 ? -->
+        <operator id="drift.scale" spec="kernel.BactrianScaleOperator" parameter="@drift" scaleFactor="0.05" weight="2.0"/>
+        <operator id="driftCorr.randomWalk" spec="kernel.BactrianRandomWalkOperator" parameter="@driftCorr" scaleFactor="0.05" weight="2.0"/>
         <!-- internal nodes angles WrappedRandomWalkOperator -->
         <!-- AVMN -->
         <!-- tree operators -->
@@ -136,7 +149,9 @@
             <log idref="lambda"/>
             <log idref="mu"/>
             <log idref="sigma"/>
-            <log idref="alpha"/>
+            <log idref="drift"/>
+            <log idref="driftCorr"/>
+            <log idref="DA.treeLikelihood"/>
         </logger>
 
         <logger id="screenlog" logEvery="100000">
@@ -146,7 +161,8 @@
             <log idref="prior"/>
             <log idref="mu"/>
             <log idref="sigma"/>
-            <log idref="alpha"/>
+            <log idref="drift"/>
+            <log idref="driftCorr"/>
         </logger>
 
 <!--        <logger id="treelog.t:firsthalf" fileName="WBD_fixedtree.trees" logEvery="1000" mode="tree">-->

@@ -26,9 +26,10 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     // 2 values
     final public Input<Function> sigmaInput = new Input<>("sigma", "the two variance terms.");
     // 3 values
-    final public Input<Function> alphaInput = new Input<>("alpha", "the three drift terms.");
-//drift [][]
-    //method:
+//    final public Input<Function> alphaInput = new Input<>("alpha", "the three drift terms.");
+    final public Input<Function> driftInput = new Input<>("drift", "the two drift terms.");
+    final public Input<Function> driftCorrInput = new Input<>("driftCorr", "the correlation of two drift terms.");
+
 
     /****** calculation engine ******/
     protected WrappedBivariateDiffusion diff = new WrappedBivariateDiffusion();
@@ -187,27 +188,32 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
     @Override
     public void log(long sample, PrintStream out) {
-//        out.print(getCurrentLogP() + "\t");
+        super.log(sample, out);
+        out.print(getA()[2] + "\t");
     }
 
     // refresh muarr, alphaarr, sigmaarr for computing likelihood
     protected void setDiffusionParams() {
         final double[] muarr = muInput.get().getDoubleValues(); // mean of the diffusion
         final double[] sigmaarr = sigmaInput.get().getDoubleValues(); // variance term
-        final double[] alphaarr = alphaInput.get().getDoubleValues(); // drift term
-
-//        double[] a12 = a12Input.get().getDoubleValues();
-//        double cor = corInput;
-//
-//        double[] alphaarr = getA(a12, cor);
-
-
-        // method: return double[] alphaarr
-        // TODO validate dims
+//        final double[] alphaarr = alphaInput.get().getDoubleValues(); // drift term
+        final double[] alphaarr = getA();
 
         // init WrappedBivariateDiffusion here, setParameters(muarr, alphaarr, sigmaarr) once.
         // use diff.loglikwndtpd(phi0, psi0, phit, psit) later when compute likelihood
         diff.setParameters(muarr, alphaarr, sigmaarr);
+    }
+
+    // compute A given two drifts and their correlation
+    private double[] getA() {
+        double[] twoDrifts = driftInput.get().getDoubleValues(); // two drift terms
+        // TODO validate dims
+        double corr = driftCorrInput.get().getArrayValue();
+
+        //TODO
+        double alpha3 = 0.0;
+
+        return new double[]{twoDrifts[0], twoDrifts[1], alpha3};
     }
 
     protected int updateBranch(final DABranchLikelihoodCore daBranchLdCore, final Node node) {

@@ -127,7 +127,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
 
         WrappedBivariateDiffusion wrappedBivariateDiffusion = new WrappedBivariateDiffusion();
 
-        Double[] alpha = getAlpha(drift, driftCorr); // should be 3 numbers
+        Double[] a = getA(drift, driftCorr); // should be 3 numbers
         /** how alpha is used:
          * double quo = Math.sqrt(sigma.get(0, 0) / sigma.get(1, 0));
          * A.set(0, 0, alpha.get(0, 0));
@@ -135,7 +135,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
          * A.set(0, 1, alpha.get(2, 0) * quo);
          * A.set(1, 0, alpha.get(2, 0) / quo);
          */
-        wrappedBivariateDiffusion.setParameters(mu.value(), alpha, sigma.value());
+        wrappedBivariateDiffusion.setParameters(mu.value(), a, sigma.value());
 
         // if any internal node id is not null and not empty string,
         // then add its sequence to the alignment.
@@ -145,7 +145,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
     }
 
     // compute A given two drifts and their correlation
-    private Double[] getAlpha(Value<Double[]> drift, Value<Number> driftCorr) {
+    private Double[] getA(Value<Double[]> drift, Value<Number> driftCorr) {
         Double[] twoDrifts = drift.value();
         double corr = driftCorr.value().doubleValue();
 
