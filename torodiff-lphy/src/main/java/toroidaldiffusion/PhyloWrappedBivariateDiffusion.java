@@ -105,9 +105,10 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
 
     public RandomVariable<TaxaCharacterMatrix> sample() {
         TimeTree timeTree = tree.value();
-        SortedMap<String, Integer> idMap = new TreeMap<>();
-        fillIdMap(timeTree.getRoot(), idMap);
-        Taxa taxa = Taxa.createTaxa(idMap); // TODO Alexei: why not tree.value().getTaxa() ?
+//        SortedMap<String, Integer> idMap = new TreeMap<>();
+//        fillIdMap(timeTree.getRoot(), idMap);
+//        Taxa taxa = Taxa.createTaxa(idMap); // TODO Alexei: why not tree.value().getTaxa() ?
+        Taxa taxa = timeTree.getTaxa();
 
         Double[][] y0 = y.value();
 
