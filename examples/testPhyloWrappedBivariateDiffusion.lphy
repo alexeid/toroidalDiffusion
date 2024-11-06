@@ -2,14 +2,18 @@
 ψ ~ Yule(lambda=λ, n=10);
 ψ2 = setInternalNodesID(ψ);
 mu ~ Normal(mean=-1.0, sd=1.0, replicates = 2);
-alpha ~ LogNormal(meanlog=0.0, sdlog=0.05, replicates = 3);
+//alpha ~ LogNormal(meanlog=0.0, sdlog=0.05, replicates = 3);
 //σ ~ Beta(alpha=0.5, beta=1, replicates = 2);
 σ ~ LogNormal(meanlog=0.01, sdlog=0.05, replicates = 2);
-
+alpha0 ~ LogNormal(meanlog=0.0, sdlog=0.05);
+alpha1 ~ LogNormal(meanlog=0.0, sdlog=0.05);
+upper = sqrt(alpha0*alpha1);
+alpha2 ~ Uniform(lower=0.0, upper=upper);
+alpha = [alpha0, alpha1, alpha2];
 
 //mu = [2.0, 2.5];
 //alpha = [1.0, 1.0, 0.5];
-//σ = [-0.5, 0.75];
+//σ = [0.5, 0.75];
 
 y0 = [[3.0, 3.0], [3.0, 3.0], [3.0, 3.0], [3.0, 3.0], [3.0, 3.0], [3.0, 3.0], [3.0, 3.0], [3.0, 3.0], [3.0, 3.0], [3.0, 3.0]];
 y ~ PhyloWrappedBivariateDiffusion(mu=mu, sigma=σ, alpha=alpha, y0=y0, tree=ψ2);

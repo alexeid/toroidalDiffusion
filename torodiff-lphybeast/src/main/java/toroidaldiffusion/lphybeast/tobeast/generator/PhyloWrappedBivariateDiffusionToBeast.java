@@ -6,8 +6,6 @@ import beast.base.inference.parameter.RealParameter;
 import lphy.base.evolution.Taxa;
 import lphy.base.evolution.tree.TimeTree;
 import lphy.base.evolution.tree.TimeTreeNode;
-import lphy.base.function.tree.InternalNodesID;
-import lphy.core.model.Generator;
 import lphy.core.model.Value;
 import lphybeast.BEASTContext;
 import lphybeast.GeneratorToBEAST;
@@ -15,14 +13,11 @@ import toroidaldiffusion.DihedralAngleAlignment;
 import toroidaldiffusion.Pair;
 import toroidaldiffusion.PhyloWrappedBivariateDiffusion;
 import toroidaldiffusion.evolution.tree.DihedralAngleTreeModel;
-import toroidaldiffusion.lphybeast.tobeast.values.DihedralAnglesToBeast;
 import toroidaldiffusion.operator.WrappedRandomWalkOperator;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static beast.base.inference.Logger.LOGMODE.tree;
 import static lphybeast.BEASTContext.getOperatorWeight;
 
 public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<PhyloWrappedBivariateDiffusion, toroidaldiffusion.evolution.likelihood.PhyloWrappedBivariateDiffusion> {
@@ -60,35 +55,27 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
         Taxa taxaNames = tree.getTaxa();
 
         //Get internalnodes
-        List<TimeTreeNode> nodes = tree.getNodes();
+        List<TimeTreeNode> internalNodes = tree.getInternalNodes();
 
         //Get the dihedralAngleAlignmentLphy values
         DihedralAngleAlignment dihedralAngleAlignmentLphy = (DihedralAngleAlignment) dihedralAngleAlignmentValue.value();
 
-        //pairsLength = tips + internalnodes
-        int pairsLength = 2 * dihedralAngleAlignmentLphy.getTaxa().ntaxa() - 1;
-
-        //Extract only internalnodes from List<TimeTreeNode> nodes
-        List<TimeTreeNode> internalNodesList = new ArrayList<>();
-        for (int i = dihedralAngleAlignmentLphy.getTaxa().getTaxaNames().length; i < pairsLength; i++) {
-            TimeTreeNode internalnode = nodes.get(i);
-            internalNodesList.add(internalnode);
-        }
         //Get nodesID
-        String[] internalNodesID = getID(internalNodesList);
+        String[] internalNodesID = getID(internalNodes);
 
         //sites
         Value<Double[][]> array = generator.getY();
         int site = (array.value().length) * 2;
 
         //value sampled from generator, with internal nodes + tips
-        int taxa = dihedralAngleAlignmentLphy.pairs.length;
+        //nSeqs
+        int nSeqs = dihedralAngleAlignmentLphy.pairs.length;
 
         /**
          * NO internalnodes is given from simulation
          * The internalnodes need to be sampled based on roots (?)
          */
-        if (taxa == taxaNames.length()) {
+        if (nSeqs == taxaNames.length()) {
 //            tipValues = dihedralAngleAlignment;
 //            System.out.println("no internalnodes given");
 //            //todo: if no internalnodes sequences given, internalnodes sequences need to be sampled based on root sequence
@@ -102,28 +89,16 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
         /**
          * Internalnodes is given from simulation
          */
-        else if (taxa > taxaNames.length()) {
+        else if (nSeqs > taxaNames.length()) {
 
             tipValues = dihedralAngleAlignment;
-            List<Double> internalNodesValues = getInternalNodes(dihedralAngleAlignmentValue, internalNodesID, internalNodesList);
 
-            // Convert list to a string with spaces between each value for input values
-            String internalNodesString = internalNodesValues.stream()
-                    .map(String::valueOf)
-                    .collect(Collectors.joining(" "));
-            // Convert string list to string for keys
-            String internalNodeskeys = String.join(" ", internalNodesID);
+            RealParameter internalNodesValues = getRealParameter(dihedralAngleAlignmentValue, internalNodesID, internalNodes, site);
 
-            RealParameter internalNodes = new RealParameter(internalNodesString);
-            //internalNodes.setInputValue("value", internalNodesString);
-            internalNodes.setInputValue("minordimension", site);
-            internalNodes.setInputValue("keys", internalNodeskeys);
-            internalNodes.initAndValidate();
-
-            context.addBEASTObject(internalNodes, dihedralAngleAlignmentValue);
+            context.addBEASTObject(internalNodesValues, dihedralAngleAlignmentValue);
 
             dihedralAngleTreeModel.setInputValue("tipValues", tipValues);
-            dihedralAngleTreeModel.setInputValue("internalNodesValues", internalNodes);
+            dihedralAngleTreeModel.setInputValue("internalNodesValues", internalNodesValues);
         } else {
             throw new IllegalStateException("Unexpected condition: 'taxa' is less than expected or invalid.");
         }
@@ -179,6 +154,23 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
 
     }
 
+    public static RealParameter getRealParameter(Value dihedralAngleAlignmentValue, String[] internalNodesID, List<TimeTreeNode> internalNodesList, int site) {
+        List<Double> internalNodesValues = getInternalNodes(dihedralAngleAlignmentValue, internalNodesID, internalNodesList);
+        // Convert list to a string with spaces between each value for input values
+        String internalNodesString = internalNodesValues.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(" "));
+        // Convert string list to string for keys
+        String internalNodeskeys = String.join(" ", internalNodesID);
+
+        RealParameter internalNodes = new RealParameter(internalNodesString);
+        //internalNodes.setInputValue("value", internalNodesString);
+        internalNodes.setInputValue("minordimension", site);
+        internalNodes.setInputValue("keys", internalNodeskeys);
+        internalNodes.initAndValidate();
+        return internalNodes;
+    }
+
 //    public static List<TimeTreeNode> getInternalNodes(Value<DihedralAngleAlignment> dihedralAngleAlignmentValue) {
 //
 //        List<Double> internalNodes = new ArrayList<>();
@@ -223,7 +215,7 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
 //        return null;
 //    }
 
-    public static String[] getID(List<TimeTreeNode> nodes) {
+    public String[] getID(List<TimeTreeNode> nodes) {
         // Return empty array if the input list is null or empty
         if (nodes == null || nodes.isEmpty()) {
             return new String[0];
@@ -247,9 +239,6 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
         DihedralAngleAlignment dihedralAngleAlignment = dihedralAngleAlignmentValue.value();
 
         Taxa taxa = dihedralAngleAlignment.getTaxa();
-        //String[] taxaNames = dihedralAngleAlignment.getTaxa().getTaxaNames();
-        //pairsLength = tips + internalnodes
-        //int pairsLength = 2 * dihedralAngleAlignment.getTaxa().ntaxa() - 1;
 
         List<Double> internalNodes = new ArrayList<>();
 

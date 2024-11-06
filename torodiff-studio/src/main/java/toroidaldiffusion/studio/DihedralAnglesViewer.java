@@ -20,15 +20,6 @@ public class DihedralAnglesViewer implements Viewer {
                 (value instanceof Value && ((Value) value).value() instanceof DihedralAngleAlignment);
     }
 
-    @Override
-//    public JComponent getViewer(Object value) {
-//        if (value instanceof DihedralAngleAlignment alignment) {
-//            return new JLabel(alignmnetToString(alignment));
-//        } else if (value instanceof Value v && v.value() instanceof DihedralAngleAlignment alignment) {
-//            return new JLabel(alignmnetToString(alignment));
-//        }
-//        return new JLabel("Value<DihedralAngleAlignment> TODO : " + ((Value) value).value().toString());
-//    }
 
     public JComponent getViewer(Object value) {
         String html;

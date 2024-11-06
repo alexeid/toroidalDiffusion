@@ -8,6 +8,7 @@ import beast.base.evolution.tree.Tree;
 import beast.base.inference.State;
 import toroidaldiffusion.WrappedBivariateDiffusion;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -26,7 +27,8 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     final public Input<Function> sigmaInput = new Input<>("sigma", "the two variance terms.");
     // 3 values
     final public Input<Function> alphaInput = new Input<>("alpha", "the three drift terms.");
-
+//drift [][]
+    //method:
 
     /****** calculation engine ******/
     protected WrappedBivariateDiffusion diff = new WrappedBivariateDiffusion();
@@ -183,12 +185,24 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         return logP;
     }
 
+    @Override
+    public void log(long sample, PrintStream out) {
+//        out.print(getCurrentLogP() + "\t");
+    }
+
     // refresh muarr, alphaarr, sigmaarr for computing likelihood
     protected void setDiffusionParams() {
         final double[] muarr = muInput.get().getDoubleValues(); // mean of the diffusion
         final double[] sigmaarr = sigmaInput.get().getDoubleValues(); // variance term
         final double[] alphaarr = alphaInput.get().getDoubleValues(); // drift term
 
+//        double[] a12 = a12Input.get().getDoubleValues();
+//        double cor = corInput;
+//
+//        double[] alphaarr = getA(a12, cor);
+
+
+        // method: return double[] alphaarr
         // TODO validate dims
 
         // init WrappedBivariateDiffusion here, setParameters(muarr, alphaarr, sigmaarr) once.

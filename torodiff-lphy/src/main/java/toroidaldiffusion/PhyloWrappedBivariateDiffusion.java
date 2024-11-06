@@ -79,6 +79,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
             narrativeName = "phylogenetic bivariate wrapped normal distribution",
             category = GeneratorCategory.PHYLO_LIKELIHOOD, examples = {"simplePhyloWrappedBivariateDiffusion.lphy"},
             description = "The phylogenetic A bivariate wrapped normal distribution distribution.")
+
     public RandomVariable<TaxaCharacterMatrix> sample() {
         TimeTree timeTree = tree.value();
         SortedMap<String, Integer> idMap = new TreeMap<>();
@@ -184,18 +185,6 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
 
     public Value<Double[][]> getY() {
         return y;
-    }
-
-    public Value<Double[]> getMu() {
-        return mu;
-    }
-
-    public Value<Double[]> getSigma() {
-        return sigma;
-    }
-
-    public Value<Double[]> getAlpha() {
-        return alpha;
     }
 
 }
