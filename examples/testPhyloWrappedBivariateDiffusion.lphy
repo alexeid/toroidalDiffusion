@@ -4,7 +4,7 @@
 mu ~ Normal(mean=-1.0, sd=1.0, replicates = 2);
 //alpha ~ LogNormal(meanlog=0.0, sdlog=0.05, replicates = 3);
 //σ ~ Beta(alpha=0.5, beta=1, replicates = 2);
-σ ~ LogNormal(meanlog=0.01, sdlog=0.05, replicates = 2);
+σ ~ LogNormal(meanlog=0.01, sdlog=0.5, replicates = 2);
 drift ~ LogNormal(meanlog=0.0, sdlog=0.5, replicates = 2);
 //upper = sqrt(drift[0]*drift[1]);
 driftCorr ~ Uniform(lower=-1.0, upper=1.0);

@@ -189,9 +189,15 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     }
 
     @Override
+    public void init(PrintStream out) {
+        super.init(out);
+        out.print("alpha3 \t");
+    }
+
+    @Override
     public void log(long sample, PrintStream out) {
         super.log(sample, out);
-        //out.print(getA()[2] + "\t");
+        out.print(getA()[2] + "\t");
     }
 
     // refresh muarr, alphaarr, sigmaarr for computing likelihood
@@ -225,7 +231,6 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         double alpha1 = twoDrifts[0];
         double alpha2 = twoDrifts[1];
         double alpha3 = sqrt(alpha1*alpha2) * corr;
-        //double alpha3 = 0.0;
 
         return new double[]{twoDrifts[0], twoDrifts[1], alpha3};
     }
