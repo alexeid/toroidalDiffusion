@@ -7,18 +7,9 @@ import beast.base.inference.util.InputUtil;
 import beast.base.util.Randomizer;
 
 public class WrappedRandomWalkOperator extends RealRandomWalkOperator {
-    final public Input<Double> windowSizeInput =
-            new Input<>("windowSize", "the size of the window both up and down when using uniform interval OR standard deviation when using Gaussian", Input.Validate.REQUIRED);
-    final public Input<RealParameter> parameterInput =
-            new Input<>("parameter", "the parameter to operate a random walk on.", Input.Validate.REQUIRED);
-    final public Input<Boolean> useGaussianInput =
-            new Input<>("useGaussian", "Use Gaussian to move instead of uniform interval. Default false.", false);
 
-    double windowSize;
-    boolean useGaussian;
-
-    public WrappedRandomWalkOperator() {
-    }
+    private double windowSize = 1;
+    private boolean useGaussian;
 
     public void initAndValidate() {
         windowSize = windowSizeInput.get();
