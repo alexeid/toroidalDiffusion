@@ -157,6 +157,8 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
 
         phyloWrappedBivariateDiffusion.initAndValidate();
 
+        context.addExtraLoggable(phyloWrappedBivariateDiffusion);
+
         return phyloWrappedBivariateDiffusion;
 
     }
