@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
 
+import static java.lang.Math.sqrt;
+
 public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
 //    final public Input<TreeLikelihood.Scaling> scaling = new Input<>("scaling",
@@ -189,7 +191,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     @Override
     public void log(long sample, PrintStream out) {
         super.log(sample, out);
-        out.print(getA()[2] + "\t");
+        //out.print(getA()[2] + "\t");
     }
 
     // refresh muarr, alphaarr, sigmaarr for computing likelihood
@@ -207,12 +209,23 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     // compute A given two drifts and their correlation
     private double[] getA() {
         double[] twoDrifts = driftInput.get().getDoubleValues(); // two drift terms
-        // TODO validate dims
+        // TODO validate dims - contain two dims
+        if (twoDrifts == null || twoDrifts.length != 2) {
+            throw new IllegalArgumentException("Expected two drift terms in 'driftInput'. Found: " + (twoDrifts == null ? "null" : twoDrifts.length));
+        }
+
         double corr = driftCorrInput.get().getArrayValue();
+
         // TODO check [-1, 1]
+        if (corr < -1.0 || corr > 1.0) {
+            throw new IllegalArgumentException("Correlation value must be within [-1, 1]. Found: " + corr);
+        }
 
         //TODO
-        double alpha3 = 0.0;
+        double alpha1 = twoDrifts[0];
+        double alpha2 = twoDrifts[1];
+        double alpha3 = sqrt(alpha1*alpha2) * corr;
+        //double alpha3 = 0.0;
 
         return new double[]{twoDrifts[0], twoDrifts[1], alpha3};
     }

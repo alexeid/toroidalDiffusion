@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import static java.lang.Math.sqrt;
+
 /**
  * @author Alexei Drummond
  */
@@ -151,7 +153,10 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
         double corr = driftCorr.value().doubleValue();
 
         //TODO
-        double alpha3 = 0.0;
+        double alpha1 = twoDrifts[0].doubleValue();
+        double alpha2 = twoDrifts[1].doubleValue();
+        double alpha3 = sqrt(alpha1*alpha2) * corr;
+        //double alpha3 = 0.0;
 
         return new Double[]{twoDrifts[0], twoDrifts[1], alpha3};
     }
