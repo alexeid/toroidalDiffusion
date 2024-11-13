@@ -156,7 +156,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
      * @return
      */
 
-    private Double[] getA(Value<Double[]> drift, Value<Number> driftCorr) {
+    public static Double[] getA(Value<Double[]> drift, Value<Number> driftCorr) {
         Double[] twoDrifts = drift.value();
         double corr = driftCorr.value().doubleValue();
 

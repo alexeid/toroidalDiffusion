@@ -134,9 +134,6 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
                 context.getAsRealParameter(generator.getParams().get(PhyloWrappedBivariateDiffusion.sigmaParamName)));
 
 
-//TODO change to drift
-//        phyloWrappedBivariateDiffusion.setInputValue("alpha",
-//                context.getAsRealParameter(generator.getParams().get(PhyloWrappedBivariateDiffusion.alphaParamName)));
         phyloWrappedBivariateDiffusion.setInputValue("drift", context.getAsRealParameter(generator.getParams().get(PhyloWrappedBivariateDiffusion.DRIFT_PARAM)));
         phyloWrappedBivariateDiffusion.setInputValue("driftCorr", context.getAsRealParameter(generator.getParams().get(PhyloWrappedBivariateDiffusion.DRIFT_CORR_PARAM)));
 
@@ -147,7 +144,6 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
         wrappedRandomWalkOperator.setInputValue("weight", getOperatorWeight(muParameter.getDimension()));
         wrappedRandomWalkOperator.setInputValue("parameter", muParameter);
         wrappedRandomWalkOperator.setInputValue("windowSize", 0.1);
-        //wrappedRandomWalkOperator.setInputValue("useGaussian", false);
 
         wrappedRandomWalkOperator.initAndValidate();
         wrappedRandomWalkOperator.setID("WrappedRandomWalkOperator." + muParameter.getID());
