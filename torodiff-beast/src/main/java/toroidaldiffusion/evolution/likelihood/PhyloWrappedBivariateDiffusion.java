@@ -215,19 +215,17 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     // compute A given two drifts and their correlation
     private double[] getA() {
         double[] twoDrifts = driftInput.get().getDoubleValues(); // two drift terms
-        // TODO validate dims - contain two dims
+
         if (twoDrifts == null || twoDrifts.length != 2) {
             throw new IllegalArgumentException("Expected two drift terms in 'driftInput'. Found: " + (twoDrifts == null ? "null" : twoDrifts.length));
         }
 
         double corr = driftCorrInput.get().getArrayValue();
 
-        // TODO check [-1, 1]
         if (corr < -1.0 || corr > 1.0) {
             throw new IllegalArgumentException("Correlation value must be within [-1, 1]. Found: " + corr);
         }
 
-        //TODO
         double alpha1 = twoDrifts[0];
         double alpha2 = twoDrifts[1];
         double alpha3 = sqrt(alpha1*alpha2) * corr;
