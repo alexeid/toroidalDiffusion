@@ -112,6 +112,8 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
 //        Taxa taxa = Taxa.createTaxa(idMap); // TODO Alexei: why not tree.value().getTaxa() ?
         Taxa taxa = timeTree.getTaxa();
 
+        // TODO if y not specified then simulate from equilibrium distribution
+        // else just set y0 to given value
         Double[][] y0 = y.value();
 
         int nchar = y0.length;
@@ -187,35 +189,31 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
     private void traverseTree(TimeTreeNode node, Double[][] nodeStateArray, TaxaCharacterMatrix<Pair> nodeValues,
                               WrappedBivariateDiffusion diffusion) {
 
-        if (node.isLeaf()) {
-            Taxa taxa = nodeValues.getTaxa();
-            int taxonIndex = taxa.indexOfTaxon(node.getId());
+        if (node.isLeaf() || (node.getId() != null && !node.getId().trim().isEmpty())) {
+            int nodeIndex = alignmentRowindex(node, nodeValues);
 
             for (int i = 0; i < nodeStateArray.length; i++) {
                 Pair pair = new Pair(nodeStateArray[i][0], nodeStateArray[i][1]);
-                // tips
-                nodeValues.setState(taxonIndex, i, pair);
-            }
-
-        } else {
-            for (TimeTreeNode child : node.getChildren()) {
-
-                double branchLength = node.getAge() - child.getAge();
-
-                Double[][] newValue = getNewValue(nodeStateArray, diffusion, branchLength);
-                // if id not null and not empty string, then add internal nodes sequences to the alignment.
-                if (node.getId() != null && !node.getId().trim().isEmpty()) {
-                    int nodeIndex = node.getIndex();
-                    for (int i = 0; i < newValue.length; i++) {
-                        Pair pair = new Pair(newValue[i][0], newValue[i][1]);
-                        // internal nodes
-                        nodeValues.setState(nodeIndex, i, pair);
-                    }
-                }
-
-                traverseTree(child, newValue, nodeValues, diffusion);
+                // internal nodes
+                nodeValues.setState(nodeIndex, i, pair);
             }
         }
+
+        // recursion
+        for (TimeTreeNode child : node.getChildren()) {
+            double branchLength = node.getAge() - child.getAge();
+            Double[][] newValue = getNewValue(nodeStateArray, diffusion, branchLength);
+            traverseTree(child, newValue, nodeValues, diffusion);
+        }
+    }
+
+    private int alignmentRowindex(TimeTreeNode node, TaxaCharacterMatrix<Pair> alignment) {
+        if (node.isLeaf()) {
+            String id = node.getId();
+            int index = alignment.getTaxa().indexOfTaxon(id);
+            return index;
+        }
+        return node.getIndex();
     }
 
     Double[][] getNewValue(Double[][] oldValue, WrappedBivariateDiffusion diffusion, double branchLength) {
