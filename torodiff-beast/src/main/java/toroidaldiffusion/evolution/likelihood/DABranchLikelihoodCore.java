@@ -99,27 +99,61 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
 
 
     //TODO need to cache per site to avoid recalculation, when only the sequence at a site is changed
+//    public void calculateBranchLd(final double[] parentNodeValues, final double[] childNodeValues) {
+//
+//        //todo: bug: k+2, check the length and final index within the bound
+//
+//        assert parentNodeValues.length == nrOfSites * 2;
+//        for (int k = 0; k < nrOfSites; k++) {
+//            // pairs of values, dimension is 2 (angles) * N_sites
+//
+//            double phi0 = parentNodeValues[k];
+//            double psi0 = parentNodeValues[k + 1];
+//
+//            double phit = childNodeValues[k];
+//            double psit = childNodeValues[k + 1];
+//
+//            // diff.setParameters(muarr, alphaarr, sigmaarr), only once in the init method
+//            branchLogLd[currentBrLdIndex][k] = diff.loglikwndtpd(phi0, psi0, phit, psit);
+//
+//            if (branchLogLd[currentBrLdIndex][k] == 0) {
+//                throw new RuntimeException("\nBranch above node " + getBranchNr() + " likelihood = 0 !\n" +
+//                        "At site " + k); //+ ", child node = " + childNode + ", parent node = " + parentNode);
+//            }
+//
+//        } // end k  nrOfSites
+//
+//    }
+
     public void calculateBranchLd(final double[] parentNodeValues, final double[] childNodeValues) {
 
-        for (int k = 0; k < nrOfSites; k++) {
-            // pairs of values, dimension is 2 (angles) * N_sites
+        assert parentNodeValues.length == nrOfSites * 2;
+        assert childNodeValues.length == nrOfSites * 2;
+
+        for (int k = 0; k < nrOfSites * 2; k += 2) {  // Increment by 2 to handle pairs of values, e.g. k = 0: phi0 = 0, psi0 = 1; k = 2: phi0 = 2, psi0 = 3...
+
+            // Check that indices are within bounds before accessing
+            if (k + 1 >= parentNodeValues.length || k + 1 >= childNodeValues.length) {
+                throw new IndexOutOfBoundsException("Index out of range for parent or child node values at site " + k / 2);
+            }
+
             double phi0 = parentNodeValues[k];
             double psi0 = parentNodeValues[k + 1];
 
             double phit = childNodeValues[k];
             double psit = childNodeValues[k + 1];
 
-            // diff.setParameters(muarr, alphaarr, sigmaarr), only once in the init method
-            branchLogLd[currentBrLdIndex][k] = diff.loglikwndtpd(phi0, psi0, phit, psit);
+            branchLogLd[currentBrLdIndex][k / 2] = diff.loglikwndtpd(phi0, psi0, phit, psit);
 
-            if (branchLogLd[currentBrLdIndex][k] == 0) {
+            // Check if the calculated log-likelihood is zero, which may indicate an issue
+            if (branchLogLd[currentBrLdIndex][k / 2] == 0) {
                 throw new RuntimeException("\nBranch above node " + getBranchNr() + " likelihood = 0 !\n" +
-                        "At site " + k); //+ ", child node = " + childNode + ", parent node = " + parentNode);
+                        "At site " + (k / 2)); //+ ", child node = " + childNode + ", parent node = " + parentNode);
             }
 
-        } // end k  nrOfSites
-
+        } // end k loop
     }
+
 
     /**
      * Calculates log likelihood at this branch.
