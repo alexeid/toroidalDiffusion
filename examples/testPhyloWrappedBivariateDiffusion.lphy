@@ -1,9 +1,11 @@
 λ ~ LogNormal(meanlog=3.0, sdlog=0.1); //sd = 0.1
 ψ ~ Yule(lambda=λ, n=10);
 ψ2 = setInternalNodesID(ψ);
-mu ~ Normal(mean=-0.5, sd=1.5, replicates = 2);
-σ ~ LogNormal(meanlog=0.0, sdlog=1, replicates = 2);
-drift ~ LogNormal(meanlog=0.0, sdlog=0.5, replicates = 2);
+// angle is [0, 2pi)
+mu ~ LogNormal(meanlog=0.7, sdlog=0.5, replicates = 2);
+//mu ~ Normal(mean=-0.5, sd=1.5, replicates = 2);
+σ ~ LogNormal(meanlog=0, sdlog=1, replicates = 2);
+drift ~ LogNormal(meanlog=-0.28, sdlog=0.1, replicates = 2);
 driftCorr ~ Uniform(lower=-1.0, upper=1.0);
 
 //mu = [2.0, 2.5];
@@ -19,7 +21,7 @@ driftCorr ~ Uniform(lower=-1.0, upper=1.0);
 //drift: [0.3753179 1.0000000 2.6644083]
 
 
-y0 = [[3.0, 3.0], [3.0, 3.0], [3.0, 3.0], [3.0, 3.0], [3.0, 3.0], [3.0, 3.0], [3.0, 3.0], [3.0, 3.0], [3.0, 3.0], [3.0, 3.0]];
+y0 = rep([3.0, 3.0], 20);
 //y ~ PhyloWrappedBivariateDiffusion(mu=mu, sigma=σ, alpha=alpha, y0=y0, tree=ψ2);
 
 y ~ PhyloWrappedBivariateDiffusion(mu=mu, sigma=σ, drift=drift, driftCorr=driftCorr, y0=y0, tree=ψ2);

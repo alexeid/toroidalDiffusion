@@ -220,5 +220,43 @@ public class DihedralAngleAlignment implements AugmentedAlignment<Pair>, TextFil
         return ".tsv";
     }
 
+    /**
+     * @param dihedralAngleAlignment
+     * @return      double[]{minphi, maxphi, minpsi, maxpsi}
+     */
+    public static double[] getAngleRange(DihedralAngleAlignment dihedralAngleAlignment) {
+        double phi;
+        double psi;
+        Pair[][] pairs = dihedralAngleAlignment.pairs;
+        double minphi = 0;
+        double maxphi = 0;
+        double minpsi = 0;
+        double maxpsi = 0;
+        for (int i = 0; i < pairs.length; i++) {
+            Pair[] sequence = pairs[i];
+            for (int j = 0; j < sequence.length; j++) {
+                Pair site = sequence[j];
+                phi = site.getPhi();
+                psi = site.getPsi();
+                if (i == 0 && j == 0) {
+                    minphi =  maxphi = phi;
+                    minpsi =  maxpsi = psi;
+                    continue;
+                }
+
+                if (phi < minphi)
+                    minphi = phi;
+                else if (phi > maxphi)
+                    maxphi = phi;
+
+                if (psi < minpsi)
+                    minpsi = psi;
+                else if (psi > maxpsi)
+                    maxpsi = psi;
+            }
+        }
+        return new double[]{minphi, maxphi, minpsi, maxpsi};
+    }
+
 }
 

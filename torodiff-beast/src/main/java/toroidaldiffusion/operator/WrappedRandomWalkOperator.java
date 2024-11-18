@@ -1,6 +1,5 @@
 package toroidaldiffusion.operator;
 
-import beast.base.core.Input;
 import beast.base.inference.operator.RealRandomWalkOperator;
 import beast.base.inference.parameter.RealParameter;
 import beast.base.inference.util.InputUtil;
@@ -46,11 +45,13 @@ public class WrappedRandomWalkOperator extends RealRandomWalkOperator {
         /* compiled code */
     }
 
+    // TODO range [0, 2pi)
+    //  > 2 * Math.PI or >=
     public static double wrapAngles(double angle) {
-        while (angle > Math.PI) {
+        while (angle >= 2 * Math.PI) {
             angle -= 2 * Math.PI;
         }
-        while (angle < -Math.PI) {
+        while (angle < 0) {
             angle += 2 * Math.PI;
         }
         return angle;

@@ -4,6 +4,7 @@ import lphy.base.evolution.Taxa;
 import lphy.base.evolution.alignment.TaxaCharacterMatrix;
 import lphy.base.evolution.tree.TimeTree;
 import lphy.base.evolution.tree.TimeTreeNode;
+import lphy.core.logger.LoggerUtils;
 import lphy.core.model.GenerativeDistribution;
 import lphy.core.model.RandomVariable;
 import lphy.core.model.Value;
@@ -145,6 +146,11 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
         // if any internal node id is not null and not empty string,
         // then add its sequence to the alignment.
         traverseTree(timeTree.getRoot(), y0, nodeValues, wrappedBivariateDiffusion);
+
+        double[] range = DihedralAngleAlignment.getAngleRange((DihedralAngleAlignment) nodeValues);
+
+        LoggerUtils.log.info("Phi range = [" + range[0] + ", " + range[1] +
+                "], Psi range = [" + range[2] + ", " + range[3] + "].");
 
         return new RandomVariable<>("x", nodeValues, this);
     }
