@@ -13,7 +13,6 @@ driftCorr ~ Uniform(lower=-1.0, upper=1.0);
 //σ = [0.5, 0.75];
 //alpha ~ LogNormal(meanlog=0.0, sdlog=0.05, replicates = 3);
 //σ ~ Beta(alpha=0.5, beta=1, replicates = 2);
-//upper = sqrt(drift[0]*drift[1]);
 
 //prior:
 //mu: [-3.439946 -0.500000  2.439946]

@@ -18,8 +18,6 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import static java.lang.Math.sqrt;
-
 /**
  * @author Alexei Drummond
  */
@@ -60,6 +58,12 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
         this.driftCorr = driftCorr;
         this.y = y;
         this.random = RandomUtils.getRandom();
+
+        Double[] twoDrifts = drift.value();
+        double corr = driftCorr.value().doubleValue();
+        if (twoDrifts[0] * twoDrifts[1] <= corr * corr)
+            throw new IllegalArgumentException("Alpha1 * alpha2 must > alpha3 * alpha3 ! But alpha = {" +
+                    twoDrifts[0] + ", " + twoDrifts[1] + ", " + corr +  "} is invalid.");
     }
 
 //    @Deprecated
@@ -133,7 +137,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
 
         WrappedBivariateDiffusion wrappedBivariateDiffusion = new WrappedBivariateDiffusion();
 
-        Double[] a = getA(drift, driftCorr); // should be 3 numbers
+//        Double[] a = getA(drift, driftCorr); // should be 3 numbers
         /** how alpha is used:
          * double quo = Math.sqrt(sigma.get(0, 0) / sigma.get(1, 0));
          * A.set(0, 0, alpha.get(0, 0));
@@ -141,7 +145,10 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
          * A.set(0, 1, alpha.get(2, 0) * quo);
          * A.set(1, 0, alpha.get(2, 0) / quo);
          */
-        wrappedBivariateDiffusion.setParameters(mu.value(), a, sigma.value());
+
+        Double[] twoDrifts = drift.value();
+        Double[] alpha = new Double[]{twoDrifts[0], twoDrifts[1], driftCorr.value().doubleValue()};
+        wrappedBivariateDiffusion.setParameters(mu.value(), alpha, sigma.value());
 
         // if any internal node id is not null and not empty string,
         // then add its sequence to the alignment.
@@ -164,16 +171,16 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
      * @return
      */
 
-    public static Double[] getA(Value<Double[]> drift, Value<Number> driftCorr) {
-        Double[] twoDrifts = drift.value();
-        double corr = driftCorr.value().doubleValue();
-
-        double alpha1 = twoDrifts[0].doubleValue();
-        double alpha2 = twoDrifts[1].doubleValue();
-        double alpha3 = sqrt(alpha1*alpha2) * corr;
-
-        return new Double[]{twoDrifts[0], twoDrifts[1], alpha3};
-    }
+//    public static Double[] getA(Value<Double[]> drift, Value<Number> driftCorr) {
+//        Double[] twoDrifts = drift.value();
+//        double corr = driftCorr.value().doubleValue();
+//
+//        double alpha1 = twoDrifts[0].doubleValue();
+//        double alpha2 = twoDrifts[1].doubleValue();
+//        double alpha3 = sqrt(alpha1*alpha2) * corr;
+//
+//        return new Double[]{twoDrifts[0], twoDrifts[1], alpha3};
+//    }
 
     private void fillIdMap(TimeTreeNode node, SortedMap<String, Integer> idMap) {
         if (node.isLeaf()) {

@@ -8,13 +8,10 @@ import beast.base.evolution.tree.Tree;
 import beast.base.inference.State;
 import toroidaldiffusion.WrappedBivariateDiffusion;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
-
-import static java.lang.Math.sqrt;
 
 public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
@@ -85,6 +82,13 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     public void initAndValidate() {
         // tree, and all nodes values
         super.initAndValidate();
+
+        final double[] drift = driftInput.get().getDoubleValues();
+        final double corr = driftCorrInput.get().getArrayValue();
+        if (drift[0] * drift[1] <= corr * corr)
+            throw new IllegalArgumentException("Alpha1 * alpha2 must > alpha3 * alpha3 ! But alpha = {" +
+                    drift[0] + ", " + drift[1] + ", " + corr +  "} is invalid.");
+
         // TODO validate dims
         setDiffusionParams();
 
@@ -188,24 +192,25 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         return logP;
     }
 
-    @Override
-    public void init(PrintStream out) {
-        super.init(out);
-        out.print("alpha3 \t");
-    }
-
-    @Override
-    public void log(long sample, PrintStream out) {
-        super.log(sample, out);
-        out.print(getA()[2] + "\t");
-    }
+//    @Override
+//    public void init(PrintStream out) {
+//        super.init(out);
+//        out.print("alpha3 \t");
+//    }
+//
+//    @Override
+//    public void log(long sample, PrintStream out) {
+//        super.log(sample, out);
+//        out.print(getA()[2] + "\t");
+//    }
 
     // refresh muarr, alphaarr, sigmaarr for computing likelihood
     protected void setDiffusionParams() {
         final double[] muarr = muInput.get().getDoubleValues(); // mean of the diffusion
         final double[] sigmaarr = sigmaInput.get().getDoubleValues(); // variance term
 //        final double[] alphaarr = alphaInput.get().getDoubleValues(); // drift term
-        final double[] alphaarr = getA();
+        final double[] drift = driftInput.get().getDoubleValues();
+        final double[] alphaarr = new double[]{drift[0], drift[1], driftCorrInput.get().getArrayValue()};
 
         // init WrappedBivariateDiffusion here, setParameters(muarr, alphaarr, sigmaarr) once.
         // use diff.loglikwndtpd(phi0, psi0, phit, psit) later when compute likelihood
@@ -213,25 +218,25 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     }
 
     // compute A given two drifts and their correlation
-    private double[] getA() {
-        double[] twoDrifts = driftInput.get().getDoubleValues(); // two drift terms
-
-        if (twoDrifts == null || twoDrifts.length != 2) {
-            throw new IllegalArgumentException("Expected two drift terms in 'driftInput'. Found: " + (twoDrifts == null ? "null" : twoDrifts.length));
-        }
-
-        double corr = driftCorrInput.get().getArrayValue();
-
-        if (corr < -1.0 || corr > 1.0) {
-            throw new IllegalArgumentException("Correlation value must be within [-1, 1]. Found: " + corr);
-        }
-
-        double alpha1 = twoDrifts[0];
-        double alpha2 = twoDrifts[1];
-        double alpha3 = sqrt(alpha1*alpha2) * corr;
-
-        return new double[]{twoDrifts[0], twoDrifts[1], alpha3};
-    }
+//    private double[] getA() {
+//        double[] twoDrifts = driftInput.get().getDoubleValues(); // two drift terms
+//
+//        if (twoDrifts == null || twoDrifts.length != 2) {
+//            throw new IllegalArgumentException("Expected two drift terms in 'driftInput'. Found: " + (twoDrifts == null ? "null" : twoDrifts.length));
+//        }
+//
+//        double corr = driftCorrInput.get().getArrayValue();
+//
+//        if (corr < -1.0 || corr > 1.0) {
+//            throw new IllegalArgumentException("Correlation value must be within [-1, 1]. Found: " + corr);
+//        }
+//
+//        double alpha1 = twoDrifts[0];
+//        double alpha2 = twoDrifts[1];
+//        double alpha3 = sqrt(alpha1*alpha2) * corr;
+//
+//        return new double[]{twoDrifts[0], twoDrifts[1], alpha3};
+//    }
 
     protected int updateBranch(final DABranchLikelihoodCore daBranchLdCore, final Node node) {
         // the branch between node and parent

@@ -57,8 +57,11 @@ public class DihedralAnglesToBeast implements ValueToBEAST<DihedralAngleAlignmen
         dihedralAngles.setInputValue("keys", builder.toString());
         dihedralAngles.setInputValue("value", angles);
         dihedralAngles.setInputValue("minordimension", minordimension);
-        dihedralAngles.initAndValidate();
 
+        //TODO upper = "6.283"   2*pi
+        dihedralAngles.setInputValue("upper", 6.283);
+
+        dihedralAngles.initAndValidate();
         return dihedralAngles;
     }
 

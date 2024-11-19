@@ -155,8 +155,13 @@ public class DihedralAngleAlignment implements AugmentedAlignment<Pair>, TextFil
             builder.append("</tr>\n");
         }
 
+        double[] range = DihedralAngleAlignment.getAngleRange(this);
+
         builder.append("</table>\n");
-        builder.append("<p>ntax = ").append(taxa.ntaxa()).append("</p>\n");
+        builder.append("<p>ntax = ").append(taxa.ntaxa()).append(", ").append("</p>\n");
+        builder.append("<p>Phi range = [").append(range[0]).append(", ").append(range[1])
+                .append("], Psi range = [").append(range[2]).append(", ").append(range[3])
+                .append("].</p>\n");
         builder.append("</body>\n");
         builder.append("</html>");
 

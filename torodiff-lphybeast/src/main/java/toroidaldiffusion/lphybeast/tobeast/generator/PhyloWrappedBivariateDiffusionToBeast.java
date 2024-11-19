@@ -13,13 +13,10 @@ import toroidaldiffusion.DihedralAngleAlignment;
 import toroidaldiffusion.Pair;
 import toroidaldiffusion.PhyloWrappedBivariateDiffusion;
 import toroidaldiffusion.evolution.tree.DihedralAngleTreeModel;
-import toroidaldiffusion.operator.WrappedRandomWalkOperator;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static lphybeast.BEASTContext.getOperatorWeight;
 
 public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<PhyloWrappedBivariateDiffusion, toroidaldiffusion.evolution.likelihood.PhyloWrappedBivariateDiffusion> {
 
@@ -95,6 +92,8 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
             tipValues = dihedralAngleAlignment;
 
             RealParameter internalNodesValues = setInternalNodesRP(dihedralAngleAlignmentValue, internalNodesID, internalNodes, site);
+            //TODO upper = "6.283"   2*pi
+            internalNodesValues.setInputValue("upper", 6.283);
 
             context.addBEASTObject(internalNodesValues, dihedralAngleAlignmentValue);
 
@@ -128,8 +127,10 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
 
         phyloWrappedBivariateDiffusion.setInputValue("daTreeModel", dihedralAngleTreeModel);
 
-        phyloWrappedBivariateDiffusion.setInputValue("mu",
-                context.getAsRealParameter(generator.getParams().get(PhyloWrappedBivariateDiffusion.muParamName)));
+        RealParameter muParameter = context.getAsRealParameter(generator.getParams().get(PhyloWrappedBivariateDiffusion.muParamName));
+        //TODO upper = "6.283"   2*pi
+        muParameter.setInputValue("upper", 6.283);
+        phyloWrappedBivariateDiffusion.setInputValue("mu", muParameter);
         phyloWrappedBivariateDiffusion.setInputValue("sigma",
                 context.getAsRealParameter(generator.getParams().get(PhyloWrappedBivariateDiffusion.sigmaParamName)));
 
@@ -137,19 +138,19 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
         phyloWrappedBivariateDiffusion.setInputValue("drift", context.getAsRealParameter(generator.getParams().get(PhyloWrappedBivariateDiffusion.DRIFT_PARAM)));
         phyloWrappedBivariateDiffusion.setInputValue("driftCorr", context.getAsRealParameter(generator.getParams().get(PhyloWrappedBivariateDiffusion.DRIFT_CORR_PARAM)));
 
+// TODO rm, this op is used for sampling internal node sequences
+//        WrappedRandomWalkOperator wrappedRandomWalkOperator = new WrappedRandomWalkOperator();
+//        RealParameter muParameter = context.getAsRealParameter(generator.getParams().get(PhyloWrappedBivariateDiffusion.muParamName));
+//
+//        wrappedRandomWalkOperator.setInputValue("weight", getOperatorWeight(muParameter.getDimension()));
+//        wrappedRandomWalkOperator.setInputValue("parameter", muParameter);
+//        wrappedRandomWalkOperator.setInputValue("windowSize", 0.1);
+//
+//        wrappedRandomWalkOperator.initAndValidate();
+//        wrappedRandomWalkOperator.setID("WrappedRandomWalkOperator." + muParameter.getID());
 
-        WrappedRandomWalkOperator wrappedRandomWalkOperator = new WrappedRandomWalkOperator();
-        RealParameter muParameter = context.getAsRealParameter(generator.getParams().get(PhyloWrappedBivariateDiffusion.muParamName));
-
-        wrappedRandomWalkOperator.setInputValue("weight", getOperatorWeight(muParameter.getDimension()));
-        wrappedRandomWalkOperator.setInputValue("parameter", muParameter);
-        wrappedRandomWalkOperator.setInputValue("windowSize", 0.1);
-
-        wrappedRandomWalkOperator.initAndValidate();
-        wrappedRandomWalkOperator.setID("WrappedRandomWalkOperator." + muParameter.getID());
-
-        context.addSkipOperator(muParameter);
-        context.addExtraOperator(wrappedRandomWalkOperator);
+//        context.addSkipOperator(muParameter);
+//        context.addExtraOperator(wrappedRandomWalkOperator);
 
         phyloWrappedBivariateDiffusion.initAndValidate();
 
