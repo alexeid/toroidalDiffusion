@@ -7,7 +7,9 @@ mu ~ LogNormal(meanlog=0.7, sdlog=0.5, replicates = 2);
 σ ~ LogNormal(meanlog=0, sdlog=1, replicates = 2);
 drift ~ LogNormal(meanlog=-0.28, sdlog=0.1, replicates = 2);
 // correlation
-alpha3 ~ Uniform(lower=-1.0, upper=1.0);
+//alpha3 ~ Uniform(lower=-1.0, upper=1.0);
+// Alpha1 * alpha2 must > alpha3 * alpha3
+alpha3 = sqrt(drift[0] * drift[1] * 0.9);
 
 //mu = [2.0, 2.5];
 //alpha = [1.0, 1.0, 0.5];
