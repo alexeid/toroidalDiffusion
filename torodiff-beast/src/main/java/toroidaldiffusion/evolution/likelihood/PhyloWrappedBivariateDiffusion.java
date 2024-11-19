@@ -295,8 +295,8 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         // ====== 2. recalculate likelihood if either child node wasn't clean ======
         if (nodeUpdate != Tree.IS_CLEAN) {
 
-            // brLD is linked to the child node index down
-            daBranchLdCore.setBranchLdForUpdate();
+            // TODO why ?
+//            daBranchLdCore.setBranchLdForUpdate();
 
             // pairs of values, dimension is 2 (angles) * N_sites
             double[] parentNodeValues = daTreeModel.getNodeValue(parent);

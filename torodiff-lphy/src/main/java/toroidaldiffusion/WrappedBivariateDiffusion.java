@@ -236,6 +236,7 @@ public class WrappedBivariateDiffusion {
         return samples;
     }
 
+    // WN wrapped normal, TPD transition probability density
     public double loglikwndtpd(double phi0, double psi0, double phit, double psit) {
         if (penalty > 0.0) {
             return Double.NEGATIVE_INFINITY;
