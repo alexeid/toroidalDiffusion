@@ -20,9 +20,10 @@ public class DriftOperator extends BactrianScaleOperator {
 
     @Override
     public double proposal() {
+        double logProb = super.proposal();
         boolean success = validateAlpha();
         if (!success) return Double.NEGATIVE_INFINITY;
-        return super.proposal();
+        return logProb;
     }
 
     private boolean validateAlpha() {
