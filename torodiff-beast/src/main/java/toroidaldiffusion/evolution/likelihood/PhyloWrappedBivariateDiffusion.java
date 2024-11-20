@@ -296,10 +296,10 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         if (nodeUpdate != Tree.IS_CLEAN) {
 
             // TODO why ?
-//            daBranchLdCore.setBranchLdForUpdate();
+            daBranchLdCore.setBranchLdForUpdate();
 
             //set initial params values
-            setDiffusionParams();
+//            setDiffusionParams();
 
             // pairs of values, dimension is 2 (angles) * N_sites
             double[] parentNodeValues = daTreeModel.getNodeValue(parent);
