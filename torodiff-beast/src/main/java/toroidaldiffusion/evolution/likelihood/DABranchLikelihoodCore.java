@@ -125,10 +125,12 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
 //
 //    }
 
-    public void calculateBranchLd(final double[] parentNodeValues, final double[] childNodeValues) {
+    public void calculateBranchLd(final double[] parentNodeValues, final double[] childNodeValues, double branchTime) {
 
         assert parentNodeValues.length == nrOfSites * 2;
         assert childNodeValues.length == nrOfSites * 2;
+
+        diff.setParameters(branchTime);
 
         for (int k = 0; k < nrOfSites; k++) {
 

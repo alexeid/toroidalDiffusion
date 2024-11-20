@@ -154,7 +154,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 //        }
 
         // set diffusion params before computing likelihood
-        setDiffusionParams();
+        //setDiffusionParams();
 
         // exclude root node, branches = nodes - 1
         final int rootIndex = getRootIndex();
@@ -298,11 +298,14 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
             // TODO why ?
 //            daBranchLdCore.setBranchLdForUpdate();
 
+            //set initial params values
+            setDiffusionParams();
+
             // pairs of values, dimension is 2 (angles) * N_sites
             double[] parentNodeValues = daTreeModel.getNodeValue(parent);
             double[] childNodeValues = daTreeModel.getNodeValue(node);
             // populate branchLd[][excl. root], nodeIndex is child
-            daBranchLdCore.calculateBranchLd(parentNodeValues, childNodeValues);
+            daBranchLdCore.calculateBranchLd(parentNodeValues, childNodeValues, branchTime);
         }
 
         return nodeUpdate;
