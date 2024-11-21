@@ -1,30 +1,23 @@
-λ ~ LogNormal(meanlog=3.0, sdlog=0.1); //sd = 0.1
-ψ ~ Yule(lambda=λ, n=10);
-ψ2 = setInternalNodesID(ψ);
-// angle is [0, 2pi)
-mu ~ LogNormal(meanlog=0.7, sdlog=0.5, replicates = 2);
-//mu ~ Normal(mean=-0.5, sd=1.5, replicates = 2);
-σ ~ LogNormal(meanlog=0, sdlog=1, replicates = 2);
-drift ~ LogNormal(meanlog=-0.28, sdlog=0.1, replicates = 2);
-// correlation
-//alpha3 ~ Uniform(lower=-1.0, upper=1.0);
-// Alpha1 * alpha2 must > alpha3 * alpha3
-alpha3 = sqrt(drift[0] * drift[1] * 0.9);
+data {
+  n = 10;
+  taxa = taxa(names=1:n); //beast bug: taxa names integer must start from 1 for beast xml
+  internalnodesID = 11:19;
+}
 
-//mu = [2.0, 2.5];
-//alpha = [1.0, 1.0, 0.5];
-//σ = [0.5, 0.75];
-//alpha ~ LogNormal(meanlog=0.0, sdlog=0.05, replicates = 3);
-//σ ~ Beta(alpha=0.5, beta=1, replicates = 2);
+model {
+  λ ~ LogNormal(meanlog=3.0, sdlog=0.1); //sd = 0.1
+  ψ ~ Yule(lambda=λ, taxa=taxa);
+  ψ2 = setInternalNodesID(tree = ψ, internalNodesID = internalnodesID);
 
-//prior:
-//mu: [-3.439946 -0.500000  2.439946]
-//σ: [0.1408635 1.0000000 7.0990714]
-//drift: [0.3753179 1.0000000 2.6644083]
+  // angle is [0, 2pi)
+  mu ~ LogNormal(meanlog=0.7, sdlog=0.5, replicates = 2);
+  σ ~ LogNormal(meanlog=0, sdlog=1, replicates = 2);
+  drift ~ LogNormal(meanlog=-0.28, sdlog=0.1, replicates = 2);
+  // correlation
+  alpha3 ~ Uniform(lower=-1.0, upper=1.0);
 
+  y0 = rep([3.0, 3.0], 10);
+  y ~ PhyloWrappedBivariateDiffusion(mu=mu, sigma=σ, drift=drift, driftCorr=alpha3, y0=y0, tree=ψ2);
+}
 
-y0 = rep([3.0, 3.0], 20);
-//y ~ PhyloWrappedBivariateDiffusion(mu=mu, sigma=σ, alpha=alpha, y0=y0, tree=ψ2);
-
-y ~ PhyloWrappedBivariateDiffusion(mu=mu, sigma=σ, drift=drift, driftCorr=alpha3, y0=y0, tree=ψ2);
 
