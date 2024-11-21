@@ -1,7 +1,9 @@
 package toroidaldiffusion.lphybeast.tobeast.generator;
 
 import beast.base.core.BEASTInterface;
+import beast.base.evolution.tree.Tree;
 import beast.base.evolution.tree.TreeInterface;
+import beast.base.inference.Operator;
 import beast.base.inference.parameter.RealParameter;
 import lphy.base.evolution.Taxa;
 import lphy.base.evolution.tree.TimeTree;
@@ -9,6 +11,8 @@ import lphy.base.evolution.tree.TimeTreeNode;
 import lphy.core.model.Value;
 import lphybeast.BEASTContext;
 import lphybeast.GeneratorToBEAST;
+import lphybeast.tobeast.operators.BICESPSTreeOperatorStractegy;
+import lphybeast.tobeast.operators.TreeOperatorStrategy;
 import toroidaldiffusion.DihedralAngleAlignment;
 import toroidaldiffusion.Pair;
 import toroidaldiffusion.PhyloWrappedBivariateDiffusion;
@@ -17,6 +21,8 @@ import toroidaldiffusion.evolution.tree.DihedralAngleTreeModel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+
 
 public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<PhyloWrappedBivariateDiffusion, toroidaldiffusion.evolution.likelihood.PhyloWrappedBivariateDiffusion> {
 
@@ -124,6 +130,15 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
         dihedralAngleTreeModel.setInputValue("tree", timeTree);
         dihedralAngleTreeModel.initAndValidate();
 
+        //*** TODO for dev ***
+        Tree stateNodeTree = (Tree) timeTree;
+        context.addSkipOperator(stateNodeTree);
+        // fix tree topology
+        Operator rootAgeScale = TreeOperatorStrategy.createRootHeightOperator(stateNodeTree, context);
+        Operator treeFlex = BICESPSTreeOperatorStractegy.createBICEPSTreeFlex(stateNodeTree, context);
+        context.addExtraOperator(rootAgeScale);
+        context.addExtraOperator(treeFlex);
+        //*** end ***
 
         phyloWrappedBivariateDiffusion.setInputValue("daTreeModel", dihedralAngleTreeModel);
 
