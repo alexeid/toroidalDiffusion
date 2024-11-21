@@ -18,7 +18,7 @@ model {
 
   y0 = rep([3.0, 3.0], 10);
   // give the root sequence
-  y ~ PhyloWrappedBivariateDiffusion(mu=mu, sigma=σ, drift=drift, driftCorr=alpha3, y0=y0, tree=ψ2);
+  y ~ PhyloWrappedBivariateDiffusion(mu=mu, sigma=σ, drift=drift, driftCorr=driftCorr, y0=y0, tree=ψ2);
 }
 
 
