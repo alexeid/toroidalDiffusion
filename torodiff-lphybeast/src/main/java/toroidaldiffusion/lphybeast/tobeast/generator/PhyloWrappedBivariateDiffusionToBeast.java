@@ -3,6 +3,7 @@ package toroidaldiffusion.lphybeast.tobeast.generator;
 import beast.base.core.BEASTInterface;
 import beast.base.evolution.tree.Tree;
 import beast.base.evolution.tree.TreeInterface;
+import beast.base.evolution.tree.TreeParser;
 import beast.base.inference.Operator;
 import beast.base.inference.parameter.RealParameter;
 import lphy.base.evolution.Taxa;
@@ -129,6 +130,11 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
 
         dihedralAngleTreeModel.setInputValue("tree", timeTree);
         dihedralAngleTreeModel.initAndValidate();
+
+        //*** https://github.com/LinguaPhylo/LPhyBeast/issues/172 **//
+        if (timeTree instanceof TreeParser treeParser)
+            // IsLabelledNewick must = false, otherwise internal node index will be messed up
+            treeParser.setInputValue("IsLabelledNewick", false);
 
         //*** TODO for dev ***
         Tree stateNodeTree = (Tree) timeTree;
