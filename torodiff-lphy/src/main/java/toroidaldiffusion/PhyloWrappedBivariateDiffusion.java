@@ -12,6 +12,7 @@ import lphy.core.model.annotation.GeneratorCategory;
 import lphy.core.model.annotation.GeneratorInfo;
 import lphy.core.model.annotation.ParameterInfo;
 import lphy.core.simulator.RandomUtils;
+import org.apache.commons.math3.exception.MathIllegalStateException;
 import org.apache.commons.math3.random.RandomGenerator;
 
 import java.util.List;
@@ -238,11 +239,20 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
         diffusion.setParameters(branchLength);
         for (int i = 0; i < oldValue.length; i += 1) {
 
-            double[][] samples = diffusion.sampleByRejection(oldValue[i][0], oldValue[i][1], 1);
+            try {
+                double[][] samples = diffusion.sampleByRejection(oldValue[i][0], oldValue[i][1], 1);
 
-            newValues[i][0] = samples[0][0];
-            newValues[i][1] = samples[0][1];
+                newValues[i][0] = samples[0][0];
+                newValues[i][1] = samples[0][1];
+            } catch (MathIllegalStateException e) {
+                throw new IllegalStateException("Cannot calculate new value for " + oldValue[i][0] +
+                        " and " + oldValue[i][1] + ", given branch length = " + branchLength +
+                        "\nmu = [" + diffusion.mu.get(0) + ", " + diffusion.mu.get(1) + "]" +
+                        "\nsigma = [" + diffusion.sigma.get(0) + ", " + diffusion.sigma.get(1) + "]" +
+                        "\nalpha = [" + diffusion.alpha.get(0) + ", " + diffusion.alpha.get(1) + ", " + diffusion.alpha.get(2) + "]");
+            }
         }
+
         return newValues;
     }
 
