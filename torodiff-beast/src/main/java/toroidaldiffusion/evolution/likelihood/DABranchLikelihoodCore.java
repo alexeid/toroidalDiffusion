@@ -91,7 +91,7 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
     //============ branch likelihood ============
 
     /**
-     * use before {@link #calculateBranchLd(double[], double[])}
+     * use before {@link #calculateBranchLd(double[], double[], double)}
      */
     public void setBranchLdForUpdate() {
         currentBrLdIndex = 1 - currentBrLdIndex; // 0 or 1
@@ -125,18 +125,25 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
 //
 //    }
 
+    /**
+     * set mu, sigma, alpha, before this method
+     * @param parentNodeValues   pairs of angles at the parent node, length is nrOfSites * 2.
+     * @param childNodeValues    pairs of angles at the child node, length is nrOfSites * 2.
+     * @param branchTime         branch time (length) from parent to child
+     */
     public void calculateBranchLd(final double[] parentNodeValues, final double[] childNodeValues, double branchTime) {
 
         assert parentNodeValues.length == nrOfSites * 2;
         assert childNodeValues.length == nrOfSites * 2;
 
+        //Require to set time before loglikwndtpd
         diff.setParameters(branchTime);
-
+        // k is site index
         for (int k = 0; k < nrOfSites; k++) {
-
+            // two angles, phi and psi, at the parent node and the kth site.
             double phi0 = parentNodeValues[k * 2];
             double psi0 = parentNodeValues[k * 2 + 1];
-
+            // two angles, phi and psi, at the child node and the kth site.
             double phit = childNodeValues[k * 2];
             double psit = childNodeValues[k * 2 + 1];
 
