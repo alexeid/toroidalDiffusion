@@ -7,6 +7,9 @@ import beast.base.util.Randomizer;
 
 public class WrappedRandomWalkOperator extends RealRandomWalkOperator {
 
+    public static final double ANGLE_LOWER = 0.0;
+    public static final double ANGLE_UPPER = 2 * Math.PI;
+
     private double windowSize = 1;
     private boolean useGaussian;
 
@@ -29,7 +32,7 @@ public class WrappedRandomWalkOperator extends RealRandomWalkOperator {
             newValue = value + Randomizer.nextDouble() * 2 * windowSize - windowSize;
         }
 
-        // Wrap the new value to be within -π to +π
+        // Wrap the new value to be within 0 to 2π
         newValue = wrapAngles(newValue);
 
         // If the new value is the same as the current value, reject the proposal
@@ -48,10 +51,10 @@ public class WrappedRandomWalkOperator extends RealRandomWalkOperator {
     // TODO range [0, 2pi)
     //  > 2 * Math.PI or >=
     public static double wrapAngles(double angle) {
-        while (angle >= 2 * Math.PI) {
+        while (angle >= ANGLE_UPPER) {
             angle -= 2 * Math.PI;
         }
-        while (angle < 0) {
+        while (angle < ANGLE_LOWER) {
             angle += 2 * Math.PI;
         }
         return angle;

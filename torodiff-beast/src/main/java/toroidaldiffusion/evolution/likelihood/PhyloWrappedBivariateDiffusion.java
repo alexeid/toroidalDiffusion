@@ -395,6 +395,8 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
         for (DABranchLikelihoodCore daBrLdCore : daBranchLdCores)
             daBrLdCore.store();
+        //TODO estimating internal node sequences needs store/restore?
+        // param store is protected?
 
         System.arraycopy(branchLengths, 0, storedBranchLengths, 0, getNrOfBranches());
         System.arraycopy(branchLogLikelihoods, 0, storedBranchLogLikelihoods, 0, getNrOfBranches()+1);
@@ -411,6 +413,8 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
         for (DABranchLikelihoodCore daBrLdCore : daBranchLdCores)
             daBrLdCore.restore();
+        //TODO estimating internal node sequences needs store/restore?
+//        daTreeModelInput.get().getInternalNodesValuesParam().restore();
 
         // pass reference in restore, but have to copy array in store.
         double[] tmp1 = branchLengths;

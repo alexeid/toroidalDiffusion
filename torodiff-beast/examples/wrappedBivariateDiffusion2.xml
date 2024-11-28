@@ -88,7 +88,7 @@ model {
         <!--        <operator id="drift.scale" spec="kernel.BactrianScaleOperator" parameter="@drift" upper="10.0" weight="1.624504792712471"/>-->
 <!--        <operator id="drift.scale" spec="toroidaldiffusion.operator.DriftOperator" parameter="@drift" driftCorr="@alpha3" upper="10.0" weight="10"/>-->
 
-                <operator id="lambda.scale" spec="kernel.BactrianScaleOperator" parameter="@lambda" upper="10.0" weight="1.0"/>
+<!--                <operator id="lambda.scale" spec="kernel.BactrianScaleOperator" parameter="@lambda" upper="10.0" weight="1.0"/>-->
         <!--        <operator id="mu.scale" spec="kernel.BactrianScaleOperator" parameter="@mu" upper="10.0" weight="1.624504792712471"/>-->
         <!--        <operator id="sigma.scale" spec="kernel.BactrianScaleOperator" parameter="@sigma" upper="10.0" weight="1.624504792712471"/>-->
 
