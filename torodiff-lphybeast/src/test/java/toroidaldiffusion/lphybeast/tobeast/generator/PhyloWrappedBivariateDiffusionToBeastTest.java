@@ -1,15 +1,12 @@
 package toroidaldiffusion.lphybeast.tobeast.generator;
 
 import beast.base.inference.parameter.RealParameter;
-import lphy.base.evolution.Taxon;
 import lphy.base.evolution.tree.TimeTree;
 import lphy.base.evolution.tree.TimeTreeNode;
 import lphy.core.model.Value;
 import lphy.core.parser.LPhyListenerImpl;
 import lphy.core.parser.LPhyParserDictionary;
 import lphy.core.parser.REPL;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import toroidaldiffusion.DihedralAngleAlignment;
 import toroidaldiffusion.Pair;
@@ -19,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class PhyloWrappedBivariateDiffusionToBeastTest {
 
@@ -61,7 +58,7 @@ class PhyloWrappedBivariateDiffusionToBeastTest {
 
         int site = dihedralAngleAlignment.nchar() * 2;
 
-        RealParameter internalNodesValues = PhyloWrappedBivariateDiffusionToBeast.setInternalNodesRP(dihedralAngleValue, ids, internalNodes, site);
+        RealParameter internalNodesValues = PhyloWrappedBivariateDiffusionToBeast.getInternalNodesParam(dihedralAngleValue, ids, internalNodes, site);
 
         //check for the ids
         String expectedKeys = String.join(" ", ids);
