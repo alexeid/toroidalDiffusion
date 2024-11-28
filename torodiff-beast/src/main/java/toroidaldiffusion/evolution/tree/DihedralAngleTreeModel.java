@@ -11,6 +11,10 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Stream;
 
+/**
+ * Use BEAST tree node Nr to map the internal node sequences (flatten in an 1d array parameter)
+ * to the corresponding node during likelihood calculation.
+ */
 public class DihedralAngleTreeModel extends Distribution implements DATreeModel {
     final public Input<TreeInterface> treeInput = new Input<>("tree", "tree over which to calculate a prior or likelihood");
 
@@ -106,9 +110,11 @@ public class DihedralAngleTreeModel extends Distribution implements DATreeModel 
     }
 
     /**
-     *
-     * @param node
-     * @return  an array of pairs of values, dimension is 2 (angles) * N_sites
+     * Assuming the internal node sequences are arranged in the order of the BEAST node numbers Nr.
+     * Additionally, the internal node sequences are stored in a 2D array,
+     * with the number of rows corresponding to the total number of internal nodes.
+     * @param node  a tip node or internal node.
+     * @return  an array of pairs of values, dimension is 2 (angles) * N_sites.
      */
     @Override
     public double[] getNodeValue(Node node) {
@@ -117,16 +123,14 @@ public class DihedralAngleTreeModel extends Distribution implements DATreeModel 
 
             Double[] values = getTipsValuesParam().getRowValues(key);
             return Stream.of(values).mapToDouble(Double::doubleValue).toArray();
-
         }
-//            return getTipsValues()[node.getNr()];
 
         // TODO check: beast Nr starts ?
-        return getInternalNodesValues()[node.getNr() - getLeafNodeCount()];
+        return getInternalNodesValues()[node.getNr() - getLeafNodeCount()]; // including root
     }
 
 
-    private double[][] convertTo2D(double[] flatArray, int nrows, int ncols) {
+    private static double[][] convertTo2D(double[] flatArray, int nrows, int ncols) {
         if (flatArray.length != nrows * ncols)
             throw new IllegalArgumentException("Invalid length of tip flatArray ! " +
                     flatArray.length + " != " + nrows + " * " + ncols + " !");
