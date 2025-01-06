@@ -27,6 +27,7 @@ class WrappedBivariateDiffusionTest {
          * 	at commons.math3@3.6.1/org.apache.commons.math3.optim.BaseOptimizer.optimize(BaseOptimizer.java:153)
          * 	at commons.math3@3.6.1/org.apache.commons.math3.optim.BaseMultivariateOptimizer.optimize(BaseMultivariateOptimizer.java:65)
          * 	at commons.math3@3.6.1/org.apache.commons.math3.optim.nonlinear.scalar.MultivariateOptimizer.optimize(MultivariateOptimizer.java:63)
+         * 	at toroidaldiffusion@0.0.1-SNAPSHOT/toroidaldiffusion.WrappedBivariateDiffusion.sampleByRejection(WrappedBivariateDiffusion.java:209)
          */
         double[][] samples = diffusion.sampleByRejection(3.0875357245670547, 3.2389546454267055, 1);
 
