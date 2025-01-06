@@ -1,11 +1,21 @@
 package toroidaldiffusion.operator;
 
-import beast.base.inference.operator.RealRandomWalkOperator;
+import beast.base.core.Input;
+import beast.base.inference.Operator;
 import beast.base.inference.parameter.RealParameter;
 import beast.base.inference.util.InputUtil;
 import beast.base.util.Randomizer;
 
-public class WrappedRandomWalkOperator extends RealRandomWalkOperator {
+import java.text.DecimalFormat;
+
+public class WrappedRandomWalkOperator extends Operator {
+
+    final public Input<Double> windowSizeInput =
+            new Input<>("windowSize", "the size of the window both up and down when using uniform interval OR standard deviation when using Gaussian", Input.Validate.REQUIRED);
+    final public Input<RealParameter> parameterInput =
+            new Input<>("parameter", "the parameter to operate a random walk on.", Input.Validate.REQUIRED);
+    final public Input<Boolean> useGaussianInput =
+            new Input<>("useGaussian", "Use Gaussian to move instead of uniform interval. Default false.", false);
 
     public static final double ANGLE_LOWER = 0.0;
     public static final double ANGLE_UPPER = 2 * Math.PI;
@@ -44,8 +54,6 @@ public class WrappedRandomWalkOperator extends RealRandomWalkOperator {
         param.setValue(i, newValue);
 
         return 0.0; // Hastings ratio is 0.0 (log(1))
-
-        /* compiled code */
     }
 
     // TODO range [0, 2pi)
@@ -61,13 +69,12 @@ public class WrappedRandomWalkOperator extends RealRandomWalkOperator {
     }
 
     public double getCoercableParameterValue() {
-        /* compiled code */
         return windowSize;
     }
 
     public void setCoercableParameterValue(double v) {
         windowSize = v;
-        /* compiled code */ }
+    }
 
     public void optimize(double logAlpha) {
         // must be overridden by operator implementation to have an effect
@@ -75,6 +82,26 @@ public class WrappedRandomWalkOperator extends RealRandomWalkOperator {
 
         delta += Math.log(windowSize);
         windowSize = Math.exp(delta);
-        /* compiled code */ }
+    }
+
+    @Override
+    public final String getPerformanceSuggestion() {
+        double prob = m_nNrAccepted / (m_nNrAccepted + m_nNrRejected + 0.0);
+        double targetProb = getTargetAcceptanceProbability();
+
+        double ratio = prob / targetProb;
+        if (ratio > 2.0) ratio = 2.0;
+        if (ratio < 0.5) ratio = 0.5;
+
+        // new scale factor
+        double newWindowSize = windowSize * ratio;
+
+        DecimalFormat formatter = new DecimalFormat("#.###");
+        if (prob < 0.10) {
+            return "Try setting window size to about " + formatter.format(newWindowSize);
+        } else if (prob > 0.40) {
+            return "Try setting window size to about " + formatter.format(newWindowSize);
+        } else return "";
+    }
 
 }
