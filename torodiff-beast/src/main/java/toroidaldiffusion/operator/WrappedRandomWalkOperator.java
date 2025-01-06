@@ -11,11 +11,17 @@ import java.text.DecimalFormat;
 public class WrappedRandomWalkOperator extends Operator {
 
     final public Input<Double> windowSizeInput =
-            new Input<>("windowSize", "the size of the window both up and down when using uniform interval OR standard deviation when using Gaussian", Input.Validate.REQUIRED);
+            new Input<>("windowSize", "the size of the window both up and down when using uniform interval OR standard deviation when using Gaussian",
+                    Input.Validate.REQUIRED);
     final public Input<RealParameter> parameterInput =
-            new Input<>("parameter", "the parameter to operate a random walk on.", Input.Validate.REQUIRED);
+            new Input<>("parameter", "the parameter to operate a random walk on.",
+                    Input.Validate.REQUIRED);
     final public Input<Boolean> useGaussianInput =
             new Input<>("useGaussian", "Use Gaussian to move instead of uniform interval. Default false.", false);
+
+//    final public Input<Tree> treeInput =
+//            new Input<>("tree", "beast.tree on which this operation is performed",
+//                    Input.Validate.REQUIRED);
 
     public static final double ANGLE_LOWER = 0.0;
     public static final double ANGLE_UPPER = 2 * Math.PI;
@@ -23,9 +29,12 @@ public class WrappedRandomWalkOperator extends Operator {
     private double windowSize = 1;
     private boolean useGaussian;
 
+//    private Tree tree;
+
     public void initAndValidate() {
         windowSize = windowSizeInput.get();
         useGaussian = useGaussianInput.get();
+//        tree = treeInput.get();
     }
 
     public double proposal() {
@@ -52,6 +61,14 @@ public class WrappedRandomWalkOperator extends Operator {
 
         // Set the new value
         param.setValue(i, newValue);
+
+//        // assuming nodeIndex is Nr
+//        int nodeIndex = (int) Math.floor((double) i / param.getMinorDimension1());
+//        int nr = nodeIndex + tree.getLeafNodeCount();
+//        if (nr > tree.getNodeCount())
+//            throw new IllegalArgumentException("Node index (" + nr + ") must < nodes count (" + tree.getNodeCount() + ") ! ");
+//        Node internal = tree.getNode(nr);
+//        internal.makeDirty(Tree.IS_DIRTY);
 
         return 0.0; // Hastings ratio is 0.0 (log(1))
     }

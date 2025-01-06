@@ -251,8 +251,9 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
         // if tips, always false
         //TODO cache per site to avoid recalculation, when only sequence at a site is changed
-//        boolean seqUpdate = nodesStates.isNodeStatesDirty(nodeNr) || nodesStates.isNodeStatesDirty(parentNum);
-        boolean seqUpdate = false;
+        boolean seqUpdate = isInternalNodeSeqDirty(nodeNr) || isInternalNodeSeqDirty(parentNum);
+        //TODO use nodeUpdate ?
+//        boolean seqUpdate = false;
 
         int nodeUpdate = node.isDirty() | parent.isDirty();
 

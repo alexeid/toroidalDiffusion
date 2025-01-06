@@ -92,10 +92,10 @@ model {
         <!--        <operator id="mu.scale" spec="kernel.BactrianScaleOperator" parameter="@mu" upper="10.0" weight="1.624504792712471"/>-->
         <!--        <operator id="sigma.scale" spec="kernel.BactrianScaleOperator" parameter="@sigma" upper="10.0" weight="1.624504792712471"/>-->
 
-<!--        <operator id="psi.rootAgeScale" spec="kernel.BactrianScaleOperator" rootOnly="true" tree="@psi2" upper="0.975" weight="1.0"/>-->
-<!--        <operator id="psi.BICEPSTreeFlex" spec="TreeStretchOperator" scaleFactor="0.01" tree="@psi2" weight="8.141810630738087"/>-->
+        <operator id="psi.rootAgeScale" spec="kernel.BactrianScaleOperator" rootOnly="true" tree="@psi2" upper="0.975" weight="1.0"/>
+        <operator id="psi.BICEPSTreeFlex" spec="TreeStretchOperator" scaleFactor="0.01" tree="@psi2" weight="8.141810630738087"/>
 
-        <!-- TODO Err: PhyloWrappedBivariateDiffusion likelihood diff ?-->
+        <!-- TODO assuming internal nodes sequences stored by the order of Nr -->
         <operator id="internalNodeSeqs.WrappedRandomWalk" spec="toroidaldiffusion.operator.WrappedRandomWalkOperator"
                   parameter="@internalNodeSeqs" windowSize="0.1" weight="10.0"/>
 

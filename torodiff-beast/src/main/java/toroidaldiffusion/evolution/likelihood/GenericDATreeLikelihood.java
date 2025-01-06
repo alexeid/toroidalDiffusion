@@ -31,7 +31,9 @@ public class GenericDATreeLikelihood extends Distribution {
      */
     protected RealParameter tipValuesParam;
     /**
-     * internal nodes values
+     * internal nodes values:
+     * minordimension / 2 is the number of sites,
+     * dimension / minordimension is the node index.
      */
     protected RealParameter internalNodesParam;
 
@@ -49,7 +51,18 @@ public class GenericDATreeLikelihood extends Distribution {
         internalNodesParam = daTreeModel.getInternalNodesValuesParam();
     }
 
+    // TODO assuming internal nodes sequences stored by the order of Nr
+    public boolean isInternalNodeSeqDirty(final int nodeIndex) {
+        int dirtyI = internalNodesParam.getLastDirty();
 
+        // assuming nodeIndex is Nr, and index starts from 1 to the number of nodes.
+        int rawI = (int) Math.floor((double) dirtyI / internalNodesParam.getMinorDimension1());
+        final int nr = rawI + tree.getLeafNodeCount();
+        if (nr > tree.getNodeCount())
+            throw new IllegalArgumentException("Node index (" + nr + ") must < nodes count (" + tree.getNodeCount() + ") ! ");
+
+        return nr == nodeIndex;
+    }
 
     /**
      * @return a list of unique ids for the state nodes that form the argument
