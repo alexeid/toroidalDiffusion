@@ -15,7 +15,7 @@ model {
 -->
 <beast namespace="beast.core:beast.evolution.alignment:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.base.evolution.alignment:beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.evolution.tree.coalescent:beast.pkgmgmt:beast.base.core:beast.base.inference.util:beast.evolution.nuc:beast.base.evolution.operator:beast.base.inference.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood" required="lphybeast v1.2.1:torodiff-beast v0.0.1" version="2.7">
 
-    <run id="MCMC" spec="MCMC" chainLength="1000000" preBurnin="80">
+    <run id="MCMC" spec="MCMC" chainLength="10000000" preBurnin="8000">
         <state id="State" spec="State">
             <parameter id="drift" spec="parameter.RealParameter" dimension="2" name="stateNode">0.6878597028874919 0.7269108836171956</parameter>
             <parameter id="alpha3" spec="parameter.RealParameter" name="stateNode">-0.5124811472532143</parameter>
@@ -99,7 +99,7 @@ model {
         <operator id="internalNodeSeqs.WrappedRandomWalk" spec="toroidaldiffusion.operator.WrappedRandomWalkOperator"
                   parameter="@internalNodeSeqs" windowSize="0.1" weight="10.0"/>
 
-        <logger id="ScreenLogger" spec="Logger" logEvery="50000">
+        <logger id="ScreenLogger" spec="Logger" logEvery="500000">
             <log idref="posterior"/>
             <log idref="likelihood"/>
             <log idref="prior"/>
@@ -110,7 +110,7 @@ model {
             <log idref="lambda"/>
             <!--            <log id="TreeStat" spec="beast.base.evolution.tree.TreeStatLogger" tree="@psi2"/>-->
         </logger>
-        <logger id="Logger" spec="Logger" fileName="test.log" logEvery="500">
+        <logger id="Logger" spec="Logger" fileName="test.log" logEvery="5000">
             <log idref="posterior"/>
             <log idref="likelihood"/>
             <log idref="prior"/>
@@ -125,7 +125,7 @@ model {
             <!-- TODO too many nodes ?-->
             <log idref="internalNodeSeqs"/>
         </logger>
-        <logger id="TreeLogger.psi" spec="Logger" fileName="test.trees" logEvery="500" mode="tree">
+        <logger id="TreeLogger.psi" spec="Logger" fileName="test.trees" logEvery="5000" mode="tree">
             <log idref="psi2"/>
         </logger>
     </run>

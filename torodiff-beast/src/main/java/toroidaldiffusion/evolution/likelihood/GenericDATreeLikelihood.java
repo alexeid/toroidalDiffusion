@@ -51,8 +51,16 @@ public class GenericDATreeLikelihood extends Distribution {
         internalNodesParam = daTreeModel.getInternalNodesValuesParam();
     }
 
-    // TODO assuming internal nodes sequences stored by the order of Nr
+    /**
+     * This assumes internal nodes sequences stored by the order of Nr
+     * in the {@link RealParameter} {@link #internalNodesParam}.
+     *
+     * @param nodeIndex It assumes nodeIndex is Nr, and index starts from 1 to the number of nodes.
+     * @return  whether the internal node sequences mapping to the node given a node index have been changed or not,
+     *          where dirty means its value was changed.
+     */
     public boolean isInternalNodeSeqDirty(final int nodeIndex) {
+        // the index of entry that was changed last. Useful if it is known only a single value has changed in the array.
         int dirtyI = internalNodesParam.getLastDirty();
 
         // assuming nodeIndex is Nr, and index starts from 1 to the number of nodes.
