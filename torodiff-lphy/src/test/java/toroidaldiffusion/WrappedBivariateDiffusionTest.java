@@ -30,5 +30,8 @@ class WrappedBivariateDiffusionTest {
          */
         double[][] samples = diffusion.sampleByRejection(3.0875357245670547, 3.2389546454267055, 1);
 
+        //vquad represents the quadratic model prediction of the change in the objective function due to the step.
+        // diff = f − f_opt - v_quad
+        //If vquad is positive or zero, it indicates that the quadratic model failed to predict improvement.
     }
 }
