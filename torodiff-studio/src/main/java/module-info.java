@@ -3,6 +3,7 @@ module toroidaldiffusion.studio {
 
     requires transitive lphystudio;
     requires toroidaldiffusion;
+    requires org.jfree.jfreechart;
 
     exports toroidaldiffusion.studio;
 

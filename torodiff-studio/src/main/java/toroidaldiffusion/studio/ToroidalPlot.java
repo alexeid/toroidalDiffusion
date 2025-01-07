@@ -27,12 +27,14 @@ public class ToroidalPlot extends JComponent {
     boolean plotTPDistribution = false;
 
     public ToroidalPlot(WrappedBivariateDiffusion diffusion) {
+        this(diffusion, 2000);
+    }
+
+    public ToroidalPlot(WrappedBivariateDiffusion diffusion, final int steps) {
 
         this.diffusion = diffusion;
 
         mu = new Point2D.Double(diffusion.mu.get(0), diffusion.mu.get(1));
-
-        int steps = 2000;
 
         double[][] p = diffusion.simulatePath(0, 0, 0.02, steps);
         path = new Point2D[steps];
