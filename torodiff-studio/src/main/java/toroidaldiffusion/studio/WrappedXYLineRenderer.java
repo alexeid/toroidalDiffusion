@@ -12,6 +12,7 @@ import org.jfree.data.xy.XYDataset;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
 
+// Axis must be from 0 to 2PI
 public class WrappedXYLineRenderer extends XYLineAndShapeRenderer {
     private final double xMax;
     private final double yMax;
