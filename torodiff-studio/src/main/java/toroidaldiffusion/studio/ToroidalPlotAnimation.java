@@ -5,7 +5,6 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.annotations.XYLineAnnotation;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import toroidaldiffusion.WrappedBivariateDiffusion;
@@ -23,11 +22,13 @@ public class ToroidalPlotAnimation {
     final static double[] sigmaarr = {0.5, 0.75}; // variance term
     final static double[] alphaarr = {1.0, 1.0, 0.5}; // drift term
 
+    static ToroidalPlot toroidalPlot;
+
     static XYSeries createDataSet() {
         WrappedBivariateDiffusion diff = new WrappedBivariateDiffusion();
         diff.setParameters(muarr, alphaarr, sigmaarr); // set the diffusion parameters
 
-        ToroidalPlot toroidalPlot = new ToroidalPlot(diff, 1000);
+        toroidalPlot = new ToroidalPlot(diff, 2000);
 
         // Dataset for path points
         Point2D[] path = toroidalPlot.path;
@@ -69,6 +70,9 @@ public class ToroidalPlotAnimation {
         plot.setRangeGridlinesVisible(false);
         // transparency
         plot.setForegroundAlpha(0.5f);
+        // axis
+        plot.getDomainAxis().setRange(0, toroidalPlot.torusSize);
+        plot.getRangeAxis().setRange(0, toroidalPlot.torusSize);
 
         // draw mean
         BasicStroke dashLine = new BasicStroke(
@@ -83,9 +87,9 @@ public class ToroidalPlotAnimation {
         plot.addAnnotation(mean1);
         plot.addAnnotation(mean2);
 
-        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, true);
-//        WrappedXYLineRenderer renderer = new WrappedXYLineRenderer(
-//                dataset.getSeries(0).getMaxX());
+//        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, true);
+        WrappedXYLineRenderer renderer = new WrappedXYLineRenderer(
+                pathSeries.getMaxX(), pathSeries.getMaxY(), toroidalPlot);
 
         /**
          * Two Series: 0 contains all paths after animation finishes, 1 is Animated path
@@ -113,7 +117,7 @@ public class ToroidalPlotAnimation {
         frame.setVisible(true);
 
         // Start Animation
-        Timer timer = new Timer(100, e -> {
+        Timer timer = new Timer(50, e -> {
             int currentSize = animatedSeries.getItemCount();
             if (currentSize < pathSeries.getItemCount()) {
                 animatedSeries.add(

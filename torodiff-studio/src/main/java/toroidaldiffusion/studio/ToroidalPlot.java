@@ -45,7 +45,7 @@ public class ToroidalPlot extends JComponent {
         setPreferredSize(new Dimension(cellWidth, cellWidth));
     }
 
-    double toroidalDistance (double x1, double y1, double x2, double y2) {
+    public double toroidalDistance (double x1, double y1, double x2, double y2) {
         double dx = Math.abs(x2 - x1);
         double dy = Math.abs(y2 - y1);
 
@@ -159,7 +159,7 @@ public class ToroidalPlot extends JComponent {
 
     }
 
-    private void paintStationaryDistribution(Graphics2D g2d) {
+    void paintStationaryDistribution(Graphics2D g2d) {
 
         int resolution = 360;
         double increment = 1.0/(double)resolution* torusSize;
@@ -190,7 +190,7 @@ public class ToroidalPlot extends JComponent {
         }
     }
 
-    private void paintTPDistribution(Graphics2D g2d) {
+    void paintTPDistribution(Graphics2D g2d) {
 
         int resolution = 360;
         double increment = (torusSize/(double)resolution);
