@@ -52,12 +52,12 @@ public class ToroidalPlotAnimation {
         dataset.addSeries(pathSeries); // this shows all paths after finish
         dataset.addSeries(animatedSeries);
 
-        JFrame frame = new JFrame("Wrapped Normal Diffusion (" + dataset.getItemCount(0) + " States)");
+        JFrame frame = new JFrame("Bivariate Wrapped Normal process (" + dataset.getItemCount(0) + " States)");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         DecimalFormat df = new DecimalFormat("0.##");
-        String title = "Phi ~ N(" + df.format(muarr[0]) + ", " + df.format(sigmaarr[0]) + "),  " +
-                "Psi ~ N(" + df.format(muarr[1]) + ", " + df.format(sigmaarr[1]) + "),  " +
+        String title = "mu = [" + df.format(muarr[0]) + ", " + df.format(muarr[1]) + "],  " +
+                "sigma = [" + df.format(sigmaarr[0]) + ", " + df.format(sigmaarr[1]) + "],  " +
                 "alpha_i = [" + df.format(alphaarr[0]) + ", " + df.format(alphaarr[1]) + ", " +
                 df.format(alphaarr[2]) + "]";
         // Create a scatter plot
