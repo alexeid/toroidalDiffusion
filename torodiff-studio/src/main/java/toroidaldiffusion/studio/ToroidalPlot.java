@@ -262,6 +262,7 @@ public class ToroidalPlot extends JComponent {
     public static void main(String[] args) {
 
         JFrame frame = new JFrame("Torus world");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         WrappedBivariateDiffusion diff = new WrappedBivariateDiffusion();
         double[] muarr = {Math.PI * 0.65, Math.PI * 0.8}; // mean of the diffusion
