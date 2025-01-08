@@ -14,6 +14,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
+import java.text.DecimalFormat;
 
 
 public class ToroidalPlotAnimation {
@@ -40,8 +41,6 @@ public class ToroidalPlotAnimation {
     }
 
     public static void main(String[] args) {
-        JFrame frame = new JFrame();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         // Dataset for path points
         XYSeries pathSeries = createDataSet();
@@ -52,12 +51,17 @@ public class ToroidalPlotAnimation {
         dataset.addSeries(pathSeries); // this shows all paths after finish
         dataset.addSeries(animatedSeries);
 
+        JFrame frame = new JFrame("Wrapped Normal Diffusion (" + dataset.getItemCount(0) + " States)");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        DecimalFormat df = new DecimalFormat("0.##");
+        String title = "Phi ~ N(" + df.format(muarr[0]) + ", " + df.format(sigmaarr[0]) + "),  " +
+                "Psi ~ N(" + df.format(muarr[1]) + ", " + df.format(sigmaarr[1]) + "),  " +
+                "alpha_i = [" + df.format(alphaarr[0]) + ", " + df.format(alphaarr[1]) + ", " +
+                df.format(alphaarr[2]) + "]";
         // Create a scatter plot
-        JFreeChart chart = ChartFactory.createScatterPlot(
-                "Wrapped Normal Diffusion (" + dataset.getItemCount(0) + " States)",
-                "Phi", "Psi",
-                dataset
-        );
+        JFreeChart chart = ChartFactory.createScatterPlot(title,
+                "Phi", "Psi", dataset);
         chart.removeLegend();
 
         XYPlot plot = chart.getXYPlot();
@@ -80,11 +84,12 @@ public class ToroidalPlotAnimation {
         plot.addAnnotation(mean2);
 
         XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, true);
+//        WrappedXYLineRenderer renderer = new WrappedXYLineRenderer(
+//                dataset.getSeries(0).getMaxX());
 
         /**
          * Two Series: 0 contains all paths after animation finishes, 1 is Animated path
          */
-
         renderer.setSeriesPaint(0, Color.white); // Original path in light gray
         renderer.setSeriesPaint(1, Color.RED); // Animated path in red
 
@@ -125,3 +130,4 @@ public class ToroidalPlotAnimation {
     }
 
 }
+
