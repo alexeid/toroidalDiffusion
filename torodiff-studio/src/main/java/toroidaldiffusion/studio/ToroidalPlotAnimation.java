@@ -24,7 +24,7 @@ public class ToroidalPlotAnimation {
 
     static ToroidalPlot toroidalPlot;
 
-    static XYSeries createDataSet() {
+    static XYSeries createPathSeries() {
         WrappedBivariateDiffusion diff = new WrappedBivariateDiffusion();
         diff.setParameters(muarr, alphaarr, sigmaarr); // set the diffusion parameters
 
@@ -44,16 +44,13 @@ public class ToroidalPlotAnimation {
     public static void main(String[] args) {
 
         // Dataset for path points
-        XYSeries pathSeries = createDataSet();
+        XYSeries pathSeries = createPathSeries();
         // cancel auto sort
         XYSeries animatedSeries = new XYSeries("Animated Path", false);
 
         XYSeriesCollection dataset = new XYSeriesCollection();
         dataset.addSeries(pathSeries); // this shows all paths after finish
         dataset.addSeries(animatedSeries);
-
-        JFrame frame = new JFrame("Bivariate Wrapped Normal process (" + dataset.getItemCount(0) + " States)");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         DecimalFormat df = new DecimalFormat("0.##");
         String title = "mu = [" + df.format(muarr[0]) + ", " + df.format(muarr[1]) + "],  " +
@@ -105,16 +102,20 @@ public class ToroidalPlotAnimation {
 //        renderer.setSeriesStroke(1, new BasicStroke(2.0f));
         // Circle shape
         renderer.setSeriesShape(1, new Ellipse2D.Double(-3, -3, 6, 6));
-
         renderer.setDrawSeriesLineAsPath(false);
 
         plot.setRenderer(renderer);
 
         ChartPanel chartPanel = new ChartPanel(chart);
 
-        frame.add(chartPanel);
-        frame.pack();
-        frame.setVisible(true);
+        SwingUtilities.invokeLater(() -> {
+            JFrame frame = new JFrame("Bivariate Wrapped Normal process (" +
+                    dataset.getItemCount(0) + " States)");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.add(chartPanel);
+            frame.pack();
+            frame.setVisible(true);
+        });
 
         // Start Animation
         Timer timer = new Timer(50, e -> {
@@ -130,7 +131,6 @@ public class ToroidalPlotAnimation {
             }
         });
         timer.start();
-
     }
 
 }
