@@ -1,14 +1,14 @@
 λ ~ LogNormal(meanlog=3.0, sdlog=1.0);
 ψ ~ Yule(lambda=λ, n=10);
-ψ2 = setInternalNodesID(ψ);
-mu = [2.0, 2.5];
-alpha = [1.0, 1.0, 0.5];
-σ = [0.5, 0.75];
+ψ2 = setInternalNodesID(tree = ψ);
 
 mu = [0.0, 0.0];
-alpha = [1.0, 0.5, 0.5];
-σ = [1.5, 1.5];
+//alpha = [1.0, 0.5, 0.5];
+drift = [1.0, 0.5];
+driftCorr = 0.5;
+σ = [0.5, 0.75];
 
+y0 = rep([3.0, 3.0], 10);
+y ~ PhyloWrappedBivariateDiffusion(mu=mu, sigma=σ, drift=drift, driftCorr=driftCorr, y0=y0, tree=ψ2);
 
-y0 = [[3.0, 3.0], [3.0, 3.0], [3.0, 3.0], [3.0, 3.0], [3.0, 3.0], [3.0, 3.0], [3.0, 3.0], [3.0, 3.0], [3.0, 3.0], [3.0, 3.0]];
-y ~ PhyloWrappedBivariateDiffusion(mu=mu, sigma=σ, alpha=alpha, y0=y0, tree=ψ2);
+//y ~ PhyloWrappedBivariateDiffusion(mu=mu, sigma=σ, alpha=alpha, y0=y0, tree=ψ2);
