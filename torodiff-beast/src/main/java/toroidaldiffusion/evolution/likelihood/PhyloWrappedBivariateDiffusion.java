@@ -200,7 +200,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     @Override
     public void init(PrintStream out) {
         super.init(out);
-        out.print("alpha3 \t");
+        out.print("alpha3\t");
     }
 
     @Override
@@ -231,12 +231,13 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
         double corr = driftCorrInput.get().getArrayValue();
 
-        if (corr < -1.0 || corr > 1.0) {
-            throw new IllegalArgumentException("Correlation value must be within [-1, 1]. Found: " + corr);
+        if (corr <= -1.0 || corr >= 1.0) {
+            throw new IllegalArgumentException("Correlation value must be within (-1, 1). Found: " + corr);
         }
 
         double alpha1 = twoDrifts[0];
         double alpha2 = twoDrifts[1];
+        // corr within (-1, 1), so that always alpha1*alpha2 > alpha3^2
         double alpha3 = sqrt(alpha1*alpha2) * corr;
 
         return new double[]{twoDrifts[0], twoDrifts[1], alpha3};

@@ -2,14 +2,14 @@
 <!--
 model {
   drift ~ LogNormal(meanlog=-0.28, sdlog=0.1, replicates=2);
-  alpha3 ~ Uniform(lower=-1.0, upper=1.0);
+  driftCorr ~ Uniform(lower=-1.0, upper=1.0);
   mu ~ LogNormal(meanlog=0.7, sdlog=0.5, replicates=2);
   σ ~ LogNormal(meanlog=0, sdlog=1, replicates=2);
   λ ~ LogNormal(meanlog=3.0, sdlog=0.1);
   ψ ~ Yule(lambda=λ, n=10);
   ψ2 = setInternalNodesID(tree=ψ);
   y0 = rep(element=[3.0, 3.0], times=20);
-  y ~ PhyloWrappedBivariateDiffusion(drift=drift, driftCorr=alpha3, mu=mu, sigma=σ, tree=ψ2, y0=y0);
+  y ~ PhyloWrappedBivariateDiffusion(drift=drift, driftCorr=driftCorr, mu=mu, sigma=σ, tree=ψ2, y0=y0);
 }
 
 -->
@@ -18,7 +18,7 @@ model {
     <run id="MCMC" spec="MCMC" chainLength="10000000" preBurnin="8000">
         <state id="State" spec="State">
             <parameter id="drift" spec="parameter.RealParameter" dimension="2" name="stateNode">0.6878597028874919 0.7269108836171956</parameter>
-            <parameter id="alpha3" spec="parameter.RealParameter" name="stateNode">-0.5124811472532143</parameter>
+            <parameter id="driftCorr" spec="parameter.RealParameter" name="stateNode">-0.5124811472532143</parameter>
             <parameter id="mu" spec="parameter.RealParameter" dimension="2" name="stateNode" upper="6.283">2.4238239647821436 0.8964436945709638</parameter>
             <parameter id="sigma" spec="parameter.RealParameter" dimension="2" name="stateNode">2.635061252418168 0.18334953560236744</parameter>
             <parameter id="lambda" spec="parameter.RealParameter" lower="0.0" name="stateNode">21.09495559549946</parameter>
@@ -44,7 +44,7 @@ model {
         </state>
         <distribution id="posterior" spec="CompoundDistribution">
             <distribution id="prior" spec="CompoundDistribution">
-                <distribution id="alpha3.prior" spec="distribution.Prior" x="@alpha3">
+                <distribution id="driftCorr.prior" spec="distribution.Prior" x="@driftCorr">
                     <distr id="Uniform" spec="distribution.Uniform" lower="-1.0"/>
                 </distribution>
                 <distribution id="sigma.prior" spec="distribution.Prior" x="@sigma">
@@ -76,7 +76,7 @@ model {
                 </distribution>
             </distribution>
             <distribution id="likelihood" spec="CompoundDistribution">
-                <distribution id="PhyloWrappedBivariateDiffusion" spec="toroidaldiffusion.evolution.likelihood.PhyloWrappedBivariateDiffusion" drift="@drift" driftCorr="@alpha3" mu="@mu" sigma="@sigma">
+                <distribution id="PhyloWrappedBivariateDiffusion" spec="toroidaldiffusion.evolution.likelihood.PhyloWrappedBivariateDiffusion" drift="@drift" driftCorr="@driftCorr" mu="@mu" sigma="@sigma">
                     <daTreeModel id="DihedralAngleTreeModel" spec="toroidaldiffusion.evolution.tree.DihedralAngleTreeModel" tree="@psi2">
                         <parameter id="RealParameter8" spec="parameter.RealParameter" dimension="400" keys="1 2 3 4 5 6 7 8 9 10" minordimension="40" name="tipValues" upper="6.283">3.025 3.234 2.844 2.94 2.979 2.917 3.651 2.924 3.476 2.858 2.804 3.201 2.487 2.842 2.188 2.98 3.188 2.854 2.266 2.977 2.957 2.958 2.887 2.929 3.181 3.084 2.848 2.982 2.313 2.909 2.985 2.998 2.37 2.871 2.99 2.842 2.836 3.053 2.805 2.962 2.868 2.952 2.624 2.959 2.886 2.961 3.289 2.952 2.994 2.994 3.352 2.987 2.658 2.923 3.218 2.983 3.4 2.952 2.28 3.099 3.121 2.899 2.742 2.979 3.306 2.964 2.35 2.98 2.83 3.048 2.859 2.851 3.169 3.053 2.68 2.811 3.787 2.98 3.49 3.018 3.016 2.963 2.448 2.95 2.826 3.009 3.504 3.066 2.968 2.985 2.933 2.95 2.87 2.93 2.792 2.919 3.509 2.992 2.262 2.995 2.675 2.906 2.907 3.046 3.253 2.921 2.492 3.039 2.923 3.035 3.178 2.763 3.046 2.963 2.737 2.842 3.819 3.048 3.284 2.931 3.187 2.897 3.045 3.051 1.999 2.979 2.525 2.839 2.823 2.957 3.338 2.911 2.754 2.933 2.929 2.896 2.499 3.046 2.518 3.147 2.796 2.892 3.576 2.832 3.267 3.05 3.126 3.147 2.886 2.895 2.09 2.917 2.258 3.125 3.0 2.83 2.609 2.885 2.952 3.059 3.098 2.857 3.442 3.054 2.608 2.897 2.052 2.914 2.758 2.97 2.825 3.125 2.94 3.104 2.903 3.119 2.662 3.087 3.435 3.068 3.869 2.924 2.681 3.102 3.46 2.999 2.288 2.95 2.774 3.043 2.452 2.939 2.64 3.033 2.697 2.971 2.798 2.939 2.715 2.869 2.636 2.931 3.137 3.217 2.569 2.906 2.078 2.958 2.587 2.886 3.411 3.026 2.955 3.036 2.783 2.893 3.002 2.965 2.864 3.156 2.979 3.037 3.437 2.982 3.34 3.049 2.609 3.08 3.044 2.969 2.254 3.036 2.351 3.107 3.359 3.079 2.777 2.793 2.734 2.941 3.076 3.04 3.395 3.173 2.622 2.904 2.532 2.877 3.16 2.804 3.122 3.038 2.732 3.078 2.984 2.925 3.244 3.015 3.319 3.181 2.76 2.923 3.695 2.986 3.289 3.001 2.522 3.044 3.074 2.977 2.209 3.035 2.379 3.115 3.3 3.036 2.64 2.814 2.915 2.961 2.608 2.926 3.418 3.201 2.475 2.943 2.259 3.009 2.708 2.887 3.472 2.975 3.078 3.019 3.041 2.935 2.92 2.979 2.862 3.175 2.834 3.022 3.386 2.938 3.174 3.067 2.54 3.063 3.233 2.956 2.096 3.03 2.128 3.132 3.318 3.05 2.743 2.786 2.645 2.963 2.988 2.994 2.484 2.932 2.583 2.977 3.338 3.044 3.176 2.97 2.908 3.065 2.786 2.955 2.887 2.852 3.149 2.998 2.287 3.002 2.972 2.863 2.485 2.971 2.976 2.925 2.117 3.01 2.519 3.012 3.112 2.855 2.909 2.998 3.149 2.881 3.758 2.914 3.071 2.998 2.585 2.932 3.093 3.213 2.587 2.942 2.034 2.954 2.689 2.906 3.462 3.042 3.167 3.058 2.751 2.899 3.096 2.961 2.906 3.171 3.009 3.001 3.373 2.978 3.232 3.047 2.683 3.078 3.124 2.979 2.136 3.031 2.323 3.124 3.388 3.06 2.671 2.839 2.655 2.901</parameter>
                         <internalNodesValues idref="internalNodeSeqs"/>
@@ -84,13 +84,14 @@ model {
                 </distribution>
             </distribution>
         </distribution>
-        <!--        <operator id="alpha3.randomWalk" spec="operator.kernel.BactrianRandomWalkOperator" parameter="@alpha3" scaleFactor="0.75" weight="10.0"/>-->
-        <!--        <operator id="drift.scale" spec="kernel.BactrianScaleOperator" parameter="@drift" upper="10.0" weight="1.624504792712471"/>-->
-<!--        <operator id="drift.scale" spec="toroidaldiffusion.operator.DriftOperator" parameter="@drift" driftCorr="@alpha3" upper="10.0" weight="10"/>-->
+<!--                <operator id="alpha3.randomWalk" spec="operator.kernel.BactrianRandomWalkOperator" parameter="@alpha3" scaleFactor="0.75" weight="10.0"/>-->
+        <operator id="drift.scale" spec="kernel.BactrianScaleOperator" parameter="@drift" upper="10.0" weight="1.624504792712471"/>
+        <!--   alpha3 = sqrt(alpha1*alpha2) * driftCorr;     -->
+        <operator id="driftCorr.scale" spec="toroidaldiffusion.operator.DriftOperator" parameter="@drift" driftCorr="@driftCorr" upper="10.0" weight="10"/>
 
-<!--                <operator id="lambda.scale" spec="kernel.BactrianScaleOperator" parameter="@lambda" upper="10.0" weight="1.0"/>-->
-        <!--        <operator id="mu.scale" spec="kernel.BactrianScaleOperator" parameter="@mu" upper="10.0" weight="1.624504792712471"/>-->
-        <!--        <operator id="sigma.scale" spec="kernel.BactrianScaleOperator" parameter="@sigma" upper="10.0" weight="1.624504792712471"/>-->
+        <operator id="lambda.scale" spec="kernel.BactrianScaleOperator" parameter="@lambda" upper="10.0" weight="1.0"/>
+        <operator id="mu.scale" spec="kernel.BactrianScaleOperator" parameter="@mu" upper="10.0" weight="1.624504792712471"/>
+        <operator id="sigma.scale" spec="kernel.BactrianScaleOperator" parameter="@sigma" upper="10.0" weight="1.624504792712471"/>
 
         <operator id="psi.rootAgeScale" spec="kernel.BactrianScaleOperator" rootOnly="true" tree="@psi2" upper="0.975" weight="1.0"/>
         <operator id="psi.BICEPSTreeFlex" spec="TreeStretchOperator" scaleFactor="0.01" tree="@psi2" weight="8.141810630738087"/>
@@ -104,7 +105,7 @@ model {
             <log idref="likelihood"/>
             <log idref="prior"/>
             <log idref="drift"/>
-            <log idref="alpha3"/>
+            <log idref="driftCorr"/>
             <log idref="mu"/>
             <log idref="sigma"/>
             <log idref="lambda"/>
@@ -115,7 +116,7 @@ model {
             <log idref="likelihood"/>
             <log idref="prior"/>
             <log idref="drift"/>
-            <log idref="alpha3"/>
+            <log idref="driftCorr"/>
             <log idref="mu"/>
             <log idref="sigma"/>
             <log idref="lambda"/>
