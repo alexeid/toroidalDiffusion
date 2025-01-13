@@ -24,6 +24,7 @@ public class ToroidalPlotAnimation {
 
     static ToroidalPlot toroidalPlot;
 
+    // start from (0, 0)
     static XYSeries createPathSeries() {
         WrappedBivariateDiffusion diff = new WrappedBivariateDiffusion();
         diff.setParameters(muarr, alphaarr, sigmaarr); // set the diffusion parameters
@@ -108,14 +109,14 @@ public class ToroidalPlotAnimation {
 
         ChartPanel chartPanel = new ChartPanel(chart);
 
-        SwingUtilities.invokeLater(() -> {
+//        SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Bivariate Wrapped Normal process (" +
                     dataset.getItemCount(0) + " States)");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.add(chartPanel);
             frame.pack();
             frame.setVisible(true);
-        });
+//        });
 
         // Start Animation
         Timer timer = new Timer(50, e -> {

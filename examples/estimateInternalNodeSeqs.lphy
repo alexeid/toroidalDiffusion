@@ -2,7 +2,6 @@ data {
   n = 10;
   taxa = taxa(names=1:n); // taxa names integer must start from 1 for beast xml
 }
-
 model {
   λ ~ LogNormal(meanlog=3.0, sdlog=0.1); //sd = 0.1
   ψ ~ Yule(lambda=λ, taxa=taxa);
