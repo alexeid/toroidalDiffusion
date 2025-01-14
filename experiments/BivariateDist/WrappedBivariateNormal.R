@@ -71,10 +71,10 @@ rbvn<-function (n, m1, s1, m2, s2, rho) {
 
 # transfer them into the expected parameters
 # expected covariance matrix s1^2, s1*s2*rho, s1*s2*rho, s2^2
-o = 0.5 / (alpha[1]*alpha[2]-alpha[3]*alpha[3])
-rho = -alpha[3] * o / ( sqrt(o * alpha[2] ) * sqrt(o * alpha[1] ) )
-s1e = sqrt(o * alpha[2] ) * s1
-s2e = sqrt(o * alpha[1] ) * s2
+const = 0.5 / (alpha[1]*alpha[2]-alpha[3]*alpha[3])
+rho = -alpha[3] * const / ( sqrt(const * alpha[2] ) * sqrt(const * alpha[1] ) )
+s1e = sqrt(const * alpha[2] ) * s1
+s2e = sqrt(const * alpha[1] ) * s2
 
 bvn3 <- rbvn(N,mu1,s1e,mu2,s2e,rho)
 colnames(bvn3) <- c("phi","psi")
