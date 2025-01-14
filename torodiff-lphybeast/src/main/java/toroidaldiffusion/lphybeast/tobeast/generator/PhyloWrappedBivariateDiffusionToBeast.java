@@ -26,11 +26,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static toroidaldiffusion.WrappedNormalConst.MAX_ANGLE_VALUE;
 import static toroidaldiffusion.WrappedNormalConst.y0RateParam;
 
 
 public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<PhyloWrappedBivariateDiffusion, toroidaldiffusion.evolution.likelihood.PhyloWrappedBivariateDiffusion> {
-    public static final double ANGLE_UPPER = 6.283; // 2 pi
 
     //without internalnodes sequence - cannot calculate likelihood
     //the internalnodes involve the root initialised angles
@@ -178,7 +178,7 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
 
         RealParameter muParameter = context.getAsRealParameter(generator.getParams().get(WrappedNormalConst.muParamName));
         //TODO upper = "6.283"   2*pi
-        muParameter.setInputValue("upper", ANGLE_UPPER);
+        muParameter.setInputValue("upper", MAX_ANGLE_VALUE);
         phyloWrappedBivariateDiffusion.setInputValue("mu", muParameter);
         phyloWrappedBivariateDiffusion.setInputValue("sigma",
                 context.getAsRealParameter(generator.getParams().get(WrappedNormalConst.sigmaParamName)));
@@ -229,7 +229,7 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
         if (internalNodeskeys != null)
             internalNodes.setInputValue("keys", internalNodeskeys);
         //TODO upper = "6.283"   2*pi
-        internalNodes.setInputValue("upper", ANGLE_UPPER);
+        internalNodes.setInputValue("upper", MAX_ANGLE_VALUE);
         internalNodes.initAndValidate();
         return internalNodes;
     }
