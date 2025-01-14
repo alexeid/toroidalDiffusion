@@ -40,20 +40,12 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
     RandomGenerator random;
 //    Value<Double[]> alpha;
 
-    public static final String treeParamName = "tree";
-    public static final String muParamName = "mu";
-    public static final String sigmaParamName = "sigma";
-//    public static final String alphaParamName = "alpha";
-    public static final String y0RateParam = "y0";
-    public static final String DRIFT_PARAM = "drift";
-    public static final String DRIFT_CORR_PARAM = "driftCorr";
-
-    public PhyloWrappedBivariateDiffusion(@ParameterInfo(name = treeParamName, description = "the time tree.") Value<TimeTree> tree,
-                                          @ParameterInfo(name = muParamName, description = "the mean of the stationary distribution.") Value<Double[]> mu,
-                                          @ParameterInfo(name = sigmaParamName, description = "the two variance terms.") Value<Double[]> sigma,
-                                          @ParameterInfo(name = DRIFT_PARAM, description = "the two drift terms.") Value<Double[]> drift,
-                                          @ParameterInfo(name = DRIFT_CORR_PARAM, description = "the correlation of two drift terms, ranged from -1 to 1.") Value<Number> driftCorr,
-                                          @ParameterInfo(name = y0RateParam, description = "the value of [phi,psi] angle pairs for each carbon backbone bond of the molecule at the root of the phylogeny.") Value<Double[][]> y0) {
+    public PhyloWrappedBivariateDiffusion(@ParameterInfo(name = WrappedNormalConst.treeParamName, description = "the time tree.") Value<TimeTree> tree,
+                                          @ParameterInfo(name = WrappedNormalConst.muParamName, description = "the mean of the stationary distribution.") Value<Double[]> mu,
+                                          @ParameterInfo(name = WrappedNormalConst.sigmaParamName, description = "the two variance terms.") Value<Double[]> sigma,
+                                          @ParameterInfo(name = WrappedNormalConst.DRIFT_PARAM, description = "the two drift terms.") Value<Double[]> drift,
+                                          @ParameterInfo(name = WrappedNormalConst.DRIFT_CORR_PARAM, description = "the correlation of two drift terms, ranged from -1 to 1.") Value<Number> driftCorr,
+                                          @ParameterInfo(name = WrappedNormalConst.y0RateParam, description = "the value of [phi,psi] angle pairs for each carbon backbone bond of the molecule at the root of the phylogeny.") Value<Double[][]> y0) {
         this.tree = tree;
         this.mu = mu;
         this.sigma = sigma;
@@ -81,25 +73,25 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
     @Override
     public SortedMap<String, Value> getParams() {
         SortedMap<String, Value> map = new TreeMap<>();
-        map.put(treeParamName, tree);
-        map.put(muParamName, mu);
-        map.put(sigmaParamName, sigma);
+        map.put(WrappedNormalConst.treeParamName, tree);
+        map.put(WrappedNormalConst.muParamName, mu);
+        map.put(WrappedNormalConst.sigmaParamName, sigma);
 //        map.put(alphaParamName, alpha); // overload
-        map.put(DRIFT_PARAM, drift);
-        map.put(DRIFT_CORR_PARAM, driftCorr);
-        map.put(y0RateParam, y0);
+        map.put(WrappedNormalConst.DRIFT_PARAM, drift);
+        map.put(WrappedNormalConst.DRIFT_CORR_PARAM, driftCorr);
+        map.put(WrappedNormalConst.y0RateParam, y0);
         return map;
     }
 
     @Override
     public void setParam(String paramName, Value value) {
-        if (paramName.equals(treeParamName)) tree = value;
-        else if (paramName.equals(muParamName)) mu = value;
-        else if (paramName.equals(sigmaParamName)) sigma = value;
+        if (paramName.equals(WrappedNormalConst.treeParamName)) tree = value;
+        else if (paramName.equals(WrappedNormalConst.muParamName)) mu = value;
+        else if (paramName.equals(WrappedNormalConst.sigmaParamName)) sigma = value;
 //        else if (paramName.equals(alphaParamName)) alpha = value; // overload
-        else if (paramName.equals(DRIFT_PARAM)) drift = value;
-        else if (paramName.equals(DRIFT_CORR_PARAM)) driftCorr = value;
-        else if (paramName.equals(y0RateParam)) y0 = value;
+        else if (paramName.equals(WrappedNormalConst.DRIFT_PARAM)) drift = value;
+        else if (paramName.equals(WrappedNormalConst.DRIFT_CORR_PARAM)) driftCorr = value;
+        else if (paramName.equals(WrappedNormalConst.y0RateParam)) y0 = value;
         else throw new RuntimeException("Unrecognised parameter name: " + paramName);
     }
 

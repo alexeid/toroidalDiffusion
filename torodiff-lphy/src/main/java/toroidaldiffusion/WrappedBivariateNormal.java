@@ -4,6 +4,8 @@ import lphy.base.distribution.ParametricDistribution;
 import lphy.core.model.RandomVariable;
 import lphy.core.model.Value;
 import lphy.core.model.ValueUtils;
+import lphy.core.model.annotation.GeneratorCategory;
+import lphy.core.model.annotation.GeneratorInfo;
 import lphy.core.model.annotation.ParameterInfo;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.random.RandomGenerator;
@@ -13,9 +15,12 @@ import java.util.TreeMap;
 import java.util.stream.Stream;
 
 import static java.lang.Math.sqrt;
-import static toroidaldiffusion.PhyloWrappedBivariateDiffusion.*;
+import static toroidaldiffusion.PhyloWrappedBivariateDiffusion.getAlphaarr;
+import static toroidaldiffusion.WrappedNormalConst.MAX_ANGLE_VALUE;
 
 public class WrappedBivariateNormal extends ParametricDistribution<Double[]> {
+
+    public static final double RANGE = 2 * Math.PI;
 
     Value<Number[]> mu;
     Value<Number[]> sigma;
@@ -25,13 +30,13 @@ public class WrappedBivariateNormal extends ParametricDistribution<Double[]> {
     NormalDistribution nD1;
     NormalDistribution nD2;
 
-    public WrappedBivariateNormal(@ParameterInfo(name = muParamName, description = "the mean of the stationary distribution.")
+    public WrappedBivariateNormal(@ParameterInfo(name = WrappedNormalConst.muParamName, description = "the mean of the stationary distribution.")
                                   Value<Number[]> mu,
-                                  @ParameterInfo(name = sigmaParamName, description = "the two variance terms.")
+                                  @ParameterInfo(name = WrappedNormalConst.sigmaParamName, description = "the two variance terms.")
                                   Value<Number[]> sigma,
-                                  @ParameterInfo(name = DRIFT_PARAM, description = "the two drift terms : alpha1 and alpha2.")
+                                  @ParameterInfo(name = WrappedNormalConst.DRIFT_PARAM, description = "the two drift terms : alpha1 and alpha2.")
                                   Value<Double[]> drift,
-                                  @ParameterInfo(name = DRIFT_CORR_PARAM, description = "the correlation of two drift terms, " +
+                                  @ParameterInfo(name = WrappedNormalConst.DRIFT_CORR_PARAM, description = "the correlation of two drift terms, " +
                                           "ranged from -1 to 1 excluding -1 and 1, but not alpha3 where alpha3 = sqrt(alpha1*alpha2) * corr.")
                                   Value<Number> driftCorr) {
         super();
@@ -52,6 +57,8 @@ public class WrappedBivariateNormal extends ParametricDistribution<Double[]> {
         nD1 = new NormalDistribution(random, mu1, s1, NormalDistribution.DEFAULT_INVERSE_ABSOLUTE_ACCURACY);
     }
 
+    @GeneratorInfo(name = "WrappedBivariateNormal", verbClause = "has", narrativeName = "normal prior",
+            category = GeneratorCategory.PRIOR, description = "The wrapped bivariate normal distribution (Golden et al. 2017).")
     @Override
     public RandomVariable<Double[]> sample() {
         double x1 = nD1.sample();
@@ -71,7 +78,10 @@ public class WrappedBivariateNormal extends ParametricDistribution<Double[]> {
         nD2 = new NormalDistribution(random, mean_sd[0], mean_sd[1], NormalDistribution.DEFAULT_INVERSE_ABSOLUTE_ACCURACY);
         double x2 = nD2.sample();
 
-        return new RandomVariable<>("bivariate", new Double[]{x1, x2}, this);
+        double x1w = ToroidalUtils.moduloInR(x1, MAX_ANGLE_VALUE);
+        double x2w = ToroidalUtils.moduloInR(x2, MAX_ANGLE_VALUE);
+
+        return new RandomVariable<>("bivariate", new Double[]{x1w, x2w}, this);
     }
 
     /**
@@ -109,19 +119,19 @@ public class WrappedBivariateNormal extends ParametricDistribution<Double[]> {
     @Override
     public SortedMap<String, Value> getParams() {
         SortedMap<String, Value> map = new TreeMap<>();
-        map.put(muParamName, mu);
-        map.put(sigmaParamName, sigma);
-        map.put(DRIFT_PARAM, drift);
-        map.put(DRIFT_CORR_PARAM, driftCorr);
+        map.put(WrappedNormalConst.muParamName, mu);
+        map.put(WrappedNormalConst.sigmaParamName, sigma);
+        map.put(WrappedNormalConst.DRIFT_PARAM, drift);
+        map.put(WrappedNormalConst.DRIFT_CORR_PARAM, driftCorr);
         return map;
     }
 
     @Override
     public void setParam(String paramName, Value value) {
-        if (paramName.equals(muParamName)) mu = value;
-        else if (paramName.equals(sigmaParamName)) sigma = value;
-        else if (paramName.equals(DRIFT_PARAM)) drift = value;
-        else if (paramName.equals(DRIFT_CORR_PARAM)) driftCorr = value;
+        if (paramName.equals(WrappedNormalConst.muParamName)) mu = value;
+        else if (paramName.equals(WrappedNormalConst.sigmaParamName)) sigma = value;
+        else if (paramName.equals(WrappedNormalConst.DRIFT_PARAM)) drift = value;
+        else if (paramName.equals(WrappedNormalConst.DRIFT_CORR_PARAM)) driftCorr = value;
         else throw new RuntimeException("Unrecognised parameter name: " + paramName);
     }
 }

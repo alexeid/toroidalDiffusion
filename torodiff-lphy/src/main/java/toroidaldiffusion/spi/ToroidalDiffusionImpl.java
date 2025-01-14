@@ -3,10 +3,7 @@ package toroidaldiffusion.spi;
 import lphy.core.model.BasicFunction;
 import lphy.core.model.GenerativeDistribution;
 import lphy.core.spi.LPhyCoreImpl;
-import toroidaldiffusion.DihedralAngleDiffusionMatrix;
-import toroidaldiffusion.PhyloCircularBrownian;
-import toroidaldiffusion.PhyloToroidalBrownian;
-import toroidaldiffusion.PhyloWrappedBivariateDiffusion;
+import toroidaldiffusion.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -29,7 +26,7 @@ public class ToroidalDiffusionImpl extends LPhyCoreImpl {
     @Override
     public List<Class<? extends GenerativeDistribution>> declareDistributions() {
         return Arrays.asList(PhyloCircularBrownian.class, PhyloToroidalBrownian.class,
-                PhyloWrappedBivariateDiffusion.class);
+                PhyloWrappedBivariateDiffusion.class, WrappedBivariateNormal.class);
     }
 
     @Override

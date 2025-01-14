@@ -9,6 +9,9 @@ import lphy.core.model.annotation.GeneratorCategory;
 import lphy.core.model.annotation.GeneratorInfo;
 import lphy.core.model.annotation.ParameterInfo;
 
+import static toroidaldiffusion.WrappedNormalConst.MAX_ANGLE_VALUE;
+import static toroidaldiffusion.WrappedNormalConst.y0RateParam;
+
 /**
  * Created by alexpopinga on 2/02/20.
  * TODO Alex P needs to check
@@ -17,12 +20,9 @@ public class PhyloToroidalBrownian extends PhyloMultivariateBrownian {
 
     boolean anglesInRadians = true;
 
-    // ANGLES IN RADIANS FOR THIS IMPLEMENTATIONS
-    double MAX_ANGLE_VALUE = Math.PI*2.0;
-
-    public PhyloToroidalBrownian(@ParameterInfo(name = "tree", description = "the time tree.") Value<TimeTree> tree,
+    public PhyloToroidalBrownian(@ParameterInfo(name = treeParamName, description = "the time tree.") Value<TimeTree> tree,
                                  @ParameterInfo(name = "diffusionMatrix", description = "the multivariate diffusion rates.") Value<Double[][]> diffusionRate,
-                                 @ParameterInfo(name = "y0", description = "the value of multivariate traits at the root.") Value<Double[]> y) {
+                                 @ParameterInfo(name = y0RateParam, description = "the value of multivariate traits at the root.") Value<Double[]> y) {
         super (tree, diffusionRate, y);
     }
 

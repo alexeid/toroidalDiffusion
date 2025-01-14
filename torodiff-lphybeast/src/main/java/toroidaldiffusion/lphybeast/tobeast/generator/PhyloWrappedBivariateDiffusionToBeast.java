@@ -17,6 +17,7 @@ import lphybeast.tobeast.operators.TreeOperatorStrategy;
 import toroidaldiffusion.DihedralAngleAlignment;
 import toroidaldiffusion.Pair;
 import toroidaldiffusion.PhyloWrappedBivariateDiffusion;
+import toroidaldiffusion.WrappedNormalConst;
 import toroidaldiffusion.evolution.tree.DihedralAngleTreeModel;
 
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static toroidaldiffusion.PhyloWrappedBivariateDiffusion.y0RateParam;
+import static toroidaldiffusion.WrappedNormalConst.y0RateParam;
 
 
 public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<PhyloWrappedBivariateDiffusion, toroidaldiffusion.evolution.likelihood.PhyloWrappedBivariateDiffusion> {
@@ -175,16 +176,16 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
 
         phyloWrappedBivariateDiffusion.setInputValue("daTreeModel", dihedralAngleTreeModel);
 
-        RealParameter muParameter = context.getAsRealParameter(generator.getParams().get(PhyloWrappedBivariateDiffusion.muParamName));
+        RealParameter muParameter = context.getAsRealParameter(generator.getParams().get(WrappedNormalConst.muParamName));
         //TODO upper = "6.283"   2*pi
         muParameter.setInputValue("upper", ANGLE_UPPER);
         phyloWrappedBivariateDiffusion.setInputValue("mu", muParameter);
         phyloWrappedBivariateDiffusion.setInputValue("sigma",
-                context.getAsRealParameter(generator.getParams().get(PhyloWrappedBivariateDiffusion.sigmaParamName)));
+                context.getAsRealParameter(generator.getParams().get(WrappedNormalConst.sigmaParamName)));
 
 
-        phyloWrappedBivariateDiffusion.setInputValue("drift", context.getAsRealParameter(generator.getParams().get(PhyloWrappedBivariateDiffusion.DRIFT_PARAM)));
-        phyloWrappedBivariateDiffusion.setInputValue("driftCorr", context.getAsRealParameter(generator.getParams().get(PhyloWrappedBivariateDiffusion.DRIFT_CORR_PARAM)));
+        phyloWrappedBivariateDiffusion.setInputValue("drift", context.getAsRealParameter(generator.getParams().get(WrappedNormalConst.DRIFT_PARAM)));
+        phyloWrappedBivariateDiffusion.setInputValue("driftCorr", context.getAsRealParameter(generator.getParams().get(WrappedNormalConst.DRIFT_CORR_PARAM)));
 
 // TODO rm, this op is used for sampling internal node sequences
 //        WrappedRandomWalkOperator wrappedRandomWalkOperator = new WrappedRandomWalkOperator();
