@@ -58,7 +58,7 @@ class PhyloWrappedBivariateDiffusionToBeastTest {
 
         int site = dihedralAngleAlignment.nchar() * 2;
 
-        RealParameter internalNodesValues = PhyloWrappedBivariateDiffusionToBeast.getInternalNodesParam(dihedralAngleValue, ids, internalNodes, site);
+        RealParameter internalNodesValues = PhyloWrappedBivariateDiffusionToBeast.getInternalNodesParam(dihedralAngleValue, ids, internalNodes, site, true);
 
         //check for the ids
         String expectedKeys = String.join(" ", ids);
