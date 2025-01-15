@@ -12,10 +12,9 @@ import org.apache.commons.math3.random.RandomGenerator;
 
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.stream.Stream;
 
 import static java.lang.Math.sqrt;
-import static toroidaldiffusion.PhyloWrappedBivariateDiffusion.getAlphaarr;
+import static toroidaldiffusion.PhyloWrappedBivariateDiffusion.getAlphaArr;
 import static toroidaldiffusion.WrappedNormalConst.MAX_ANGLE_VALUE;
 
 public class WrappedBivariateNormal extends ParametricDistribution<Double[]> {
@@ -24,7 +23,7 @@ public class WrappedBivariateNormal extends ParametricDistribution<Double[]> {
 
     Value<Number[]> mu;
     Value<Number[]> sigma;
-    Value<Double[]> drift;
+    Value<Number[]> drift;
     Value<Number> driftCorr;
 
     NormalDistribution nD1;
@@ -35,11 +34,11 @@ public class WrappedBivariateNormal extends ParametricDistribution<Double[]> {
                                   @ParameterInfo(name = WrappedNormalConst.sigmaParamName, description = "the two variance terms.")
                                   Value<Number[]> sigma,
                                   @ParameterInfo(name = WrappedNormalConst.DRIFT_PARAM, description = "the two drift terms : alpha1 and alpha2.")
-                                  Value<Double[]> drift,
+                                  Value<Number[]> drift,
                                   @ParameterInfo(name = WrappedNormalConst.DRIFT_CORR_PARAM, description = "the correlation of two drift terms, " +
                                           "ranged from -1 to 1 excluding -1 and 1, but not alpha3 where alpha3 = sqrt(alpha1*alpha2) * corr.")
                                   Value<Number> driftCorr) {
-        super();
+        super(); // getRandom
         this.mu = mu;
         this.sigma = sigma;
         this.drift = drift;
@@ -66,7 +65,7 @@ public class WrappedBivariateNormal extends ParametricDistribution<Double[]> {
         double mu1 = ValueUtils.doubleArrayValue(mu)[0];
         double mu2 = ValueUtils.doubleArrayValue(mu)[1];
         // transfer alpha1,2,3 into rho
-        double[] alpha = Stream.of(getAlphaarr(drift, driftCorr)).mapToDouble(Double::doubleValue).toArray();
+        double[] alpha = getAlphaArr(drift, driftCorr);
         double rho = getRho(alpha);
         // transfer sigma1,2 into s1,2 for bivariate normal
         double s1 = getS1(ValueUtils.doubleArrayValue(sigma)[0], alpha);

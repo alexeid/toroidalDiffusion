@@ -19,15 +19,13 @@ import toroidaldiffusion.Pair;
 import toroidaldiffusion.PhyloWrappedBivariateDiffusion;
 import toroidaldiffusion.WrappedNormalConst;
 import toroidaldiffusion.evolution.tree.DihedralAngleTreeModel;
+import toroidaldiffusion.operator.WrappedRandomWalkOperator;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static toroidaldiffusion.WrappedNormalConst.MAX_ANGLE_VALUE;
-import static toroidaldiffusion.WrappedNormalConst.y0RateParam;
 
 
 public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<PhyloWrappedBivariateDiffusion, toroidaldiffusion.evolution.likelihood.PhyloWrappedBivariateDiffusion> {
@@ -87,43 +85,8 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
          * The internalnodes need to be sampled based on roots (?)
          */
         if (nSeqs == taxaNames.length()) {
-            Value y0V = generator.getParams().get(y0RateParam);
-
-            // two options: 1. give root sequence, 2. give equilibrium frequency at the root
-            if (y0V != null) {
-                // root seqs
-                Double[][] y0 = (Double[][]) y0V.value();
-                // nsite rows, 2 cols
-                Double[] flatArray = Arrays.stream(y0)
-                        .flatMap(Arrays::stream)
-                        .toArray(Double[]::new);
-
-                int nINExclRoot = internalNodes.size() - 1;
-                // exclude root
-                String internalNodesString = "";
-                if (nINExclRoot > 0) // there are other internal nodes
-                    //TODO create internalNodes only contain root seq, rest uses 3.0 ?
-                    internalNodesString = String.join(" ", Collections.nCopies(nINExclRoot * nsite, "3.14"));
-                else if (nINExclRoot < 0)
-                    throw new IllegalStateException("Incorrect number of internal nodes : " + internalNodes.size());
-                // root seq always at the last
-                String rootSeqStr = String.join(" ", Arrays.stream(flatArray)
-                        .map(String::valueOf) // Convert Double to String
-                        .toArray(String[]::new) );
-                internalNodesString += rootSeqStr;
-
-                //TODO err
-
-                internalNodesSeqs = new RealParameter(internalNodesString);
-                //internalNodes.setInputValue("value", internalNodesString);
-                internalNodesSeqs.setInputValue("minordimension", minordimension );
-                internalNodesSeqs.initAndValidate();
-
-                //TODO add WrpRanOP here to sample internal node seq
-
-
-            } else
-                throw new UnsupportedOperationException("Giving equilibrium frequency at the root is not supported yet !");
+//TODO root (all internal nodes?) sequences are sampled from equilibrium distribution
+                throw new UnsupportedOperationException("Not supported yet !");
 
         } else if (nSeqs > taxaNames.length()) {
             //Get nodesID
@@ -134,6 +97,15 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
             context.addBEASTObject(internalNodesSeqs, dihedralAngleAlignmentValue);
         } else {
             throw new IllegalStateException("Unexpected condition: 'taxa' is less than expected or invalid.");
+        }
+
+        boolean sampleInterNodeSeq = true; //TODO how get this flag from lphy?
+        if (sampleInterNodeSeq) {
+            //TODO add WrappedRandomWalkOperator to sample internal node seq
+            WrappedRandomWalkOperator wrappedRWOp = new WrappedRandomWalkOperator();
+            wrappedRWOp.initByName("parameter", internalNodesSeqs, "windowSize", 0.1, "weight", 10.0);
+            // TODO tree id?
+            wrappedRWOp.setID("" + "InternalNodeSeqs.WrappedRandomWalk");
         }
 
         dihedralAngleTreeModel.setInputValue("internalNodesValues", internalNodesSeqs);

@@ -1,10 +1,11 @@
 data {
-  n = 10;
+  n = 100;
   taxa = taxa(names=1:n); // taxa names integer must start from 1 for beast xml
 }
 model {
   λ ~ LogNormal(meanlog=3.0, sdlog=0.1); //sd = 0.1
   ψ ~ Yule(lambda=λ, taxa=taxa);
+  // TODO if no internalNodesID, then create XML sampling internal node sequences
 
   // angle is [0, 2pi)
   // 0.7557974 2.0137527 5.3654594
@@ -16,9 +17,8 @@ model {
   // correlation
   driftCorr ~ Uniform(lower=-1.0, upper=1.0);
 
-  y0 = rep([3.0, 3.0], 10);
-  // give the root sequence
-  y ~ PhyloWrappedBivariateDiffusion(mu=mu, sigma=σ, drift=drift, driftCorr=driftCorr, y0=y0, tree=ψ);
+  // the root sequence is sampled from equilibrium distribution
+  y ~ PhyloWrappedBivariateDiffusion(mu=mu, sigma=σ, drift=drift, driftCorr=driftCorr, n=n, tree=ψ);
 }
 
 

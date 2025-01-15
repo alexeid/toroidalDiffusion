@@ -8,6 +8,7 @@ import lphy.core.logger.LoggerUtils;
 import lphy.core.model.GenerativeDistribution;
 import lphy.core.model.RandomVariable;
 import lphy.core.model.Value;
+import lphy.core.model.ValueUtils;
 import lphy.core.model.annotation.GeneratorCategory;
 import lphy.core.model.annotation.GeneratorInfo;
 import lphy.core.model.annotation.ParameterInfo;
@@ -20,38 +21,41 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import static java.lang.Math.sqrt;
+import static toroidaldiffusion.WrappedNormalConst.*;
 
 /**
  * @author Alexei Drummond
+ * @author Walter Xie
  */
 public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<TaxaCharacterMatrix> {
 
     boolean anglesInRadians = true;
 
-    // ANGLES IN RADIANS FOR THIS IMPLEMENTATION
-    double MAX_ANGLE_VALUE = Math.PI * 2.0;
-
     Value<TimeTree> tree;
-    Value<Double[]> mu;
-    Value<Double[]> sigma;
-    Value<Double[]> drift;
+    Value<Number[]> mu;
+    Value<Number[]> sigma;
+    Value<Number[]> drift;
     Value<Number> driftCorr;
-    Value<Double[][]> y0;
+    Value<Integer> n;
+//    Value<Double[][]> y0;
+
     RandomGenerator random;
 //    Value<Double[]> alpha;
 
-    public PhyloWrappedBivariateDiffusion(@ParameterInfo(name = WrappedNormalConst.treeParamName, description = "the time tree.") Value<TimeTree> tree,
-                                          @ParameterInfo(name = WrappedNormalConst.muParamName, description = "the mean of the stationary distribution.") Value<Double[]> mu,
-                                          @ParameterInfo(name = WrappedNormalConst.sigmaParamName, description = "the two variance terms.") Value<Double[]> sigma,
-                                          @ParameterInfo(name = WrappedNormalConst.DRIFT_PARAM, description = "the two drift terms.") Value<Double[]> drift,
-                                          @ParameterInfo(name = WrappedNormalConst.DRIFT_CORR_PARAM, description = "the correlation of two drift terms, ranged from -1 to 1.") Value<Number> driftCorr,
-                                          @ParameterInfo(name = WrappedNormalConst.y0RateParam, description = "the value of [phi,psi] angle pairs for each carbon backbone bond of the molecule at the root of the phylogeny.") Value<Double[][]> y0) {
+    public PhyloWrappedBivariateDiffusion(@ParameterInfo(name = treeParamName, description = "the time tree.") Value<TimeTree> tree,
+                                          @ParameterInfo(name = muParamName, description = "the mean of the stationary distribution.") Value<Number[]> mu,
+                                          @ParameterInfo(name = sigmaParamName, description = "the two variance terms.") Value<Number[]> sigma,
+                                          @ParameterInfo(name = DRIFT_PARAM, description = "the two drift terms.") Value<Number[]> drift,
+                                          @ParameterInfo(name = DRIFT_CORR_PARAM, description = "the correlation of two drift terms, ranged from -1 to 1.") Value<Number> driftCorr,
+                                          @ParameterInfo(name = "n", description = "the number of pairs of angles to be simulated.") Value<Integer> n) {
+//                                          @ParameterInfo(name = WrappedNormalConst.y0RateParam, description = "the value of [phi,psi] angle pairs for each carbon backbone bond of the molecule at the root of the phylogeny.") Value<Double[][]> y0) {
         this.tree = tree;
         this.mu = mu;
         this.sigma = sigma;
         this.drift = drift;
         this.driftCorr = driftCorr;
-        this.y0 = y0;
+        this.n = n;
+//        this.y0 = y0;
         this.random = RandomUtils.getRandom();
 
     }
@@ -73,25 +77,27 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
     @Override
     public SortedMap<String, Value> getParams() {
         SortedMap<String, Value> map = new TreeMap<>();
-        map.put(WrappedNormalConst.treeParamName, tree);
-        map.put(WrappedNormalConst.muParamName, mu);
-        map.put(WrappedNormalConst.sigmaParamName, sigma);
+        map.put(treeParamName, tree);
+        map.put(muParamName, mu);
+        map.put(sigmaParamName, sigma);
 //        map.put(alphaParamName, alpha); // overload
-        map.put(WrappedNormalConst.DRIFT_PARAM, drift);
-        map.put(WrappedNormalConst.DRIFT_CORR_PARAM, driftCorr);
-        map.put(WrappedNormalConst.y0RateParam, y0);
+        map.put(DRIFT_PARAM, drift);
+        map.put(DRIFT_CORR_PARAM, driftCorr);
+        map.put("n", n);
+//        map.put(y0RateParam, y0);
         return map;
     }
 
     @Override
     public void setParam(String paramName, Value value) {
-        if (paramName.equals(WrappedNormalConst.treeParamName)) tree = value;
-        else if (paramName.equals(WrappedNormalConst.muParamName)) mu = value;
-        else if (paramName.equals(WrappedNormalConst.sigmaParamName)) sigma = value;
+        if (paramName.equals(treeParamName)) tree = value;
+        else if (paramName.equals(muParamName)) mu = value;
+        else if (paramName.equals(sigmaParamName)) sigma = value;
 //        else if (paramName.equals(alphaParamName)) alpha = value; // overload
-        else if (paramName.equals(WrappedNormalConst.DRIFT_PARAM)) drift = value;
-        else if (paramName.equals(WrappedNormalConst.DRIFT_CORR_PARAM)) driftCorr = value;
-        else if (paramName.equals(WrappedNormalConst.y0RateParam)) y0 = value;
+        else if (paramName.equals(DRIFT_PARAM)) drift = value;
+        else if (paramName.equals(DRIFT_CORR_PARAM)) driftCorr = value;
+        else if (paramName.equals("n")) n = value;
+//        else if (paramName.equals(y0RateParam)) y0 = value;
         else throw new RuntimeException("Unrecognised parameter name: " + paramName);
     }
 
@@ -107,15 +113,15 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
 //        Taxa taxa = Taxa.createTaxa(idMap); // TODO Alexei: why not tree.value().getTaxa() ?
         Taxa taxa = timeTree.getTaxa();
 
-        // TODO if y not specified then simulate from equilibrium distribution
-        // else just set y0 to given value
-        Double[][] y0mat = y0.value();
+        int nchar = n.value(); // sites
 
-        int nchar = y0mat.length; // rows
-        int length = y0mat[0].length; // cols should be 2, because each element in this array is an angle pair
-
-        if (length != 2)
-            throw new RuntimeException("Dimensions of y0 should be L by 2, but found: " + nchar + " by " + length);
+        // root sequences y0 should be simulated from equilibrium distribution
+        Double[][] y0 = new Double[nchar][2];
+        WrappedBivariateNormal equilDist = new WrappedBivariateNormal(mu, sigma, drift, driftCorr);
+        for (int i = 0; i < nchar; i++) {
+            Double[] pair = equilDist.sample().value();
+            y0[i] = pair;
+        }
 
         // check if all internal nodes have their IDs
         List<TimeTreeNode> internalNodes = timeTree.getInternalNodes();
@@ -127,7 +133,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
 
         WrappedBivariateDiffusion wrappedBivariateDiffusion = new WrappedBivariateDiffusion();
 
-        Double[] alpha_true = getAlphaarr(drift, driftCorr); // should be 3 numbers
+        double[] alpha_true = getAlphaArr(drift, driftCorr); // should be 3 numbers
 
         if (alpha_true[0] * alpha_true[1] <= alpha_true[2] * alpha_true[2]) //corr changed to a3
             throw new IllegalArgumentException("Alpha1 * alpha2 must > alpha3 * alpha3 ! But alpha = {" +
@@ -143,11 +149,11 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
 
 //        Double[] twoDrifts = drift.value();
 //        Double[] alpha = new Double[]{twoDrifts[0], twoDrifts[1], driftCorr.value().doubleValue()}; //change to driftCorr -> a3
-        wrappedBivariateDiffusion.setParameters(mu.value(), alpha_true, sigma.value());
+        wrappedBivariateDiffusion.setParameters(ValueUtils.doubleArrayValue(mu), alpha_true, ValueUtils.doubleArrayValue(sigma));
 
         // if any internal node id is not null and not empty string,
         // then add its sequence to the alignment.
-        traverseTree(timeTree.getRoot(), y0mat, nodeValues, wrappedBivariateDiffusion);
+        traverseTree(timeTree.getRoot(), y0, nodeValues, wrappedBivariateDiffusion);
 
         double[] range = DihedralAngleAlignment.getAngleRange((DihedralAngleAlignment) nodeValues);
 
@@ -160,21 +166,20 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
     // compute A given two drifts and their correlation
 
     /**
-     * Reparametrisation: alpha3^2 < alpha2 * alpha3, alpha3 < sqrt(alpha2 * alpha3)
+     * Reparametrisation: alpha3^2 < alpha1 * alpha2, alpha3 < sqrt(alpha1 * alpha2)
      * @param drift
      * @param driftCorr
      * @return
      */
+    public static double[] getAlphaArr(Value<Number[]> drift, Value<Number> driftCorr) {
+        double[] twoDrifts = ValueUtils.doubleArrayValue(drift);
+        double corr = ValueUtils.doubleValue(driftCorr);
 
-    public static Double[] getAlphaarr(Value<Double[]> drift, Value<Number> driftCorr) {
-        Double[] twoDrifts = drift.value();
-        double corr = driftCorr.value().doubleValue();
-
-        double alpha1 = twoDrifts[0].doubleValue();
-        double alpha2 = twoDrifts[1].doubleValue();
+        double alpha1 = twoDrifts[0];
+        double alpha2 = twoDrifts[1];
         double alpha3 = sqrt(alpha1*alpha2) * corr;
 
-        return new Double[]{twoDrifts[0], twoDrifts[1], alpha3};
+        return new double[]{alpha1, alpha2, alpha3};
     }
 
     private void fillIdMap(TimeTreeNode node, SortedMap<String, Integer> idMap) {
@@ -252,8 +257,8 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
         return tree;
     }
 
-    public Value<Double[][]> getY0() {
-        return y0;
-    }
+//    public Value<Double[][]> getY0() {
+//        return y0;
+//    }
 
 }
