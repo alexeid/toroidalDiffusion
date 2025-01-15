@@ -242,8 +242,8 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
                 newValues[i][0] = samples[0][0];
                 newValues[i][1] = samples[0][1];
             } catch (MathIllegalStateException e) {
-                throw new IllegalStateException("Cannot calculate new value for " + oldValue[i][0] +
-                        " and " + oldValue[i][1] + ", given branch length = " + branchLength +
+                throw new IllegalStateException("Cannot calculate new (phi, psi) given old pair (" + oldValue[i][0] +
+                        ", " + oldValue[i][1] + "), where branch length = " + branchLength +
                         "\nmu = [" + diffusion.mu.get(0) + ", " + diffusion.mu.get(1) + "]" +
                         "\nsigma = [" + diffusion.sigma.get(0) + ", " + diffusion.sigma.get(1) + "]" +
                         "\nalpha = [" + diffusion.alpha.get(0) + ", " + diffusion.alpha.get(1) + ", " + diffusion.alpha.get(2) + "]");

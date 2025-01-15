@@ -17,8 +17,8 @@ model {
   mu ~ LogNormal(meanlog=0.7, sdlog=0.5, replicates = 2);
   // 0.1408635 1.0000000 7.0990714
   σ ~ LogNormal(meanlog=0, sdlog=1, replicates = 2);
-  // 0.3396016 0.9048374 2.4108563
-  drift ~ LogNormal(meanlog=-0.1, sdlog=0.5, replicates = 2);
+  // 0.6212657 0.7557837 0.9194279
+  drift ~ LogNormal(meanlog=-0.28, sdlog=0.1, replicates = 2);
   // correlation
   driftCorr ~ Uniform(lower=-1.0, upper=1.0);
 
