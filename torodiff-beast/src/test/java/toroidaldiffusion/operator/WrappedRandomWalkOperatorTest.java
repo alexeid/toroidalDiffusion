@@ -1,8 +1,9 @@
 package toroidaldiffusion.operator;
 
 import org.junit.jupiter.api.Test;
+import toroidaldiffusion.ToroidalUtils;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class WrappedRandomWalkOperatorTest {
 
@@ -23,13 +24,13 @@ class WrappedRandomWalkOperatorTest {
 
         // Test angles within bounds
         for (int i = 0; i < withinBounds.length; i++) {
-            double observed = WrappedRandomWalkOperator.wrapAngles(withinBounds[i]);
+            double observed = ToroidalUtils.wrapToMaxAngle(withinBounds[i]);
             assertEquals(expectedWithinBounds[i], observed, TOLERANCE, "Failed for angle: " + withinBounds[i]);
         }
 
         // Test angles outside bounds
         for (int i = 0; i < outsideBounds.length; i++) {
-            double observed = WrappedRandomWalkOperator.wrapAngles(outsideBounds[i]);
+            double observed = ToroidalUtils.wrapToMaxAngle(outsideBounds[i]);
             assertEquals(expectedOutsideBounds[i], observed, TOLERANCE, "Failed for angle: " + outsideBounds[i]);
         }
     }

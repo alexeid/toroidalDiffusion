@@ -4,6 +4,10 @@ public class ToroidalUtils {
     // ANGLES IN RADIANS FOR THIS IMPLEMENTATIONS
     public static final double MAX_ANGLE_VALUE = 2.0 * Math.PI;
 
+    public static double wrapToMaxAngle(double rawAngle) {
+        return wrapToMaxAngle(rawAngle, MAX_ANGLE_VALUE);
+    }
+
     public static double wrapToMaxAngle(double rawAngle, double MAX_ANGLE_VALUE) {
         if (rawAngle > MAX_ANGLE_VALUE) {
             int K = (int)Math.floor(rawAngle / MAX_ANGLE_VALUE);

@@ -18,11 +18,6 @@ import static java.lang.Math.sqrt;
 
 public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
-//    final public Input<TreeLikelihood.Scaling> scaling = new Input<>("scaling",
-//            "type of scaling to use, one of " + Arrays.toString(TreeLikelihood.Scaling.values()) +
-//                    ". If not specified, the -beagle_scaling flag is used.",
-//            TreeLikelihood.Scaling._default, TreeLikelihood.Scaling.values());
-
     // 2 values
     final public Input<Function> muInput = new Input<>("mu", "the mean of the stationary distribution.");
     // 2 values
@@ -30,7 +25,8 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     // 3 values
 //    final public Input<Function> alphaInput = new Input<>("alpha", "the three drift terms.");
     final public Input<Function> driftInput = new Input<>("drift", "the two drift terms.");
-    final public Input<Function> driftCorrInput = new Input<>("driftCorr", "the correlation of two drift terms, ranged from -1 to 1.");
+    final public Input<Function> driftCorrInput = new Input<>("driftCorr", "the correlation of two drift terms, " +
+            "ranged within (-1, 1), so that it always satisfies alpha1*alpha2 > alpha3^2.");
 
 
     /****** calculation engine ******/
@@ -88,7 +84,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
 //        final double[] drift = driftInput.get().getDoubleValues();
 //        final double corr = driftCorrInput.get().getArrayValue();
-        final double[] alphaarr = getAlphaarr();
+        final double[] alphaarr = getAlphaArr();
 
         if (alphaarr[0] * alphaarr[1] <= alphaarr[2] * alphaarr[2])
             throw new IllegalArgumentException("alpha1 * alpha2 must > alpha3 * alpha3 ! But alpha = {" +
@@ -159,7 +155,8 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 //        }
 
         // set diffusion params before computing likelihood
-        //setDiffusionParams();
+        // TODO why err when using it?
+//        setDiffusionParams();
 
         // exclude root node, branches = nodes - 1
         final int rootIndex = getRootIndex();
@@ -206,7 +203,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     @Override
     public void log(long sample, PrintStream out) {
         super.log(sample, out);
-        out.print(getAlphaarr()[2] + "\t");
+        out.print(getAlphaArr()[2] + "\t");
     }
 
     // refresh muarr, alphaarr, sigmaarr for computing likelihood
@@ -214,7 +211,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         final double[] muarr = muInput.get().getDoubleValues(); // mean of the diffusion
         final double[] sigmaarr = sigmaInput.get().getDoubleValues(); // variance term
 //        final double[] alphaarr = alphaInput.get().getDoubleValues(); // drift term
-        final double[] alphaarr = getAlphaarr();
+        final double[] alphaarr = getAlphaArr();
 
         // init WrappedBivariateDiffusion here, setParameters(muarr, alphaarr, sigmaarr) once.
         // use diff.loglikwndtpd(phi0, psi0, phit, psit) later when compute likelihood
@@ -222,7 +219,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     }
 
     // compute A given two drifts and their correlation
-    private double[] getAlphaarr() {
+    private double[] getAlphaArr() {
         double[] twoDrifts = driftInput.get().getDoubleValues(); // two drift terms
 
         if (twoDrifts == null || twoDrifts.length != 2) {

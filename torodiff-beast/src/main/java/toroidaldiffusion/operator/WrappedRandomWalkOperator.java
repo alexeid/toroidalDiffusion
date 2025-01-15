@@ -38,30 +38,24 @@ public class WrappedRandomWalkOperator extends Operator {
 //        tree = treeInput.get();
     }
 
+    // need to move the pair of angles each time
     public double proposal() {
         RealParameter param = (RealParameter) InputUtil.get(parameterInput, this);
 
         int i = Randomizer.nextInt(param.getDimension());
-        double value = param.getValue(i);
-        double newValue;
-
-        // Perturb the value
-        if (useGaussian) {
-            newValue = value + Randomizer.nextGaussian() * windowSize;
-        } else {
-            newValue = value + Randomizer.nextDouble() * 2 * windowSize - windowSize;
-        }
-
-        // Wrap the new value to be within 0 to 2π
-        newValue = ToroidalUtils.wrapToMaxAngle(newValue, ToroidalUtils.MAX_ANGLE_VALUE);
-
+        // (phi, psi) index starts (0, 1), so if i is even then j = i+1, else j = i-1
+        int j = i % 2 == 0 ? i + 1 : i - 1;
+        double val1 = param.getValue(i);
+        double val2 = param.getValue(j);
+        double newVal1 = getNewValue(val1);
+        double newVal2 = getNewValue(val2);
         // If the new value is the same as the current value, reject the proposal
-        if (newValue == value) {
+        if (newVal1 == val1 && newVal2 == val2)
             return Double.NEGATIVE_INFINITY;
-        }
 
-        // Set the new value
-        param.setValue(i, newValue);
+        // Set the new pair
+        param.setValue(i, newVal1);
+        param.setValue(j, newVal2);
 
 //        // assuming nodeIndex is Nr
 //        int nodeIndex = (int) Math.floor((double) i / param.getMinorDimension1());
@@ -72,6 +66,20 @@ public class WrappedRandomWalkOperator extends Operator {
 //        internal.makeDirty(Tree.IS_DIRTY);
 
         return 0.0; // Hastings ratio is 0.0 (log(1))
+    }
+
+    private double getNewValue(double value) {
+        double newValue;
+        // Perturb the value
+        if (useGaussian) {
+            newValue = value + Randomizer.nextGaussian() * windowSize;
+        } else {
+            newValue = value + Randomizer.nextDouble() * 2 * windowSize - windowSize;
+        }
+
+        // Wrap the new value to be within 0 to 2π
+        newValue = ToroidalUtils.wrapToMaxAngle(newValue);
+        return newValue;
     }
 
     public double getCoercableParameterValue() {
