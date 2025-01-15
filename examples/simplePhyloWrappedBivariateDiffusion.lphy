@@ -8,6 +8,6 @@ drift = [1.0, 0.5];
 driftCorr = 0.5;
 σ = [0.5, 0.75];
 
-y ~ PhyloWrappedBivariateDiffusion(mu=mu, sigma=σ, drift=drift, driftCorr=driftCorr, n=20, tree=ψ2);
+y ~ PhyloWrappedBivariateDiffusion(mu=mu, sigma=σ, drift=drift, driftCorr=driftCorr, L=20, tree=ψ2);
 
 

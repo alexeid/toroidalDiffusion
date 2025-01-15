@@ -1,5 +1,6 @@
 data {
-  n = 100;
+  l = 100
+  n = 10;
   taxa = taxa(names=1:n); // taxa names integer must start from 1 for beast xml
 }
 model {
@@ -18,7 +19,7 @@ model {
   driftCorr ~ Uniform(lower=-1.0, upper=1.0);
 
   // the root sequence is sampled from equilibrium distribution
-  y ~ PhyloWrappedBivariateDiffusion(mu=mu, sigma=σ, drift=drift, driftCorr=driftCorr, n=n, tree=ψ);
+  X ~ PhyloWrappedBivariateDiffusion(mu=mu, sigma=σ, drift=drift, driftCorr=driftCorr, L=l, tree=ψ);
 }
 
 

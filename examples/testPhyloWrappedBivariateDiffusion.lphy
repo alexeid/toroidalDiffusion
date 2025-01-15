@@ -1,7 +1,11 @@
 data {
-  n = 10; // sites
+  l = 100; // sites
+  n = 20; // taxa
   taxa = taxa(names=1:n); // taxa names integer must start from 1 for beast xml
-  internalNodesID = 11:19;
+  i = n+1;
+  j = 2*n-1;
+  // tips id starts from 1
+  internalNodesID = i:j;
 }
 model {
   λ ~ LogNormal(meanlog=3.0, sdlog=0.1); //sd = 0.1
@@ -13,13 +17,13 @@ model {
   mu ~ LogNormal(meanlog=0.7, sdlog=0.5, replicates = 2);
   // 0.1408635 1.0000000 7.0990714
   σ ~ LogNormal(meanlog=0, sdlog=1, replicates = 2);
-  // 0.6212657 0.7557837 0.9194279
-  drift ~ LogNormal(meanlog=-0.28, sdlog=0.1, replicates = 2);
+  // 0.3396016 0.9048374 2.4108563
+  drift ~ LogNormal(meanlog=-0.1, sdlog=0.5, replicates = 2);
   // correlation
   driftCorr ~ Uniform(lower=-1.0, upper=1.0);
 
   // the root sequence is sampled from equilibrium distribution
-  y ~ PhyloWrappedBivariateDiffusion(mu=mu, sigma=σ, drift=drift, driftCorr=driftCorr, n=n, tree=ψ2);
+  X ~ PhyloWrappedBivariateDiffusion(mu=mu, sigma=σ, drift=drift, driftCorr=driftCorr, L=l, tree=ψ2);
 }
 
 

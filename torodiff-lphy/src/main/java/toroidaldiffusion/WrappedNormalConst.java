@@ -10,6 +10,7 @@ public class WrappedNormalConst {
     public static final String alphaParamName = "alpha";
     public static final String DRIFT_PARAM = "drift";
     public static final String DRIFT_CORR_PARAM = "driftCorr";
+    public static final String LParamName = "L";
 
     public static final String y0RateParam = "y0";
 

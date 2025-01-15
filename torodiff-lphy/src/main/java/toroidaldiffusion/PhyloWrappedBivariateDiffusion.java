@@ -36,7 +36,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
     Value<Number[]> sigma;
     Value<Number[]> drift;
     Value<Number> driftCorr;
-    Value<Integer> n;
+    Value<Integer> l;
 //    Value<Double[][]> y0;
 
     RandomGenerator random;
@@ -47,14 +47,14 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
                                           @ParameterInfo(name = sigmaParamName, description = "the two variance terms.") Value<Number[]> sigma,
                                           @ParameterInfo(name = DRIFT_PARAM, description = "the two drift terms.") Value<Number[]> drift,
                                           @ParameterInfo(name = DRIFT_CORR_PARAM, description = "the correlation of two drift terms, ranged from -1 to 1.") Value<Number> driftCorr,
-                                          @ParameterInfo(name = "n", description = "the number of pairs of angles to be simulated.") Value<Integer> n) {
+                                          @ParameterInfo(name = LParamName, description = "the number of pairs of angles to be simulated.") Value<Integer> l) {
 //                                          @ParameterInfo(name = WrappedNormalConst.y0RateParam, description = "the value of [phi,psi] angle pairs for each carbon backbone bond of the molecule at the root of the phylogeny.") Value<Double[][]> y0) {
         this.tree = tree;
         this.mu = mu;
         this.sigma = sigma;
         this.drift = drift;
         this.driftCorr = driftCorr;
-        this.n = n;
+        this.l = l;
 //        this.y0 = y0;
         this.random = RandomUtils.getRandom();
 
@@ -83,7 +83,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
 //        map.put(alphaParamName, alpha); // overload
         map.put(DRIFT_PARAM, drift);
         map.put(DRIFT_CORR_PARAM, driftCorr);
-        map.put("n", n);
+        map.put(LParamName, l);
 //        map.put(y0RateParam, y0);
         return map;
     }
@@ -96,7 +96,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
 //        else if (paramName.equals(alphaParamName)) alpha = value; // overload
         else if (paramName.equals(DRIFT_PARAM)) drift = value;
         else if (paramName.equals(DRIFT_CORR_PARAM)) driftCorr = value;
-        else if (paramName.equals("n")) n = value;
+        else if (paramName.equals(LParamName)) l = value;
 //        else if (paramName.equals(y0RateParam)) y0 = value;
         else throw new RuntimeException("Unrecognised parameter name: " + paramName);
     }
@@ -113,7 +113,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
 //        Taxa taxa = Taxa.createTaxa(idMap); // TODO Alexei: why not tree.value().getTaxa() ?
         Taxa taxa = timeTree.getTaxa();
 
-        int nchar = n.value(); // sites
+        int nchar = l.value(); // sites
 
         // root sequences y0 should be simulated from equilibrium distribution
         Double[][] y0 = new Double[nchar][2];

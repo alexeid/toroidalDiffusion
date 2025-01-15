@@ -92,20 +92,32 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
             //Get nodesID
             String[] internalNodesID = getID(internalNodes);
 
-            // Internal nodes sequences are given from simulation
-            internalNodesSeqs = getInternalNodesParam(dihedralAngleAlignmentValue, internalNodesID, internalNodes, minordimension);
+            boolean sampleInterNodeSeq = true; //TODO how get this flag from lphy?
+            if (sampleInterNodeSeq) {
+                // TODO cannot handle keys if sampling internal node seqs
+                internalNodesSeqs = getInternalNodesParam(dihedralAngleAlignmentValue, internalNodesID,
+                        internalNodes, minordimension, false);
+
+                context.addStateNode(internalNodesSeqs, dihedralAngleAlignmentValue, false);
+                //TODO add WrappedRandomWalkOperator to sample internal node seq
+                WrappedRandomWalkOperator wrappedRWOp = new WrappedRandomWalkOperator();
+                wrappedRWOp.initByName("parameter", internalNodesSeqs, "windowSize", 0.1, "weight", 10.0);
+                // TODO tree id?
+                wrappedRWOp.setID("" + "InternalNodeSeqs.WrappedRandomWalk");
+                context.addExtraOperator(wrappedRWOp);
+
+                //TODO rm logging internal node seqs
+                context.addSkipLoggable(internalNodesSeqs);
+
+            } else
+                // Internal nodes sequences are given from simulation
+                internalNodesSeqs = getInternalNodesParam(dihedralAngleAlignmentValue, internalNodesID,
+                        internalNodes, minordimension, true);
+
             context.addBEASTObject(internalNodesSeqs, dihedralAngleAlignmentValue);
+
         } else {
             throw new IllegalStateException("Unexpected condition: 'taxa' is less than expected or invalid.");
-        }
-
-        boolean sampleInterNodeSeq = true; //TODO how get this flag from lphy?
-        if (sampleInterNodeSeq) {
-            //TODO add WrappedRandomWalkOperator to sample internal node seq
-            WrappedRandomWalkOperator wrappedRWOp = new WrappedRandomWalkOperator();
-            wrappedRWOp.initByName("parameter", internalNodesSeqs, "windowSize", 0.1, "weight", 10.0);
-            // TODO tree id?
-            wrappedRWOp.setID("" + "InternalNodeSeqs.WrappedRandomWalk");
         }
 
         dihedralAngleTreeModel.setInputValue("internalNodesValues", internalNodesSeqs);
@@ -181,31 +193,33 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
 
     }
 
-    public static RealParameter getInternalNodesParam(Value dihedralAngleAlignmentValue, String[] internalNodesID, List<TimeTreeNode> internalNodesList, int minordimension) {
+    public static RealParameter getInternalNodesParam(
+            Value dihedralAngleAlignmentValue, String[] internalNodesID,
+            List<TimeTreeNode> internalNodesList, int minordimension, boolean useKey) {
+
         List<Double> internalNodesValues = getInternalNodes(dihedralAngleAlignmentValue, internalNodesID, internalNodesList);
         // Convert list to a string with spaces between each value for input values
         String internalNodesString = internalNodesValues.stream()
                 .map(String::valueOf)
                 .collect(Collectors.joining(" "));
-        // Convert string list to string for keys
-        String internalNodeskeys = String.join(" ", internalNodesID);
 
-        return createInternalNodeValuesParameter(minordimension, internalNodesString, internalNodeskeys);
-    }
-
-    private static RealParameter createInternalNodeValuesParameter(int minordimension, String internalNodesString,
-                                                                   String internalNodeskeys) {
         RealParameter internalNodes = new RealParameter(internalNodesString);
         //internalNodes.setInputValue("value", internalNodesString);
-        internalNodes.setInputValue("minordimension", minordimension); // a pair
-        if (internalNodeskeys != null)
+        // minordimension = num of sites * 2
+        internalNodes.setInputValue("minordimension", minordimension);
+        if (useKey) {
+            // Convert string list to string for keys
+            String internalNodeskeys = String.join(" ", internalNodesID);
             internalNodes.setInputValue("keys", internalNodeskeys);
+        }
+
         //TODO upper = "6.283"   2*pi
         internalNodes.setInputValue("upper", MAX_ANGLE_VALUE);
         internalNodes.initAndValidate();
+        // TODO unique?
+        internalNodes.setID("internalNodes");
         return internalNodes;
     }
-
 
     public String[] getID(List<TimeTreeNode> nodes) {
         // Return empty array if the input list is null or empty
