@@ -5,6 +5,7 @@ import beast.base.inference.Operator;
 import beast.base.inference.parameter.RealParameter;
 import beast.base.inference.util.InputUtil;
 import beast.base.util.Randomizer;
+import toroidaldiffusion.ToroidalUtils;
 
 import java.text.DecimalFormat;
 
@@ -52,7 +53,7 @@ public class WrappedRandomWalkOperator extends Operator {
         }
 
         // Wrap the new value to be within 0 to 2π
-        newValue = wrapAngles(newValue);
+        newValue = ToroidalUtils.wrapToMaxAngle(newValue, ToroidalUtils.MAX_ANGLE_VALUE);
 
         // If the new value is the same as the current value, reject the proposal
         if (newValue == value) {
@@ -71,18 +72,6 @@ public class WrappedRandomWalkOperator extends Operator {
 //        internal.makeDirty(Tree.IS_DIRTY);
 
         return 0.0; // Hastings ratio is 0.0 (log(1))
-    }
-
-    // TODO range [0, 2pi)
-    //  > 2 * Math.PI or >=
-    public static double wrapAngles(double angle) {
-        while (angle >= ANGLE_UPPER) {
-            angle -= 2 * Math.PI;
-        }
-        while (angle < ANGLE_LOWER) {
-            angle += 2 * Math.PI;
-        }
-        return angle;
     }
 
     public double getCoercableParameterValue() {
