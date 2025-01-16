@@ -41,6 +41,15 @@
             <outputDirectory>/lib</outputDirectory>
             <includes>
                 <include>io.github.linguaphylo:torodiff-beast</include>
+                <!--TODO currently depend on toroidal lphy  -->
+                <include>io.github.linguaphylo:toroidaldiffusion</include>
+                <!-- 3rd party  -->
+                <include>org.ejml:ejml-core</include>
+                <include>org.ejml:ejml-ddense</include>
+                <include>org.ejml:ejml-simple</include>
+                <!--TODO why not working?-->
+                <include>io.github.linguaphylo:lphy</include>
+                <include>io.github.linguaphylo:lphy-base</include>
             </includes>
             <useTransitiveDependencies>false</useTransitiveDependencies>
         </dependencySet>
