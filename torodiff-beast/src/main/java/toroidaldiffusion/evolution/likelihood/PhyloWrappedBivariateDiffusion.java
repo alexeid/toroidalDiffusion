@@ -31,6 +31,10 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
     /****** calculation engine ******/
     protected WrappedBivariateDiffusion diff = new WrappedBivariateDiffusion();
+    protected double[] muArr; // stationary mean of the diffusion
+    protected double[] sigmaArr; // diffusion coefficient
+    protected double[] driftArr; // drift
+    protected double driftCorr; // ranged within (-1, 1), so that it always satisfies alpha1*alpha2 > alpha3^2.
 
 //    protected BeagleTreeLikelihood beagle;
     /**
@@ -82,13 +86,12 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         // tree, and all nodes values
         super.initAndValidate();
 
-//        final double[] drift = driftInput.get().getDoubleValues();
-//        final double corr = driftCorrInput.get().getArrayValue();
-        final double[] alphaarr = getAlphaArr();
-
-        if (alphaarr[0] * alphaarr[1] <= alphaarr[2] * alphaarr[2])
-            throw new IllegalArgumentException("alpha1 * alpha2 must > alpha3 * alpha3 ! But alpha = {" +
-                    alphaarr[0] + ", " + alphaarr[1] + ", " + alphaarr[2] +  "} is invalid.");
+        if (muInput.get().getDimension() != 2)
+            throw new IllegalArgumentException("Expected two mu in 'muInput'. Found: " + muInput.get().getDimension());
+        if (sigmaInput.get().getDimension() != 2)
+            throw new IllegalArgumentException("Expected two sigma in 'sigmaInput'. Found: " + sigmaInput.get().getDimension());
+        if (driftInput.get().getDimension() != 2)
+            throw new IllegalArgumentException("Expected two drift terms in 'driftInput'. Found: " + driftInput.get().getDimension());
 
         // set mu, sigma, alpha
         setDiffusionParams();
@@ -156,7 +159,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
         // set diffusion params before computing likelihood
         // TODO why err when using it?
-        setDiffusionParams();
+//        setDiffusionParams();
 
         // exclude root node, branches = nodes - 1
         final int rootIndex = getRootIndex();
@@ -209,36 +212,30 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
     // refresh muarr, alphaarr, sigmaarr for computing likelihood
     protected void setDiffusionParams() {
-        final double[] muarr = muInput.get().getDoubleValues(); // mean of the diffusion
-        final double[] sigmaarr = sigmaInput.get().getDoubleValues(); // variance term
-//        final double[] alphaarr = alphaInput.get().getDoubleValues(); // drift term
-        final double[] alphaarr = getAlphaArr();
+        muArr = muInput.get().getDoubleValues(); // stationary mean of the diffusion
+        sigmaArr = sigmaInput.get().getDoubleValues(); // diffusion coefficient
+        driftArr = driftInput.get().getDoubleValues(); // drift
+        driftCorr = driftCorrInput.get().getArrayValue();
 
+        double[] alphaarr = getAlphaArr();
         // init WrappedBivariateDiffusion here, setParameters(muarr, alphaarr, sigmaarr) once.
         // use diff.loglikwndtpd(phi0, psi0, phit, psit) later when compute likelihood
-        diff.setParameters(muarr, alphaarr, sigmaarr);
+        diff.setParameters(muArr, alphaarr, sigmaArr);
     }
 
     // compute A given two drifts and their correlation
     private double[] getAlphaArr() {
-        final double[] twoDrifts = driftInput.get().getDoubleValues(); // two drift terms
-
-        if (twoDrifts == null || twoDrifts.length != 2) {
-            throw new IllegalArgumentException("Expected two drift terms in 'driftInput'. Found: " + (twoDrifts == null ? "null" : twoDrifts.length));
+        if (driftCorr <= -1.0 || driftCorr >= 1.0) {
+            throw new IllegalArgumentException("Drifts correlation must be within (-1, 1). Found: " + driftCorr);
         }
-
-        final double corr = driftCorrInput.get().getArrayValue();
-
-        if (corr <= -1.0 || corr >= 1.0) {
-            throw new IllegalArgumentException("Correlation value must be within (-1, 1). Found: " + corr);
-        }
-
-        double alpha1 = twoDrifts[0];
-        double alpha2 = twoDrifts[1];
         // corr within (-1, 1), so that always alpha1*alpha2 > alpha3^2
-        double alpha3 = sqrt(alpha1*alpha2) * corr;
+        double alpha3 = sqrt(driftArr[0]*driftArr[1]) * driftCorr;
+        double[] alphaarr = new double[]{driftArr[0], driftArr[1], alpha3};
 
-        return new double[]{twoDrifts[0], twoDrifts[1], alpha3};
+        if (alphaarr[0] * alphaarr[1] <= alphaarr[2] * alphaarr[2])
+            throw new IllegalArgumentException("alpha1 * alpha2 must > alpha3 * alpha3 ! But alpha = {" +
+                    alphaarr[0] + ", " + alphaarr[1] + ", " + alphaarr[2] +  "} is invalid.");
+        return alphaarr;
     }
 
     protected int updateBranch(final DABranchLikelihoodCore daBranchLdCore, final Node node) {
@@ -254,7 +251,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 //        boolean seqUpdate = false;
 
 //        int nodeUpdate = node.isDirty() | parent.isDirty();
-        int nodeUpdate = Tree.IS_DIRTY;
+        int nodeUpdate = Tree.IS_DIRTY; // no caching
 
         final double branchRate = 1.0; //TODO branchRateModel.getRateForBranch(node);
         // do not use getLength, code below to save time
@@ -304,9 +301,6 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
             // TODO why ?
             daBranchLdCore.setBranchLdForUpdate();
-
-            //set initial params values
-//            setDiffusionParams();
 
             // pairs of values, dimension is 2 (angles) * N_sites
             double[] parentNodeValues = daTreeModel.getNodeValue(parent);
@@ -371,22 +365,27 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 //        if (beagle != null) {
 //            return beagle.requiresRecalculation();
 //        }
-//        hasDirt = Tree.IS_CLEAN;
+
+        // TODO check set here?
+        setDiffusionParams();
+        return super.requiresRecalculation();
+
 // TODO check isDirtyCalculation()?
-        if (daTreeModel.getTipsValuesParam().somethingIsDirty()) {
-            return true;
-        }
-        if (daTreeModel.getInternalNodesValuesParam().somethingIsDirty()) {
-            return true;
-        }
+//        if (daTreeModel.getTipsValuesParam().somethingIsDirty()) {
+//            return true;
+//        }
+//        if (daTreeModel.getInternalNodesValuesParam().somethingIsDirty()) {
+//            return true;
+//        }
 //        if (branchRateModel != null && branchRateModel.isDirtyCalculation()) {
 //            //m_nHasDirt = Tree.IS_DIRTY;
 //            return true;
 //        }
         // TODO check
-        if (tree.getRoot().isDirty() > 0)
-            return true;
-        return tree.somethingIsDirty();
+//        for (Node node : tree.getNodesAsArray())
+//            if (node.isDirty() != Tree.IS_CLEAN)
+//                return true;
+//        return tree.somethingIsDirty();
     }
 
     @Override
@@ -396,15 +395,19 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 //            super.store();
 //            return;
 //        }
-        super.store(); // storedLogP = logP; isDirty = false
 
-        for (DABranchLikelihoodCore daBrLdCore : daBranchLdCores)
-            daBrLdCore.store();
+        // TODO check set here?
+        setDiffusionParams();
+
+//        for (DABranchLikelihoodCore daBrLdCore : daBranchLdCores)
+//            daBrLdCore.store();
         //TODO estimating internal node sequences needs store/restore?
         // param store is protected?
 
         System.arraycopy(branchLengths, 0, storedBranchLengths, 0, getNrOfBranches());
         System.arraycopy(branchLogLikelihoods, 0, storedBranchLogLikelihoods, 0, getNrOfBranches()+1);
+
+        super.store(); // storedLogP = logP; isDirty = false
     }
 
     @Override
@@ -414,10 +417,12 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 //            super.restore();
 //            return;
 //        }
-        super.restore(); // logP = storedLogP; isDirty = false
 
-        for (DABranchLikelihoodCore daBrLdCore : daBranchLdCores)
-            daBrLdCore.restore();
+        // TODO check set here?
+        setDiffusionParams();
+
+//        for (DABranchLikelihoodCore daBrLdCore : daBranchLdCores)
+//            daBrLdCore.restore();
         //TODO estimating internal node sequences needs store/restore?
 //        daTreeModelInput.get().getInternalNodesValuesParam().restore();
 
@@ -429,6 +434,8 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         double[] tmp2 = branchLogLikelihoods;
         branchLogLikelihoods = storedBranchLogLikelihoods;
         storedBranchLogLikelihoods = tmp2;
+
+        super.restore(); // logP = storedLogP; isDirty = false
     }
 
     // for testing, nodeIndex is the child node below this branch
