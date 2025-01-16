@@ -158,8 +158,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 //        }
 
         // set diffusion params before computing likelihood
-        // TODO why err when using it?
-//        setDiffusionParams();
+        setDiffusionParams();
 
         // exclude root node, branches = nodes - 1
         final int rootIndex = getRootIndex();
@@ -251,7 +250,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 //        boolean seqUpdate = false;
 
 //        int nodeUpdate = node.isDirty() | parent.isDirty();
-        int nodeUpdate = Tree.IS_DIRTY; // no caching
+        int nodeUpdate = Tree.IS_DIRTY; // TODO caching not working
 
         final double branchRate = 1.0; //TODO branchRateModel.getRateForBranch(node);
         // do not use getLength, code below to save time
@@ -270,7 +269,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         if (seqUpdate || nodeUpdate != Tree.IS_CLEAN || branchTime != branchLengths[nodeNr]) {
             this.branchLengths[nodeNr] = branchTime;
 
-            //TODO here?
+            //not here, already did in calculateLogP()
 //            setDiffusionParams();
 
             /*TODO
@@ -366,7 +365,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 //            return beagle.requiresRecalculation();
 //        }
 
-        // TODO check set here?
+        // must be called before super
         setDiffusionParams();
         return super.requiresRecalculation();
 
@@ -396,9 +395,6 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 //            return;
 //        }
 
-        // TODO check set here?
-        setDiffusionParams();
-
 //        for (DABranchLikelihoodCore daBrLdCore : daBranchLdCores)
 //            daBrLdCore.store();
         //TODO estimating internal node sequences needs store/restore?
@@ -407,6 +403,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         System.arraycopy(branchLengths, 0, storedBranchLengths, 0, getNrOfBranches());
         System.arraycopy(branchLogLikelihoods, 0, storedBranchLogLikelihoods, 0, getNrOfBranches()+1);
 
+        // store logP after all stored
         super.store(); // storedLogP = logP; isDirty = false
     }
 
@@ -418,7 +415,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 //            return;
 //        }
 
-        // TODO check set here?
+        // must refresh diffusion param
         setDiffusionParams();
 
 //        for (DABranchLikelihoodCore daBrLdCore : daBranchLdCores)
@@ -435,6 +432,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         branchLogLikelihoods = storedBranchLogLikelihoods;
         storedBranchLogLikelihoods = tmp2;
 
+        // store logP after all stored
         super.restore(); // logP = storedLogP; isDirty = false
     }
 
