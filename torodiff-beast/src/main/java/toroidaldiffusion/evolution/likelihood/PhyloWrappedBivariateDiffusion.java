@@ -37,7 +37,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
      * calculation engine for each branch, excl. root index, nrOfNodes-1
      */
     protected DABranchLikelihoodCore[] daBranchLdCores;
-    protected DABranchLikelihoodCore daRootLdCores;
+//    protected DABranchLikelihoodCore daRootLdCores;
 
     /**
      * multi-threading {@link DABranchLikelihoodCallable}
@@ -90,7 +90,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
             throw new IllegalArgumentException("alpha1 * alpha2 must > alpha3 * alpha3 ! But alpha = {" +
                     alphaarr[0] + ", " + alphaarr[1] + ", " + alphaarr[2] +  "} is invalid.");
 
-        // TODO validate dims
+        // set mu, sigma, alpha
         setDiffusionParams();
 
         // no pattern, use getSiteCount()
@@ -118,7 +118,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         }
         tree.getRoot().makeDirty(Tree.IS_FILTHY);
         // root special
-        daRootLdCores = new DABranchLikelihoodCore(getRootIndex(), siteCount, diff);
+//        daRootLdCores = new DABranchLikelihoodCore(getRootIndex(), siteCount, diff);
 
         //TODO  multi-threading uses likelihoodCallers
 
@@ -156,7 +156,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
         // set diffusion params before computing likelihood
         // TODO why err when using it?
-//        setDiffusionParams();
+        setDiffusionParams();
 
         // exclude root node, branches = nodes - 1
         final int rootIndex = getRootIndex();
@@ -203,6 +203,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     @Override
     public void log(long sample, PrintStream out) {
         super.log(sample, out);
+        // alpha3
         out.print(getAlphaArr()[2] + "\t");
     }
 
@@ -220,13 +221,13 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
     // compute A given two drifts and their correlation
     private double[] getAlphaArr() {
-        double[] twoDrifts = driftInput.get().getDoubleValues(); // two drift terms
+        final double[] twoDrifts = driftInput.get().getDoubleValues(); // two drift terms
 
         if (twoDrifts == null || twoDrifts.length != 2) {
             throw new IllegalArgumentException("Expected two drift terms in 'driftInput'. Found: " + (twoDrifts == null ? "null" : twoDrifts.length));
         }
 
-        double corr = driftCorrInput.get().getArrayValue();
+        final double corr = driftCorrInput.get().getArrayValue();
 
         if (corr <= -1.0 || corr >= 1.0) {
             throw new IllegalArgumentException("Correlation value must be within (-1, 1). Found: " + corr);
@@ -252,7 +253,8 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         boolean seqUpdate = isInternalNodeSeqDirty(nodeNr) || isInternalNodeSeqDirty(parentNum);
 //        boolean seqUpdate = false;
 
-        int nodeUpdate = node.isDirty() | parent.isDirty();
+//        int nodeUpdate = node.isDirty() | parent.isDirty();
+        int nodeUpdate = Tree.IS_DIRTY;
 
         final double branchRate = 1.0; //TODO branchRateModel.getRateForBranch(node);
         // do not use getLength, code below to save time
@@ -270,6 +272,9 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         // ====== 1. update the transition probability matrix(ices) if the branch len changes ======
         if (seqUpdate || nodeUpdate != Tree.IS_CLEAN || branchTime != branchLengths[nodeNr]) {
             this.branchLengths[nodeNr] = branchTime;
+
+            //TODO here?
+//            setDiffusionParams();
 
             /*TODO
             daBranchLdCore.setNodeMatrixForUpdate(); // TODO review the index
@@ -289,13 +294,13 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
             }
             */
 
-            nodeUpdate |= Tree.IS_DIRTY;
-        }
+//            nodeUpdate |= Tree.IS_DIRTY;
+//        }
 // TODO only some sites are changed
 //       else if (seqUpdate) { }
 
         // ====== 2. recalculate likelihood if either child node wasn't clean ======
-        if (nodeUpdate != Tree.IS_CLEAN) {
+//        if (nodeUpdate != Tree.IS_CLEAN) {
 
             // TODO why ?
             daBranchLdCore.setBranchLdForUpdate();
@@ -306,7 +311,8 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
             // pairs of values, dimension is 2 (angles) * N_sites
             double[] parentNodeValues = daTreeModel.getNodeValue(parent);
             double[] childNodeValues = daTreeModel.getNodeValue(node);
-            // populate branchLd[][excl. root], nodeIndex is child
+            // populate branchLd[][excl. root],
+            // Require to set dt before loglikwndtpd
             daBranchLdCore.calculateBranchLd(parentNodeValues, childNodeValues, branchTime);
         }
 
@@ -324,7 +330,8 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
         // by group
         public DABranchLikelihoodCallable(List<DABranchLikelihoodCore> brLDCores) {
-            this.brLDCores = brLDCores;
+            throw new UnsupportedOperationException("in dev !");
+//            this.brLDCores = brLDCores;
         }
 
         @Override

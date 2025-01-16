@@ -28,6 +28,9 @@ public class DihedralAngleTreeModel extends Distribution implements DATreeModel 
 
     public final static int PAIR = 2;
 
+    // index is node Nr, value is ID if node.getID() != null
+    String[] nodeIDs;
+
     @Override
     public void initAndValidate() {
         // tree
@@ -47,28 +50,19 @@ public class DihedralAngleTreeModel extends Distribution implements DATreeModel 
                     "must be the same as the 2nd dimension of internal nodes values ! " +
                     internalNodesValues.getMinorDimension2() + " !");
 
+        List<String> keys = tipValues.getKeysList();
+        if (keys.isEmpty() || keys.size() != leafNodeCount)
+            throw new UnsupportedOperationException("Tip nodes value must use parameter having keys !");
+
+        //TODO for getNodeValue(Node node)?
+        nodeIDs = new String[tree.getNodeCount()];
+        for (Node node : tree.getNodesAsArray()) {
+            if (node.getID() != null)
+                nodeIDs[node.getNr()] = node.getID();
+            else
+                nodeIDs[node.getNr()] = Integer.toString(node.getNr());
+        }
     }
-
-    @Override
-    public List<String> getArguments() {
-        return null;
-    }
-
-    @Override
-    public List<String> getConditions() {
-        return null;
-    }
-
-    @Override
-    public void sample(State state, Random random) {
-
-    }
-
-//    @Override
-//    protected boolean requiresRecalculation() {
-//        return treeInput.get().somethingIsDirty();
-//    }
-
 
     public TreeInterface getTree() {
         return treeInput.get();
@@ -85,6 +79,11 @@ public class DihedralAngleTreeModel extends Distribution implements DATreeModel 
     }
 
     // TODO no keys?
+
+    /**
+     * @return  1st[] is the internal nodes index, assuming the last is the root.
+     *          2nd[] are the pairs of angles, ncols = nsite * 2;
+     */
     public double[][] getInternalNodesValues() {
         double[] values = internalNodesValuesInput.get().getDoubleValues();
         int nrows = this.getLeafNodeCount() - 1;
@@ -119,16 +118,17 @@ public class DihedralAngleTreeModel extends Distribution implements DATreeModel 
     @Override
     public double[] getNodeValue(Node node) {
         if (node.isLeaf()) {
+            // TODO key must start from 1, so node.getID() = node.getNr() + 1
             String key = node.getID();
-
             Double[] values = getTipsValuesParam().getRowValues(key);
             return Stream.of(values).mapToDouble(Double::doubleValue).toArray();
         }
-
-        // TODO check: beast Nr starts ?
-        return getInternalNodesValues()[node.getNr() - getLeafNodeCount()]; // including root
+        // beast Nr starts from 0, last is root
+        int nr = node.getNr();
+        int nTips = getLeafNodeCount();
+        // TODO not use key ?
+        return getInternalNodesValues()[nr - nTips]; // including root
     }
-
 
     private static double[][] convertTo2D(double[] flatArray, int nrows, int ncols) {
         if (flatArray.length != nrows * ncols)
@@ -144,5 +144,27 @@ public class DihedralAngleTreeModel extends Distribution implements DATreeModel 
         }
         return twoDArray;
     }
+
+
+
+    @Override
+    public List<String> getArguments() {
+        return null;
+    }
+
+    @Override
+    public List<String> getConditions() {
+        return null;
+    }
+
+    @Override
+    public void sample(State state, Random random) {
+
+    }
+
+//    @Override
+//    protected boolean requiresRecalculation() {
+//        return treeInput.get().somethingIsDirty();
+//    }
 
 }
