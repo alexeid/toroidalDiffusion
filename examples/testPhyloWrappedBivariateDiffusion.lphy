@@ -1,6 +1,6 @@
 data {
-  l = 10; // sites
-  n = 5; // taxa
+  l = 50; // sites
+  n = 10; // taxa
   taxa = taxa(names=1:n); // taxa names integer must start from 1 for beast xml
   i = n+1;
   j = 2*n-1;
