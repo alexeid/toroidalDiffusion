@@ -23,6 +23,7 @@ import toroidaldiffusion.operator.WrappedRandomWalkOperator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static toroidaldiffusion.WrappedNormalConst.MAX_ANGLE_VALUE;
@@ -160,20 +161,25 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
 
         phyloWrappedBivariateDiffusion.setInputValue("daTreeModel", dihedralAngleTreeModel);
 
-        RealParameter muParameter = context.getAsRealParameter(generator.getParams().get(WrappedNormalConst.muParamName));
+        Map<String, Value> paramMap = generator.getParams();
+        RealParameter muParameter = context.getAsRealParameter(paramMap.get(WrappedNormalConst.muParamName));
         //TODO upper = "6.283"   2*pi
         muParameter.setInputValue("upper", MAX_ANGLE_VALUE);
         phyloWrappedBivariateDiffusion.setInputValue("mu", muParameter);
         phyloWrappedBivariateDiffusion.setInputValue("sigma",
-                context.getAsRealParameter(generator.getParams().get(WrappedNormalConst.sigmaParamName)));
+                context.getAsRealParameter(paramMap.get(WrappedNormalConst.sigmaParamName)));
 
 
-        phyloWrappedBivariateDiffusion.setInputValue("drift", context.getAsRealParameter(generator.getParams().get(WrappedNormalConst.DRIFT_PARAM)));
-        phyloWrappedBivariateDiffusion.setInputValue("driftCorr", context.getAsRealParameter(generator.getParams().get(WrappedNormalConst.DRIFT_CORR_PARAM)));
+        phyloWrappedBivariateDiffusion.setInputValue("drift", context.getAsRealParameter(paramMap.get(WrappedNormalConst.DRIFT_PARAM)));
+
+        RealParameter driftCorrParam = context.getAsRealParameter(paramMap.get(WrappedNormalConst.DRIFT_CORR_PARAM));
+        //TODO why Uniform prior not working ?
+        driftCorrParam.initByName("lower", -1.0, "upper", 1.0);
+        phyloWrappedBivariateDiffusion.setInputValue("driftCorr", driftCorrParam);
 
 // TODO rm, this op is used for sampling internal node sequences
 //        WrappedRandomWalkOperator wrappedRandomWalkOperator = new WrappedRandomWalkOperator();
-//        RealParameter muParameter = context.getAsRealParameter(generator.getParams().get(PhyloWrappedBivariateDiffusion.muParamName));
+//        RealParameter muParameter = context.getAsRealParameter(paramMap.get(PhyloWrappedBivariateDiffusion.muParamName));
 //
 //        wrappedRandomWalkOperator.setInputValue("weight", getOperatorWeight(muParameter.getDimension()));
 //        wrappedRandomWalkOperator.setInputValue("parameter", muParameter);
