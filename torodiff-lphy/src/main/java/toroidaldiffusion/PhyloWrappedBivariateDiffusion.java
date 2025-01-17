@@ -16,6 +16,7 @@ import lphy.core.simulator.RandomUtils;
 import org.apache.commons.math3.exception.MathIllegalStateException;
 import org.apache.commons.math3.random.RandomGenerator;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -116,12 +117,12 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
         int nchar = l.value(); // sites
 
         // root sequences y0 should be simulated from equilibrium distribution
-        Double[][] y0 = new Double[nchar][2];
-        WrappedBivariateNormal equilDist = new WrappedBivariateNormal(mu, sigma, drift, driftCorr);
-        for (int i = 0; i < nchar; i++) {
-            Double[] pair = equilDist.sample().value();
-            y0[i] = pair;
-        }
+//        Double[][] y0 = new Double[nchar][2];
+//        WrappedBivariateNormal equilDist = new WrappedBivariateNormal(mu, sigma, drift, driftCorr);
+//        for (int i = 0; i < nchar; i++) {
+//            Double[] pair = equilDist.sample().value();
+//            y0[i] = pair;
+//        }
 
         // check if all internal nodes have their IDs
         List<TimeTreeNode> internalNodes = timeTree.getInternalNodes();
@@ -149,11 +150,19 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
 
 //        Double[] twoDrifts = drift.value();
 //        Double[] alpha = new Double[]{twoDrifts[0], twoDrifts[1], driftCorr.value().doubleValue()}; //change to driftCorr -> a3
-        wrappedBivariateDiffusion.setParameters(ValueUtils.doubleArrayValue(mu), alpha_true, ValueUtils.doubleArrayValue(sigma));
+        double[] muArr = ValueUtils.doubleArrayValue(mu);
+        wrappedBivariateDiffusion.setParameters(muArr, alpha_true, ValueUtils.doubleArrayValue(sigma));
+
+        // sampling method both on root sequences and other internal nodes should be same,
+        // change to rejection sampling
+        double[][] y0 = wrappedBivariateDiffusion.sampleByRejection(muArr[0], muArr[1], nchar);
+        Double[][] y0Double = Arrays.stream(y0).map(
+                row -> Arrays.stream(row).boxed().toArray(Double[]::new)
+        ).toArray(Double[][]::new);
 
         // if any internal node id is not null and not empty string,
         // then add its sequence to the alignment.
-        traverseTree(timeTree.getRoot(), y0, nodeValues, wrappedBivariateDiffusion);
+        traverseTree(timeTree.getRoot(), y0Double, nodeValues, wrappedBivariateDiffusion);
 
         double[] range = DihedralAngleAlignment.getAngleRange((DihedralAngleAlignment) nodeValues);
 

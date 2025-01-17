@@ -197,6 +197,7 @@ public class WrappedBivariateDiffusion {
         }
     }
 
+    // rejection sampling (only work for 1 or 2 dim)
     public double[][] sampleByRejection(double phi0, double psi0, int nsamples) {
 
         double[][] samples = new double[nsamples][2];

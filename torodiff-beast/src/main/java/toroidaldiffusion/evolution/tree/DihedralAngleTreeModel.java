@@ -82,12 +82,14 @@ public class DihedralAngleTreeModel extends Distribution implements DATreeModel 
 
     /**
      * @return  1st[] is the internal nodes index, assuming the last is the root.
-     *          2nd[] are the pairs of angles, ncols = nsite * 2;
+     *          2nd[] are the pairs of angles flatten to 1d, ncols = nsite * 2;
      */
     public double[][] getInternalNodesValues() {
+        // flatten 1d arr
         double[] values = internalNodesValuesInput.get().getDoubleValues();
         int nrows = this.getLeafNodeCount() - 1;
         int ncols = this.getSiteCount() * PAIR; // a pair
+        // 1st[] is mapping to each node, 2nd[] is mapping to flatten 1d array for nsite*2 elements
         return convertTo2D(values, nrows, ncols);
     }
 
@@ -113,7 +115,7 @@ public class DihedralAngleTreeModel extends Distribution implements DATreeModel 
      * Additionally, the internal node sequences are stored in a 2D array,
      * with the number of rows corresponding to the total number of internal nodes.
      * @param node  a tip node or internal node.
-     * @return  an array of pairs of values, dimension is 2 (angles) * N_sites.
+     * @return  an array of pairs of values, its dimension is 2 (angles) * N_sites.
      */
     @Override
     public double[] getNodeValue(Node node) {
