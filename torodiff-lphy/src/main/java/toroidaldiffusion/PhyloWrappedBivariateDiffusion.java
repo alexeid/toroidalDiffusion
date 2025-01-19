@@ -48,7 +48,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
                                           @ParameterInfo(name = sigmaParamName, description = "the two variance terms.") Value<Number[]> sigma,
                                           @ParameterInfo(name = DRIFT_PARAM, description = "the two drift terms.") Value<Number[]> drift,
                                           @ParameterInfo(name = DRIFT_CORR_PARAM, description = "the correlation of two drift terms, ranged from -1 to 1.") Value<Number> driftCorr,
-                                          @ParameterInfo(name = LParamName, description = "the number of pairs of angles to be simulated.") Value<Integer> l) {
+                                          @ParameterInfo(name = LParamName, description = "the number of pairs of angles (sites) to be simulated.") Value<Integer> l) {
 //                                          @ParameterInfo(name = WrappedNormalConst.y0RateParam, description = "the value of [phi,psi] angle pairs for each carbon backbone bond of the molecule at the root of the phylogeny.") Value<Double[][]> y0) {
         this.tree = tree;
         this.mu = mu;
@@ -116,14 +116,6 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
 
         int nchar = l.value(); // sites
 
-        // root sequences y0 should be simulated from equilibrium distribution
-//        Double[][] y0 = new Double[nchar][2];
-//        WrappedBivariateNormal equilDist = new WrappedBivariateNormal(mu, sigma, drift, driftCorr);
-//        for (int i = 0; i < nchar; i++) {
-//            Double[] pair = equilDist.sample().value();
-//            y0[i] = pair;
-//        }
-
         // check if all internal nodes have their IDs
         List<TimeTreeNode> internalNodes = timeTree.getInternalNodes();
         boolean addIntNodeSeq = internalNodes.stream().allMatch(node -> node.getId() != null);
@@ -155,14 +147,13 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
 
         // sampling method both on root sequences and other internal nodes should be same,
         // change to rejection sampling
-        double[][] y0 = wrappedBivariateDiffusion.sampleByRejection(muArr[0], muArr[1], nchar);
-        Double[][] y0Double = Arrays.stream(y0).map(
-                row -> Arrays.stream(row).boxed().toArray(Double[]::new)
-        ).toArray(Double[][]::new);
+        Double[][] y0 = simulateRootSeqs(wrappedBivariateDiffusion, muArr[0], muArr[1], nchar);
+        // root sequences y0 should be simulated from equilibrium distribution
+//        Double[][] y0 = simulateRootSeqs2(nchar);
 
         // if any internal node id is not null and not empty string,
         // then add its sequence to the alignment.
-        traverseTree(timeTree.getRoot(), y0Double, nodeValues, wrappedBivariateDiffusion);
+        traverseTree(timeTree.getRoot(), y0, nodeValues, wrappedBivariateDiffusion);
 
         double[] range = DihedralAngleAlignment.getAngleRange((DihedralAngleAlignment) nodeValues);
 
@@ -170,6 +161,37 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
                 "], Psi range = [" + range[2] + ", " + range[3] + "].");
 
         return new RandomVariable<>("x", nodeValues, this);
+    }
+
+    /**
+     * simulate root sequences y0 from equilibrium distribution WN(mu, 1/2 A^-1 Sigma)
+     * @param wrappedBiDif
+     * @param muPhi
+     * @param muPsi
+     * @param nsamples
+     * @return
+     */
+    public Double[][] simulateRootSeqs(WrappedBivariateDiffusion wrappedBiDif,
+                                       double muPhi, double muPsi, int nsamples){
+        double[][] y0 = wrappedBiDif.sampleByRejection(muPhi, muPsi, nsamples);
+        return Arrays.stream(y0).map(
+                row -> Arrays.stream(row).boxed().toArray(Double[]::new)
+        ).toArray(Double[][]::new);
+    }
+
+    /**
+     * simulate root sequences y0 from equilibrium distribution WN(mu, 1/2 A^-1 Sigma)
+     * @return y0
+     */
+    public Double[][] simulateRootSeqs2(){
+        int nchar = l.value(); // number of sites
+        Double[][] y0 = new Double[nchar][2];
+        WrappedBivariateNormal equilDist = new WrappedBivariateNormal(mu, sigma, drift, driftCorr);
+        for (int i = 0; i < nchar; i++) {
+            Double[] pair = equilDist.sample().value();
+            y0[i] = pair;
+        }
+        return y0;
     }
 
     // compute A given two drifts and their correlation
