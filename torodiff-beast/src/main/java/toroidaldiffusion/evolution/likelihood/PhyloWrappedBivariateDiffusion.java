@@ -31,10 +31,10 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
     /****** calculation engine ******/
     protected WrappedBivariateDiffusion diff = new WrappedBivariateDiffusion();
-    protected double[] muArr; // stationary mean of the diffusion
-    protected double[] sigmaArr; // diffusion coefficient
-    protected double[] driftArr; // drift
-    protected double driftCorr; // ranged within (-1, 1), so that it always satisfies alpha1*alpha2 > alpha3^2.
+//    protected double[] muArr; // stationary mean of the diffusion
+//    protected double[] sigmaArr; // diffusion coefficient
+//    protected double[] driftArr; // drift
+//    protected double driftCorr; // ranged within (-1, 1), so that it always satisfies alpha1*alpha2 > alpha3^2.
 
 //    protected BeagleTreeLikelihood beagle;
     /**
@@ -223,25 +223,27 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     @Override
     public void log(long sample, PrintStream out) {
         super.log(sample, out);
+        double[] driftArr = driftInput.get().getDoubleValues(); // drift
+        double driftCorr = driftCorrInput.get().getArrayValue();
         // alpha3
-        out.print(getAlphaArr()[2] + "\t");
+        out.print(getAlphaArr(driftArr, driftCorr)[2] + "\t");
     }
 
     // refresh muarr, alphaarr, sigmaarr for computing likelihood
     protected void setDiffusionParams() {
-        muArr = muInput.get().getDoubleValues(); // stationary mean of the diffusion
-        sigmaArr = sigmaInput.get().getDoubleValues(); // diffusion coefficient
-        driftArr = driftInput.get().getDoubleValues(); // drift
-        driftCorr = driftCorrInput.get().getArrayValue();
+        double[] muArr = muInput.get().getDoubleValues(); // stationary mean of the diffusion
+        double[] sigmaArr = sigmaInput.get().getDoubleValues(); // diffusion coefficient
+        double[] driftArr = driftInput.get().getDoubleValues(); // drift
+        double driftCorr = driftCorrInput.get().getArrayValue();
 
-        double[] alphaarr = getAlphaArr();
+        double[] alphaarr = getAlphaArr(driftArr, driftCorr);
         // init WrappedBivariateDiffusion here, setParameters(muarr, alphaarr, sigmaarr) once.
         // use diff.loglikwndtpd(phi0, psi0, phit, psit) later when compute likelihood
         diff.setParameters(muArr, alphaarr, sigmaArr);
     }
 
     // compute A given two drifts and their correlation
-    private double[] getAlphaArr() {
+    private double[] getAlphaArr(double[] driftArr, double driftCorr) {
         if (driftCorr <= -1.0 || driftCorr >= 1.0) {
             throw new IllegalArgumentException("Drifts correlation must be within (-1, 1). Found: " + driftCorr);
         }
