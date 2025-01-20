@@ -10,16 +10,17 @@ import lphy.core.model.annotation.ParameterInfo;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.random.RandomGenerator;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 import static java.lang.Math.sqrt;
-import static toroidaldiffusion.PhyloWrappedBivariateDiffusion.getAlphaArr;
 import static toroidaldiffusion.WrappedNormalConst.MAX_ANGLE_VALUE;
 
 public class WrappedBivariateNormal extends ParametricDistribution<Double[]> {
-
-    public static final double RANGE = 2 * Math.PI;
 
     Value<Number[]> mu;
     Value<Number[]> sigma;
@@ -65,7 +66,7 @@ public class WrappedBivariateNormal extends ParametricDistribution<Double[]> {
         double mu1 = ValueUtils.doubleArrayValue(mu)[0];
         double mu2 = ValueUtils.doubleArrayValue(mu)[1];
         // transfer alpha1,2,3 into rho
-        double[] alpha = getAlphaArr(drift, driftCorr);
+        double[] alpha = WrappedNormalUtils.getAlphaArr(drift, driftCorr);
         double rho = getRho(alpha);
         // transfer sigma1,2 into s1,2 for bivariate normal
         double s1 = getS1(ValueUtils.doubleArrayValue(sigma)[0], alpha);
@@ -108,6 +109,7 @@ public class WrappedBivariateNormal extends ParametricDistribution<Double[]> {
         return sqrt(constant * alpha[0]) * sigma2;
     }
 
+    // X2 <- rnorm(n, mu2 + (s2/s1) * rho * (X1 - mu1), sqrt((1 - rho^2)*s2^2))
     public static double[] getConditionedMeanSd(double mu1, double s1, double mu2, double s2,
                                                  double rho, double x1) {
         double mean = mu2 + (s2/s1) * rho * (x1 - mu1);
@@ -132,5 +134,39 @@ public class WrappedBivariateNormal extends ParametricDistribution<Double[]> {
         else if (paramName.equals(WrappedNormalConst.DRIFT_PARAM)) drift = value;
         else if (paramName.equals(WrappedNormalConst.DRIFT_CORR_PARAM)) driftCorr = value;
         else throw new RuntimeException("Unrecognised parameter name: " + paramName);
+    }
+
+    public static void main(String[] args) throws IOException {
+
+        final int NSamples = 100000;
+        double[] muarr = {Math.PI * 0.65, Math.PI * 0.8}; // mean of the diffusion
+        double[] sigmaarr = {1.5, 1.5}; // variance term
+        double[] alphaarr = {1.0, 0.5, 0.5}; // drift term
+        double driftCorr = WrappedNormalUtils.getDriftCorr(alphaarr[0], alphaarr[1], alphaarr[2]);
+
+        WrappedBivariateNormal wrappedBiNorm = new WrappedBivariateNormal(
+                new Value<>("mu", new Double[]{muarr[0], muarr[1]}),
+                new Value<>("sigma", new Double[]{sigmaarr[0], sigmaarr[1]}),
+                new Value<>("drift", new Double[]{alphaarr[0], alphaarr[1]}),
+                new Value<>("driftCorr", driftCorr)
+        );
+
+        //2. sampling from WN(mu, 1/2 A^-1 Sigma)
+
+        String filename = "WrappedBivariateNormalJava.txt";
+        PrintWriter writer = new PrintWriter(new FileWriter(filename));
+        writer.println("phi\tpsi\tlogP\tdensity");
+        for (int i = 0; i < NSamples; i++) {
+            Double[] pair = wrappedBiNorm.sample().value();
+
+            double phi = pair[0];
+            double psi = pair[1];
+
+//            double logP = diff.loglikwndstat(phi, psi);
+            writer.println(phi + "\t" + psi); // calculate the transition density of the point (0.0, 0.0) transitioning to (1.0, 1.0) in time t=1.0
+        }
+        writer.flush();
+        writer.close();
+
     }
 }

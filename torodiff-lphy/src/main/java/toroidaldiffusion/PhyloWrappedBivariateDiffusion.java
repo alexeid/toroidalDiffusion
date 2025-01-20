@@ -129,7 +129,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
 
         WrappedBivariateDiffusion wrappedBivariateDiffusion = new WrappedBivariateDiffusion();
 
-        double[] alpha_true = getAlphaArr(drift, driftCorr); // should be 3 numbers
+        double[] alpha_true = WrappedNormalUtils.getAlphaArr(drift, driftCorr); // should be 3 numbers
         if (alpha_true[0] * alpha_true[1] <= alpha_true[2] * alpha_true[2]) //corr changed to a3
             throw new IllegalArgumentException("Alpha1 * alpha2 must > alpha3 * alpha3 ! But alpha = {" +
                     alpha_true[0] + ", " + alpha_true[1] + ", " + alpha_true[2] +  "} is invalid.");
@@ -204,23 +204,6 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
     }
 
     // compute A given two drifts and their correlation
-
-    /**
-     * Reparametrisation: alpha3^2 < alpha1 * alpha2, alpha3 < sqrt(alpha1 * alpha2)
-     * @param drift
-     * @param driftCorr
-     * @return
-     */
-    public static double[] getAlphaArr(Value<Number[]> drift, Value<Number> driftCorr) {
-        double[] twoDrifts = ValueUtils.doubleArrayValue(drift);
-        double corr = ValueUtils.doubleValue(driftCorr);
-
-        double alpha1 = twoDrifts[0];
-        double alpha2 = twoDrifts[1];
-        double alpha3 = sqrt(alpha1*alpha2) * corr;
-
-        return new double[]{alpha1, alpha2, alpha3};
-    }
 
     private void fillIdMap(TimeTreeNode node, SortedMap<String, Integer> idMap) {
         if (node.isLeaf()) {
