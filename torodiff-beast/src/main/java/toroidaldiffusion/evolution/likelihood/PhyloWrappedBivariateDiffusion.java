@@ -178,10 +178,11 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
             }
         } // end n loop
 
-        // TODO have any root special ?
-//        double[] rootValues = daTreeModel.getNodeValue(tree.getRoot());
-//        this.branchLogLikelihoods[rootIndex] =
-//                daRootLdCores.calculateRootLogLikelihood(rootValues, diff);
+        // TODO multiply the stationary density on the root
+        // the pairs of angles flatten to 1d, length = nsite * 2;
+        double[] rootValues = daTreeModel.getNodeValue(tree.getRoot());
+        // rootIndex = nNode - 1
+        this.branchLogLikelihoods[rootIndex] = calculateRootLogLikelihood(rootValues, diff);
 
         // sum logP
         logP =0;
@@ -193,6 +194,23 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         //TODO Scaling
 
 //        System.out.println("tree logP = " + logP);
+        return logP;
+    }
+
+    // the stationary density on the root
+    protected double calculateRootLogLikelihood(double[] rootValues, WrappedBivariateDiffusion diff) {
+        if (rootValues.length != daTreeModel.getSiteCount() * 2)
+            throw new IllegalArgumentException("Incorrect length on root sequences ! " + rootValues.length);
+        double logP = 0;
+        // s is site index
+        for (int s = 0; s < daTreeModel.getSiteCount(); s++) {
+            // two angles, phi and psi, at the parent node and the sth site.
+            double phi0 = rootValues[s * 2];
+            double psi0 = rootValues[s * 2 + 1];
+            // TODO seem not working ?
+            // stationary density
+            logP += diff.loglikwndstat(phi0, psi0);
+        }
         return logP;
     }
 

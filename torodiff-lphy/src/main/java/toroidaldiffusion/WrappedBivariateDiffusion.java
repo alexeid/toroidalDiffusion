@@ -146,7 +146,7 @@ public class WrappedBivariateDiffusion {
 //        vstores.print(); // if debug
 
         double tempt = this.t;
-        this.t = -2.0; //TODO would it be the problem during MCMC ?
+        this.t = -2.0; // use this to make this.t != t, and then re-compute ExptA and invGammat, ...
         setParameters(tempt);
     }
 
@@ -306,6 +306,7 @@ public class WrappedBivariateDiffusion {
         }
     }
 
+    // pdf of stationary dist
     public double loglikwndstat(double phi, double psi) {
         if (penalty > 0.0) {
             return -1.0e10;

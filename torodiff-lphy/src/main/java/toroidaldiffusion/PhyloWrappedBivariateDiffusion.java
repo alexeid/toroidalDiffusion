@@ -16,6 +16,9 @@ import lphy.core.simulator.RandomUtils;
 import org.apache.commons.math3.exception.MathIllegalStateException;
 import org.apache.commons.math3.random.RandomGenerator;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.SortedMap;
@@ -145,11 +148,13 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
         double[] muArr = ValueUtils.doubleArrayValue(mu);
         wrappedBivariateDiffusion.setParameters(muArr, alpha_true, ValueUtils.doubleArrayValue(sigma));
 
-        // sampling method both on root sequences and other internal nodes should be same,
-        // change to rejection sampling
-        Double[][] y0 = simulateRootSeqs(wrappedBivariateDiffusion, muArr[0], muArr[1], nchar);
         // root sequences y0 should be simulated from equilibrium distribution
-//        Double[][] y0 = simulateRootSeqs2(nchar);
+        // sampling method both on root sequences and other internal nodes should be same,
+        // method 1: rejection sampling at mu
+        // TODO setTime or not?
+//        Double[][] y0 = simulateRootSeqs(wrappedBivariateDiffusion, muArr[0], muArr[1], nchar);
+        // method 2: sampling from WN(mu, 1/2 A^-1 Sigma)
+        Double[][] y0 = simulateRootSeqs2();
 
         // if any internal node id is not null and not empty string,
         // then add its sequence to the alignment.
@@ -164,14 +169,14 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
     }
 
     /**
-     * simulate root sequences y0 from equilibrium distribution WN(mu, 1/2 A^-1 Sigma)
+     * rejection sampling at mu
      * @param wrappedBiDif
      * @param muPhi
      * @param muPsi
      * @param nsamples
      * @return
      */
-    public Double[][] simulateRootSeqs(WrappedBivariateDiffusion wrappedBiDif,
+    public static Double[][] simulateRootSeqs(WrappedBivariateDiffusion wrappedBiDif,
                                        double muPhi, double muPsi, int nsamples){
         double[][] y0 = wrappedBiDif.sampleByRejection(muPhi, muPsi, nsamples);
         return Arrays.stream(y0).map(
@@ -292,4 +297,52 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
 //        return y0;
 //    }
 
+    public static void main(String[] args) throws IOException {
+
+        final int NSamples = 100000;
+
+        WrappedBivariateDiffusion diff = new WrappedBivariateDiffusion();
+        double[] muarr = {Math.PI * 0.65, Math.PI * 0.8}; // mean of the diffusion
+        double[] sigmaarr = {1.5, 1.5}; // variance term
+        double[] alphaarr = {1.0, 0.5, 0.5}; // drift term
+        // before this method time is set to 1.0 as default
+        diff.setParameters(muarr, alphaarr, sigmaarr); // set the diffusion parameters
+
+        System.out.println("Stationary dist logP = " + diff.loglikwndstat(muarr[0], muarr[1])); // calculate the stationary density of the mean
+        //1. rejection sampling at mu
+        Double[][] y0 = simulateRootSeqs(diff, muarr[0], muarr[1], NSamples);
+
+        String filename = "sampleByRejectionAtMu.txt";
+        PrintWriter writer = new PrintWriter(new FileWriter(filename));
+        writer.println("phi\tpsi\tlogP\tdensity");
+        for (int i = 0; i < y0.length; i++) {
+            double phi = y0[i][0];
+            double psi = y0[i][1];
+
+            double logP = diff.loglikwndstat(phi, psi);
+            writer.println(phi + "\t" + psi + "\t" + logP + "\t" + Math.exp(logP)); // calculate the transition density of the point (0.0, 0.0) transitioning to (1.0, 1.0) in time t=1.0
+        }
+        writer.flush();
+        writer.close();
+
+        // 2. sampling from WN(mu, 1/2 A^-1 Sigma)
+//        Double[][] y0 = simulateRootSeqs2();
+
+
+        // prove t does not affect the loglikwndstat code
+//        String filename = "testStatDistJava.txt";
+//        PrintWriter writer = new PrintWriter(new FileWriter(filename));
+//        writer.println("phi\tpsi\tlogP\tdensity");
+//        for (int i = 0; i < 1000; i++) {
+//            double phi = muarr[0];
+//            double psi = muarr[1];
+//
+//            diff.setParameters(i * 0.5);
+//            double logP = diff.loglikwndstat(phi, psi);
+//            writer.println(phi + "\t" + psi + "\t" + logP + "\t" + Math.exp(logP) + "\t" + i * 0.5); // calculate the transition density of the point (0.0, 0.0) transitioning to (1.0, 1.0) in time t=1.0
+//        }
+//        writer.flush();
+//        writer.close();
+
+    }
 }
