@@ -1,6 +1,6 @@
 data {
-  l = 50; // sites
-  n = 10; // taxa
+  l = 20; // sites
+  n = 3; // taxa
   taxa = taxa(names=1:n); // taxa names integer must start from 1 for beast xml
   i = n+1;
   j = 2*n-1;
@@ -12,9 +12,9 @@ model {
   ψ ~ Yule(lambda=λ, taxa=taxa);
   ψ2 = setInternalNodesID(tree = ψ, internalNodesID = internalNodesID);
 
-  // angle is [0, 2pi)
-  // 0.7557974 2.0137527 5.3654594
-  mu ~ LogNormal(meanlog=0.7, sdlog=0.5, replicates = 2);
+  // angle and mu must be [0, 2pi)
+  // 1.836767 2.718282 4.022859
+  mu ~ LogNormal(meanlog=1, sdlog=0.2, replicates = 2);
   // 0.1408635 1.0000000 7.0990714
   σ ~ LogNormal(meanlog=0, sdlog=1, replicates = 2);
   // 0.6212657 0.7557837 0.9194279
