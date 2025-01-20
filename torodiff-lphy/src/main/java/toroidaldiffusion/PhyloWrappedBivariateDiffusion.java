@@ -151,10 +151,9 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
         // root sequences y0 should be simulated from equilibrium distribution
         // sampling method both on root sequences and other internal nodes should be same,
         // method 1: rejection sampling at mu
-        // TODO wrong, sampling from stationary dist does not require time, but sampleByRejection does
 //        Double[][] y0 = simulateRootSeqs(wrappedBivariateDiffusion, muArr[0], muArr[1], nchar);
         // method 2: sampling from WN(mu, 1/2 A^-1 Sigma)
-        Double[][] y0 = simulateRootSeqs2();
+        Double[][] y0 = simulateRootSeqs2(mu, sigma, drift, driftCorr);
 
         // if any internal node id is not null and not empty string,
         // then add its sequence to the alignment.
@@ -178,18 +177,19 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
      */
     public static Double[][] simulateRootSeqs(WrappedBivariateDiffusion wrappedBiDif,
                                        double muPhi, double muPsi, int nsamples){
-        //TODO this is wrong, sampling from stationary dist does not require time, but sampleByRejection does
-        double[][] y0 = wrappedBiDif.sampleByRejection(muPhi, muPsi, nsamples);
-        return Arrays.stream(y0).map(
+        //1. rejection sampling at mu
+        double[][] y0d = wrappedBiDif.rejectSampleStationaryDensity(muPhi, muPsi, nsamples);
+        Double[][] y0 =  Arrays.stream(y0d).map(
                 row -> Arrays.stream(row).boxed().toArray(Double[]::new)
         ).toArray(Double[][]::new);
+        return y0;
     }
 
     /**
      * simulate root sequences y0 from equilibrium distribution WN(mu, 1/2 A^-1 Sigma)
      * @return y0
      */
-    public Double[][] simulateRootSeqs2(){
+    public Double[][] simulateRootSeqs2(Value<Number[]> mu, Value<Number[]> sigma, Value<Number[]> drift, Value<Number> driftCorr){
         int nchar = l.value(); // number of sites
         Double[][] y0 = new Double[nchar][2];
         WrappedBivariateNormal equilDist = new WrappedBivariateNormal(mu, sigma, drift, driftCorr);
@@ -311,7 +311,10 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
 
         System.out.println("Stationary dist logP = " + diff.loglikwndstat(muarr[0], muarr[1])); // calculate the stationary density of the mean
         //1. rejection sampling at mu
-        Double[][] y0 = simulateRootSeqs(diff, muarr[0], muarr[1], NSamples);
+        double[][] y0d = diff.rejectSampleStationaryDensity(muarr[0], muarr[1], NSamples);
+        Double[][] y0 =  Arrays.stream(y0d).map(
+                row -> Arrays.stream(row).boxed().toArray(Double[]::new)
+        ).toArray(Double[][]::new);
 
         String filename = "sampleByRejectionAtMu.txt";
         PrintWriter writer = new PrintWriter(new FileWriter(filename));
@@ -327,7 +330,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
         writer.close();
 
         // 2. sampling from WN(mu, 1/2 A^-1 Sigma)
-//        Double[][] y0 = simulateRootSeqs2();
+//        Double[][] y02 = simulateRootSeqs2();
 
 
         // prove t does not affect the loglikwndstat code

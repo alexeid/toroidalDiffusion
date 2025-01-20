@@ -197,7 +197,7 @@ public class WrappedBivariateDiffusion {
         }
     }
 
-    // rejection sampling (only work for 1 or 2 dim)
+    // rejection sampling (only work for 1 or 2 dim) from TPD
     public double[][] sampleByRejection(double phi0, double psi0, int nsamples) {
 
         double[][] samples = new double[nsamples][2];
@@ -337,6 +337,48 @@ public class WrappedBivariateDiffusion {
             return ll;
         }
     }
+
+    // TODO check
+    // rejection sampling (only work for 1 or 2 dim) from Stationary Density
+    public double[][] rejectSampleStationaryDensity(double phiMu, double psiMu, int nsamples) {
+
+        double[][] samples = new double[nsamples][2];
+        int count = 0;
+        int rejection = 0;
+        WrappedBivariateDiffusionStationaryDensityFunction func = new WrappedBivariateDiffusionStationaryDensityFunction(this);
+
+        BOBYQAOptimizer optimizer = new BOBYQAOptimizer(5);
+
+        PointValuePair pvp = optimizer.optimize(
+                new MaxEval(200),
+                GoalType.MAXIMIZE,
+                new InitialGuess(new double[]{phiMu, psiMu}),
+                new ObjectiveFunction(func),
+                new SimpleBounds(new double[]{0, 0}, new double[]{2.0 * Math.PI, 2.0 * Math.PI}));
+
+        //double[] p = pvp.getPoint();
+
+        double maxP = Math.exp(pvp.getValue()) * 1.01;
+
+        RandomGenerator random = RandomUtils.getRandom();
+        while (count < samples.length) {
+
+            double ph = random.nextDouble() * 2.0 * Math.PI;
+            double ps = random.nextDouble() * 2.0 * Math.PI;
+            double density = random.nextDouble() * maxP;
+
+            if (density < Math.exp(loglikwndstat(ph, ps))) {
+                samples[count][0] = ph;
+                samples[count][1] = ps;
+                count += 1;
+            } else {
+                rejection += 1;
+            }
+        }
+        //System.out.println(rejection + " rejections to sample " + count + " points.");
+        return samples;
+    }
+
 
     public static ArrayList<Double> linspace(double start, double stop, int n) {
         ArrayList<Double> result = new ArrayList<>();
