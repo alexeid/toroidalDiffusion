@@ -151,7 +151,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
         // root sequences y0 should be simulated from equilibrium distribution
         // sampling method both on root sequences and other internal nodes should be same,
         // method 1: rejection sampling at mu
-        // TODO setTime or not?
+        // TODO wrong, sampling from stationary dist does not require time, but sampleByRejection does
 //        Double[][] y0 = simulateRootSeqs(wrappedBivariateDiffusion, muArr[0], muArr[1], nchar);
         // method 2: sampling from WN(mu, 1/2 A^-1 Sigma)
         Double[][] y0 = simulateRootSeqs2();
@@ -178,6 +178,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
      */
     public static Double[][] simulateRootSeqs(WrappedBivariateDiffusion wrappedBiDif,
                                        double muPhi, double muPsi, int nsamples){
+        //TODO this is wrong, sampling from stationary dist does not require time, but sampleByRejection does
         double[][] y0 = wrappedBiDif.sampleByRejection(muPhi, muPsi, nsamples);
         return Arrays.stream(y0).map(
                 row -> Arrays.stream(row).boxed().toArray(Double[]::new)
