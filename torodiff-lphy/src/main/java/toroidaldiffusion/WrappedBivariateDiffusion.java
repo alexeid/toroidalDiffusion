@@ -146,7 +146,7 @@ public class WrappedBivariateDiffusion {
 //        vstores.print(); // if debug
 
         double tempt = this.t;
-        this.t = -2.0;
+        this.t = -2.0; //TODO would it be the problem during MCMC ?
         setParameters(tempt);
     }
 
