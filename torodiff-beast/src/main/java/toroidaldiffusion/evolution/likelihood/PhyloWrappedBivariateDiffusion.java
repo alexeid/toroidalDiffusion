@@ -6,6 +6,7 @@ import beast.base.core.Log;
 import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.Tree;
 import beast.base.inference.State;
+import toroidaldiffusion.ToroidalUtils;
 import toroidaldiffusion.WrappedBivariateDiffusion;
 
 import java.io.PrintStream;
@@ -231,10 +232,10 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
     // refresh muarr, alphaarr, sigmaarr for computing likelihood
     protected void setDiffusionParams() {
-        double[] muArr = muInput.get().getDoubleValues(); // stationary mean of the diffusion
+        double[] muArr = getMuArr(); // stationary mean of the diffusion
         double[] sigmaArr = sigmaInput.get().getDoubleValues(); // diffusion coefficient
         double[] driftArr = driftInput.get().getDoubleValues(); // drift
-        double driftCorr = driftCorrInput.get().getArrayValue();
+        double driftCorr = getDriftCorr();
 
         double[] alphaarr = getAlphaArr(driftArr, driftCorr);
         // init WrappedBivariateDiffusion here, setParameters(muarr, alphaarr, sigmaarr) once.
@@ -242,11 +243,23 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         diff.setParameters(muArr, alphaarr, sigmaArr);
     }
 
-    // compute A given two drifts and their correlation
-    private double[] getAlphaArr(double[] driftArr, double driftCorr) {
-        if (driftCorr <= -1.0 || driftCorr >= 1.0) {
+    protected double[] getMuArr() {
+        double[] muArr = muInput.get().getDoubleValues();
+        if (muArr[0] < 0 || muArr[0] > ToroidalUtils.MAX_ANGLE_VALUE ||
+                muArr[1] < 0 || muArr[1] > ToroidalUtils.MAX_ANGLE_VALUE)
+            throw new IllegalArgumentException("Mu should be [0, 2PI], but muArr[0] = " + muArr[0] +
+                    ", muArr[1] = " + muArr[1] + " !");
+        return muArr;
+    }
+    protected double getDriftCorr() {
+        double driftCorr = driftCorrInput.get().getArrayValue();
+        if (driftCorr <= -1.0 || driftCorr >= 1.0)
             throw new IllegalArgumentException("Drifts correlation must be within (-1, 1). Found: " + driftCorr);
-        }
+        return driftCorr;
+    }
+
+    // compute A given two drifts and their correlation
+    protected double[] getAlphaArr(double[] driftArr, double driftCorr) {
         // corr within (-1, 1), so that always alpha1*alpha2 > alpha3^2
         double alpha3 = sqrt(driftArr[0]*driftArr[1]) * driftCorr;
         double[] alphaarr = new double[]{driftArr[0], driftArr[1], alpha3};
