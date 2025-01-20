@@ -47,7 +47,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
 //    Value<Double[]> alpha;
 
     public PhyloWrappedBivariateDiffusion(@ParameterInfo(name = treeParamName, description = "the time tree.") Value<TimeTree> tree,
-                                          @ParameterInfo(name = muParamName, description = "the mean of the stationary distribution.") Value<Number[]> mu,
+                                          @ParameterInfo(name = muParamName, description = "the mean of the stationary distribution, [0, 2PI].") Value<Number[]> mu,
                                           @ParameterInfo(name = sigmaParamName, description = "the two variance terms.") Value<Number[]> sigma,
                                           @ParameterInfo(name = DRIFT_PARAM, description = "the two drift terms.") Value<Number[]> drift,
                                           @ParameterInfo(name = DRIFT_CORR_PARAM, description = "the correlation of two drift terms, ranged from -1 to 1.") Value<Number> driftCorr,
@@ -130,7 +130,6 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
         WrappedBivariateDiffusion wrappedBivariateDiffusion = new WrappedBivariateDiffusion();
 
         double[] alpha_true = getAlphaArr(drift, driftCorr); // should be 3 numbers
-
         if (alpha_true[0] * alpha_true[1] <= alpha_true[2] * alpha_true[2]) //corr changed to a3
             throw new IllegalArgumentException("Alpha1 * alpha2 must > alpha3 * alpha3 ! But alpha = {" +
                     alpha_true[0] + ", " + alpha_true[1] + ", " + alpha_true[2] +  "} is invalid.");
@@ -146,6 +145,10 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
 //        Double[] twoDrifts = drift.value();
 //        Double[] alpha = new Double[]{twoDrifts[0], twoDrifts[1], driftCorr.value().doubleValue()}; //change to driftCorr -> a3
         double[] muArr = ValueUtils.doubleArrayValue(mu);
+        if (muArr[0] < 0 || muArr[0] > WrappedNormalConst.MAX_ANGLE_VALUE ||
+                muArr[1] < 0 || muArr[1] > WrappedNormalConst.MAX_ANGLE_VALUE)
+            throw new IllegalArgumentException("Mu should be [0, 2PI], but muArr[0] = " + muArr[0] +
+                    ", muArr[1] = " + muArr[1] + " !");
         wrappedBivariateDiffusion.setParameters(muArr, alpha_true, ValueUtils.doubleArrayValue(sigma));
 
         // root sequences y0 should be simulated from equilibrium distribution
