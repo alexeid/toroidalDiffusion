@@ -225,7 +225,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     public void log(long sample, PrintStream out) {
         super.log(sample, out);
         double[] driftArr = driftInput.get().getDoubleValues(); // drift
-        double driftCorr = driftCorrInput.get().getArrayValue();
+        double driftCorr = getDriftCorr();
         // alpha3
         out.print(getAlphaArr(driftArr, driftCorr)[2] + "\t");
     }
