@@ -331,8 +331,8 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         // ====== 2. recalculate likelihood if either child node wasn't clean ======
 //        if (nodeUpdate != Tree.IS_CLEAN) {
 
-            // TODO why ?
-            daBranchLdCore.setBranchLdForUpdate();
+            // TODO caching
+//            daBranchLdCore.setBranchLdForUpdate();
 
             // pairs of values, dimension is 2 (angles) * N_sites
             double[] parentNodeValues = daTreeModel.getNodeValue(parent);
@@ -457,22 +457,25 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 //        daTreeModelInput.get().getInternalNodesValuesParam().restore();
 
         // pass reference in restore, but have to copy array in store.
-        double[] tmp1 = branchLengths;
-        branchLengths = storedBranchLengths;
-        storedBranchLengths = tmp1;
+//        double[] tmp1 = branchLengths;
+//        branchLengths = storedBranchLengths;
+//        storedBranchLengths = tmp1;
+//
+//        double[] tmp2 = branchLogLikelihoods;
+//        branchLogLikelihoods = storedBranchLogLikelihoods;
+//        storedBranchLogLikelihoods = tmp2;
 
-        double[] tmp2 = branchLogLikelihoods;
-        branchLogLikelihoods = storedBranchLogLikelihoods;
-        storedBranchLogLikelihoods = tmp2;
+        System.arraycopy(storedBranchLengths, 0, branchLengths, 0, getNrOfBranches());
+        System.arraycopy(storedBranchLogLikelihoods, 0, branchLogLikelihoods, 0, getNrOfBranches()+1);
 
         // store logP after all stored
         super.restore(); // logP = storedLogP; isDirty = false
     }
 
     // for testing, nodeIndex is the child node below this branch
-    public void getBranchLdFromCore(int nodeIndex, double[] branchLdOut) {
-        daBranchLdCores[nodeIndex].getBranchLikelihoods(branchLdOut);
-    }
+//    public void getBranchLdFromCore(int nodeIndex, double[] branchLdOut) {
+//        daBranchLdCores[nodeIndex].getBranchLikelihoods(branchLdOut);
+//    }
 
     public int getRootIndex() {
         int rootIndex = tree.getNodeCount() - 1;
