@@ -6,10 +6,13 @@ import beast.base.evolution.tree.TreeInterface;
 import beast.base.evolution.tree.TreeParser;
 import beast.base.inference.Operator;
 import beast.base.inference.parameter.RealParameter;
+import lphy.base.distribution.Uniform;
 import lphy.base.evolution.Taxa;
 import lphy.base.evolution.tree.TimeTree;
 import lphy.base.evolution.tree.TimeTreeNode;
+import lphy.core.model.Generator;
 import lphy.core.model.Value;
+import lphy.core.model.ValueUtils;
 import lphybeast.BEASTContext;
 import lphybeast.GeneratorToBEAST;
 import lphybeast.tobeast.operators.BICESPSTreeOperatorStractegy;
@@ -93,7 +96,7 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
             //Get nodesID
             String[] internalNodesID = getID(internalNodes);
 
-            boolean sampleInterNodeSeq = true; //TODO how get this flag from lphy?
+            boolean sampleInterNodeSeq = false; //TODO how get this flag from lphy?
             if (sampleInterNodeSeq) {
                 // TODO cannot handle keys if sampling internal node seqs
                 internalNodesSeqs = getInternalNodesParam(dihedralAngleAlignmentValue, internalNodesID,
@@ -169,12 +172,17 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
         phyloWrappedBivariateDiffusion.setInputValue("sigma",
                 context.getAsRealParameter(paramMap.get(WrappedNormalConst.sigmaParamName)));
 
-
         phyloWrappedBivariateDiffusion.setInputValue("drift", context.getAsRealParameter(paramMap.get(WrappedNormalConst.DRIFT_PARAM)));
 
-        RealParameter driftCorrParam = context.getAsRealParameter(paramMap.get(WrappedNormalConst.DRIFT_CORR_PARAM));
-        //TODO why Uniform prior not working ?
-        driftCorrParam.initByName("lower", -1.0, "upper", 1.0);
+        Value driftCorrValue = paramMap.get(WrappedNormalConst.DRIFT_CORR_PARAM);
+        RealParameter driftCorrParam = context.getAsRealParameter(driftCorrValue);
+        Generator genDC = driftCorrValue.getGenerator();
+        //TODO why beast Uniform prior not restrict the bound ?
+        if (genDC instanceof Uniform uniformLPhy) {
+            driftCorrParam.initByName("lower", ValueUtils.doubleValue(uniformLPhy.getLower()),
+                    "upper", ValueUtils.doubleValue(uniformLPhy.getUpper()));
+        } else
+            driftCorrParam.initByName("lower", -1.0, "upper", 1.0);
         phyloWrappedBivariateDiffusion.setInputValue("driftCorr", driftCorrParam);
 
 // TODO rm, this op is used for sampling internal node sequences

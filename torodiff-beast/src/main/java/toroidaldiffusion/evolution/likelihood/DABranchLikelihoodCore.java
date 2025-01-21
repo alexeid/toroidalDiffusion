@@ -13,8 +13,8 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
 
     // to store branch likelihood calculation per site:
     // dimension is nrOfSites, Ld across categories are integrated
-    protected double[] branchLogLd;
-    protected double[] storedBranchLogLd;
+    protected double[] siteLogLd;
+    protected double[] storedSiteLogLd;
 
 //    protected int currentBrLdIndex = 0;
 //    protected int storedBrLdIndex = 0;
@@ -48,8 +48,8 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
     protected void initialize() {
         // the branch above the node
         // 1st dimension is matrix index (current, stored),
-        branchLogLd = new double[nrOfSites];
-        storedBranchLogLd = new double[nrOfSites];
+        siteLogLd = new double[nrOfSites];
+        storedSiteLogLd = new double[nrOfSites];
 //        siteLd = new double[nrOfSites];
         //TODO diff.setParameters(muarr, alphaarr, sigmaarr); ?
     }
@@ -60,7 +60,7 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
     @Override
     public void store() {
 //        storedBrLdIndex = currentBrLdIndex;
-        System.arraycopy(branchLogLd, 0, storedBranchLogLd, 0, nrOfSites);
+        System.arraycopy(siteLogLd, 0, storedSiteLogLd, 0, nrOfSites);
     }
 
     /**
@@ -72,7 +72,7 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
 //        int tmp = currentBrLdIndex;
 //        currentBrLdIndex = storedBrLdIndex;
 //        storedBrLdIndex = tmp;
-        System.arraycopy(storedBranchLogLd, 0, branchLogLd, 0, nrOfSites);
+        System.arraycopy(storedSiteLogLd, 0, siteLogLd, 0, nrOfSites);
     }
 
     @Override
@@ -85,8 +85,8 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
      */
     @Override
     public void finalize() throws Throwable {
-        branchLogLd = null;
-        storedBranchLogLd = null;
+        siteLogLd = null;
+        storedSiteLogLd = null;
 //        currentBrLdIndex = -1;
 //        storedBrLdIndex = -1;
     }
@@ -151,10 +151,10 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
             double phit = childNodeValues[k * 2];
             double psit = childNodeValues[k * 2 + 1];
 
-            // diff.setParameters(muarr, alphaarr, sigmaarr), only once in the init method
-            branchLogLd[k] = diff.loglikwndtpd(phi0, psi0, phit, psit);
+            // diff.setParameters(muarr, alphaarr, sigmaarr), only once per tree likelihood calculation
+            siteLogLd[k] = diff.loglikwndtpd(phi0, psi0, phit, psit);
 
-            if (branchLogLd[k] == 0) {
+            if (siteLogLd[k] == 0) {
                 throw new RuntimeException("\nBranch above node " + getBranchNr() + " likelihood = 0 !\n" +
                         "At site " + k); //+ ", child node = " + childNode + ", parent node = " + parentNode);
             }
@@ -174,9 +174,9 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
     public double calculateBranchLogLikelihood() {
         double logP = 0;
         // siteLd.length == nrOfSites
-        for (int k = 0; k < branchLogLd.length; k++) {
+        for (int k = 0; k < siteLogLd.length; k++) {
             // diff.loglikwndtpd returns log likelihood
-            logP += branchLogLd[k];
+            logP += siteLogLd[k];
         } // end k
         return logP;
     }

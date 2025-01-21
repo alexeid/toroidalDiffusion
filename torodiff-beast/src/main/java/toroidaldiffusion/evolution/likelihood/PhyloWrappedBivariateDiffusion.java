@@ -161,10 +161,10 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         // set diffusion params before computing likelihood
         setDiffusionParams();
 
-        // exclude root node, branches = nodes - 1
+        // rootIndex = getNodeCount - 1
         final int rootIndex = getRootIndex();
         // branch likelihoods indexes excludes root index
-        for (int n = 0; n < rootIndex; n++) {
+        for (int n = 0; n < rootIndex-1; n++) {
             final Node node = tree.getNode(n);
             DABranchLikelihoodCore daBranchLdCore = daBranchLdCores[n];
             try {
@@ -428,8 +428,8 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 //            return;
 //        }
 
-//        for (DABranchLikelihoodCore daBrLdCore : daBranchLdCores)
-//            daBrLdCore.store();
+        for (DABranchLikelihoodCore daBrLdCore : daBranchLdCores)
+            daBrLdCore.store();
         //TODO estimating internal node sequences needs store/restore?
         // param store is protected?
 
@@ -451,8 +451,8 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         // must refresh diffusion param
         setDiffusionParams();
 
-//        for (DABranchLikelihoodCore daBrLdCore : daBranchLdCores)
-//            daBrLdCore.restore();
+        for (DABranchLikelihoodCore daBrLdCore : daBranchLdCores)
+            daBrLdCore.restore();
         //TODO estimating internal node sequences needs store/restore?
 //        daTreeModelInput.get().getInternalNodesValuesParam().restore();
 
