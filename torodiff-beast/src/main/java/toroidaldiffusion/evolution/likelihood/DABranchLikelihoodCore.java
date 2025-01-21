@@ -16,8 +16,8 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
     protected double[] branchLogLd;
     protected double[] storedBranchLogLd;
 
-    protected int currentBrLdIndex = 0;
-    protected int storedBrLdIndex = 0;
+//    protected int currentBrLdIndex = 0;
+//    protected int storedBrLdIndex = 0;
 
     /**
      * caching likelihood per site at one node.
