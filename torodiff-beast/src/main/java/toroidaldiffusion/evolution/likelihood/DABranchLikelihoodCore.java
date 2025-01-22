@@ -155,8 +155,10 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
             siteLogLd[k] = diff.loglikwndtpd(phi0, psi0, phit, psit);
 
             if (siteLogLd[k] == 0) {
-                throw new RuntimeException("\nBranch above node " + getBranchNr() + " likelihood = 0 !\n" +
-                        "At site " + k); //+ ", child node = " + childNode + ", parent node = " + parentNode);
+                throw new RuntimeException("\nBranch above node " + getBranchNr() +
+                        ", siteLogLd[" + k + "] = " + siteLogLd[k] + ", branchTime = " + branchTime +
+                        "\nphi0 = " + phi0 + ", psi0 = " + psi0 + ", phit = " + phit + ", psit = " + psit);
+                //+ ", child node = " + childNode + ", parent node = " + parentNode);
             }
 
         } // end k  nrOfSites

@@ -12,6 +12,7 @@ import toroidaldiffusion.WrappedBivariateNormal;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
@@ -344,9 +345,18 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
             // pairs of values, dimension is 2 (angles) * N_sites
             double[] parentNodeValues = daTreeModel.getNodeValue(parent);
             double[] childNodeValues = daTreeModel.getNodeValue(node);
-            // populate branchLd[][excl. root],
-            // Require to set dt before loglikwndtpd
-            daBranchLdCore.calculateBranchLd(parentNodeValues, childNodeValues, branchTime);
+            try {
+                // populate branchLd[][excl. root],
+                // Require to set dt before loglikwndtpd
+                daBranchLdCore.calculateBranchLd(parentNodeValues, childNodeValues, branchTime);
+            } catch (Exception e) {
+                System.err.println("parent (" + parent.getNr() +") = " + parent.getID() +
+                        ", node (" + node.getNr() + ") = " + node.getID() + ", branchTime = " + branchTime);
+                System.err.println("mu = " + Arrays.toString(getMuArr()) +
+                        ", sigma = " + Arrays.toString(sigmaInput.get().getDoubleValues()) +
+                        ", alpha = " + Arrays.toString(getAlphaArr(driftInput.get().getDoubleValues(), getDriftCorr())));
+                throw new RuntimeException(e);
+            }
         }
 
         return nodeUpdate;
