@@ -96,7 +96,7 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
             //Get nodesID
             String[] internalNodesID = getID(internalNodes);
 
-            boolean sampleInterNodeSeq = false; //TODO how get this flag from lphy?
+            boolean sampleInterNodeSeq = true; //TODO how get this flag from lphy?
             if (sampleInterNodeSeq) {
                 // TODO cannot handle keys if sampling internal node seqs
                 internalNodesSeqs = getInternalNodesParam(dihedralAngleAlignmentValue, internalNodesID,

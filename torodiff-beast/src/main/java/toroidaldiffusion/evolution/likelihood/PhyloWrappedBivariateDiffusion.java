@@ -8,6 +8,7 @@ import beast.base.evolution.tree.Tree;
 import beast.base.inference.State;
 import toroidaldiffusion.ToroidalUtils;
 import toroidaldiffusion.WrappedBivariateDiffusion;
+import toroidaldiffusion.WrappedBivariateNormal;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -219,6 +220,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     public void init(PrintStream out) {
         super.init(out);
         out.print("alpha3\t");
+        out.print("WNsd1\tWNsd2_3\tWNsd4\t");
     }
 
     @Override
@@ -226,8 +228,13 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         super.log(sample, out);
         double[] driftArr = driftInput.get().getDoubleValues(); // drift
         double driftCorr = getDriftCorr();
+        double[] alpha = getAlphaArr(driftArr, driftCorr);
         // alpha3
-        out.print(getAlphaArr(driftArr, driftCorr)[2] + "\t");
+        out.print(alpha[2] + "\t");
+        double[] sigma = sigmaInput.get().getDoubleValues();
+        // WN sd, [sd1, sd2_3; sd2_3, sd4], so arr = [sd1, sd2_3, sd4]
+        double[] wnsd = WrappedBivariateNormal.getWNSd(alpha, sigma);
+        out.print(wnsd[0] + "\t" + wnsd[1] + "\t" + wnsd[2] + "\t");
     }
 
     // refresh muarr, alphaarr, sigmaarr for computing likelihood

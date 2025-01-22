@@ -13,7 +13,6 @@ import org.apache.commons.math3.random.RandomGenerator;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -88,25 +87,25 @@ public class WrappedBivariateNormal extends ParametricDistribution<Double[]> {
      * @param alpha  drift term : alpha1, alpha2, alpha3
      * @return  the constant term outside the matrix: 1 / 2(alpha1*alpha2-alpha3*alpha3)
      */
-    public static double getConst(double[] alpha) {
+    public static double getMultiplier(double[] alpha) {
         return 0.5 / (alpha[0]*alpha[1]-alpha[2]*alpha[2]);
     }
 
     public static double getRho(double[] alpha) {
-        double constant = getConst(alpha);
-        return -alpha[2] * constant / ( sqrt(constant * alpha[1] ) * sqrt(constant * alpha[0] ) );
+        double multiplier = getMultiplier(alpha);
+        return -alpha[2] * multiplier / ( sqrt(multiplier * alpha[1] ) * sqrt(multiplier * alpha[0] ) );
     }
 
     public static double getS1(double sigma1, double[] alpha) {
-        double constant = getConst(alpha);
+        double multiplier = getMultiplier(alpha);
         // alpha2 is alpha[1]
-        return sqrt(constant * alpha[1]) * sigma1;
+        return sqrt(multiplier * alpha[1]) * sigma1;
     }
 
     public static double getS2(double sigma2, double[] alpha) {
-        double constant = getConst(alpha);
+        double multiplier = getMultiplier(alpha);
         // alpha1 is alpha[0]
-        return sqrt(constant * alpha[0]) * sigma2;
+        return sqrt(multiplier * alpha[0]) * sigma2;
     }
 
     // X2 <- rnorm(n, mu2 + (s2/s1) * rho * (X1 - mu1), sqrt((1 - rho^2)*s2^2))
@@ -115,6 +114,15 @@ public class WrappedBivariateNormal extends ParametricDistribution<Double[]> {
         double mean = mu2 + (s2/s1) * rho * (x1 - mu1);
         double sd = sqrt( (1 - rho * rho) * s2 * s2 );
         return new double[]{mean, sd};
+    }
+
+    // the sd in WN, which = 0.5 * A^−1 * Σ
+    public static double[] getWNSd(double[] alpha, double[] sigma) {
+        double multiplier = getMultiplier(alpha);
+        return new double[]{multiplier * alpha[1] * sigma[0] * sigma[0],
+                - multiplier * alpha[2] * sigma[0] * sigma[1], // diag is same
+                multiplier * alpha[0] * sigma[1] * sigma[1]
+        };
     }
 
     @Override
