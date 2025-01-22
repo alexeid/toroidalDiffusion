@@ -1,6 +1,6 @@
 data {
-  l = 20; // sites
-  n = 5; // taxa
+  l = 100; // sites
+  n = 10; // taxa
   taxa = taxa(names=1:n); // taxa names integer must start from 1 for beast xml
   i = n+1;
   j = 2*n-1;
@@ -8,7 +8,9 @@ data {
   internalNodesID = i:j;
   // fix, it is similar to mutation rate
   σ = [0.5, 0.75];
-  //drift = [1.0, 0.5];
+  drift = [1.0, 0.5];
+  // driftCorr = alpha3 / sqrt(drift[0]*drift[1]); 0.5 / sqrt(0.5);
+  driftCorr = 0.70;
 }
 model {
   λ ~ LogNormal(meanlog=3.0, sdlog=0.1); //sd = 0.1
@@ -21,9 +23,9 @@ model {
   // 0.4082007 0.4965853 0.6041072
   //σ ~ LogNormal(meanlog=-0.7, sdlog=0.1, replicates = 2);
   // 0.6212657 0.7557837 0.9194279
-  drift ~ LogNormal(meanlog=-0.28, sdlog=0.1, replicates = 2);
+  //drift ~ LogNormal(meanlog=-0.28, sdlog=0.1, replicates = 2);
   // correlation
-  driftCorr ~ Uniform(lower=0.0, upper=0.5);
+  //driftCorr ~ Uniform(lower=0.0, upper=0.5);
 
   // the root sequence is sampled from equilibrium distribution
   X ~ PhyloWrappedBivariateDiffusion(mu=mu, sigma=σ, drift=drift, driftCorr=driftCorr, L=l, tree=ψ2);
