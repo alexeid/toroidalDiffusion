@@ -1,5 +1,6 @@
 package toroidaldiffusion;
 
+import lphy.base.distribution.MVN;
 import lphy.base.evolution.Taxa;
 import lphy.base.evolution.alignment.TaxaCharacterMatrix;
 import lphy.base.evolution.tree.TimeTree;
@@ -24,7 +25,6 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import static java.lang.Math.sqrt;
 import static toroidaldiffusion.WrappedNormalConst.*;
 
 /**
@@ -156,7 +156,7 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
         // method 1: rejection sampling at mu
 //        Double[][] y0 = simulateRootSeqs(wrappedBivariateDiffusion, muArr[0], muArr[1], nchar);
         // method 2: sampling from WN(mu, 1/2 A^-1 Sigma)
-        Double[][] y0 = simulateRootSeqs2(mu, sigma, drift, driftCorr);
+        Double[][] y0 = simulateRootSeqs2(mu, sigma, drift, driftCorr, l);
 
         // if any internal node id is not null and not empty string,
         // then add its sequence to the alignment.
@@ -170,21 +170,25 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
         return new RandomVariable<>("x", nodeValues, this);
     }
 
-    /**
-     * rejection sampling at mu
-     * @param wrappedBiDif
-     * @param muPhi
-     * @param muPsi
-     * @param nsamples
-     * @return
-     */
-    public static Double[][] simulateRootSeqs(WrappedBivariateDiffusion wrappedBiDif,
-                                       double muPhi, double muPsi, int nsamples){
-        //1. rejection sampling at mu
-        double[][] y0d = wrappedBiDif.rejectSampleStationaryDensity(muPhi, muPsi, nsamples);
-        Double[][] y0 =  Arrays.stream(y0d).map(
-                row -> Arrays.stream(row).boxed().toArray(Double[]::new)
-        ).toArray(Double[][]::new);
+    //TODO need to check if correct
+    public static Double[][] simulateRootSeqs(Value<Number[]> mu, Value<Number[]> sigma, Value<Number[]> drift,
+                                              Value<Number> driftCorr, Value<Integer> l){
+        int nchar = l.value(); // number of sites
+        Double[][] y0 = new Double[nchar][2];
+
+        Value<Double[]> mean = new Value<>("mean",
+                new Double[]{mu.value()[0].doubleValue(), mu.value()[1].doubleValue()});
+
+        double[] alpha = WrappedNormalUtils.getAlphaArr(drift, driftCorr);
+        double[] wnSD = WrappedBivariateNormal.getWNSd(alpha, ValueUtils.doubleArrayValue(sigma));
+        Value<Double[][]> covariances = new Value<>("covariances",
+                new Double[][]{{wnSD[0], wnSD[1]},{wnSD[1], wnSD[2]}});
+
+        MVN mvn = new MVN(mean, covariances);
+        for (int i = 0; i < nchar; i++) {
+            Double[] pair = mvn.sample().value();
+            y0[i] = pair;
+        }
         return y0;
     }
 
@@ -192,7 +196,8 @@ public class PhyloWrappedBivariateDiffusion implements GenerativeDistribution<Ta
      * simulate root sequences y0 from equilibrium distribution WN(mu, 1/2 A^-1 Sigma)
      * @return y0
      */
-    public Double[][] simulateRootSeqs2(Value<Number[]> mu, Value<Number[]> sigma, Value<Number[]> drift, Value<Number> driftCorr){
+    public Double[][] simulateRootSeqs2(Value<Number[]> mu, Value<Number[]> sigma, Value<Number[]> drift,
+                                        Value<Number> driftCorr, Value<Integer> l){
         int nchar = l.value(); // number of sites
         Double[][] y0 = new Double[nchar][2];
         WrappedBivariateNormal equilDist = new WrappedBivariateNormal(mu, sigma, drift, driftCorr);
