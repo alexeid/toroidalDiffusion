@@ -9,14 +9,16 @@ data {
   mu = [3.14, 1.57];
   // fix, it is similar to mutation rate
   σ = [1, 1];
-  drift = [1.0, 0.5];
-  // driftCorr = alpha3 / sqrt(drift[0]*drift[1]); // 0.5 / sqrt(0.5);
-  driftCorr = 0.70;
+  drift = [0.1, 0.05]; // drift = [1.0, 0.5];
+  // driftCorr = alpha3 / sqrt(drift[0]*drift[1]); // 0.5 / sqrt(0.5) = 0.7071
+  driftCorr = 0.7;
   // WNsd = [0.9803922, -0.9705387; -0.9705387, 1.9607843]
 }
 model {
+  // 7.538461 20.085537 53.516071
+  λ ~ LogNormal(meanlog=3, sdlog=0.5);
   // 0.7557974 2.0137527 5.3654594
-  λ ~ LogNormal(meanlog=0.7, sdlog=0.5);
+  //λ ~ LogNormal(meanlog=0.7, sdlog=0.5);
   ψ ~ Yule(lambda=λ, taxa=taxa);
   ψ2 = setInternalNodesID(tree = ψ, internalNodesID = internalNodesID);
 
