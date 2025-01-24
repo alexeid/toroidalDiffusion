@@ -458,7 +458,7 @@ public class WrappedBivariateDiffusion {
         WrappedBivariateDiffusion diff = new WrappedBivariateDiffusion();
         double[] muarr = {Math.PI, Math.PI * 0.5}; // mean of the diffusion
         double[] sigmaarr = {1.0, 1.0}; // variance term
-        double[] alphaarr = {1.0, 0.5, 0.5}; // drift term
+        double[] alphaarr = {0.1, 0.05, 0.05}; // drift term
         diff.setParameters(muarr, alphaarr, sigmaarr); // set the diffusion parameters
         System.out.println(diff.loglikwndstat(0.0, 0.0)); // calculate the stationary density of the point (0.0, 0.0)
 
@@ -499,40 +499,54 @@ public class WrappedBivariateDiffusion {
 
 
         filename = "wrappedNormal.txt";
-
-        writer = new PrintWriter(new FileWriter(filename));
-        writer.println("time\tphi0\tpsi0\tphit\tpsit\tlogP\tdensity");
-        for (int i0 = 0; i0 < gridSize; i0++) {
-            double phi0 = (i0 + 0.5) * MaxDegrees / (double) gridSize;
-            for (int j0 = 0; j0 < gridSize; j0++) {
-                double psi0 = (j0 + 0.5) * MaxDegrees / (double) gridSize;
-                // after t
-                for (int i = 0; i < gridSize; i++) {
-                    double phit = (i + 0.5) * MaxDegrees / (double) gridSize;
-                    for (int j = 0; j < gridSize; j++) {
-                        for (int t = 0; t <= maxTimeInterval; t++) {
-                            // test time
-                            double time = t * 1.0 / maxTimeInterval;
-                            diff.setParameters(time); // set the time parameter
-
-                            double psit = (j + 0.5) * MaxDegrees / (double) gridSize;
-
-                            double logP = diff.loglikwndtpd(phi0, psi0, phit, psit);
-//                diff.setParameters(0.5); // set the time parameter
-                            writer.println(time + "\t" + phi0 + "\t" + psi0 + "\t" + phit + "\t" + psit + "\t" + logP + "\t" + Math.exp(logP)); // calculate the transition density of the point (0.0, 0.0) transitioning to (1.0, 1.0) in time t=1.0
-
-                            //diff.setParameters(0.7); // change the time parameter
-                            //System.out.println(diff.loglikwndtpd(0.0, 0.0, 1.0, 1.0)); // calculate the transition density for the same points, but for a different time (t=0.7)
-                        }
-                    }
-                }
-            }
-        }
-        writer.flush();
-        writer.close();
-
         double phi0 = Math.PI / 4;
         double psi0 = Math.PI;
+
+        writer = new PrintWriter(new FileWriter(filename));
+        writer.println("phit\tpsit\tlogP\tdensity");
+        for (int i = 0; i < gridSize; i++) {
+            double phit = (i + 0.5) * MaxDegrees / (double) gridSize;
+            for (int j = 0; j < gridSize; j++) {
+                double psit = (j + 0.5) * MaxDegrees / (double) gridSize;
+
+                double logP = diff.loglikwndtpd(phi0, psi0, phit, psit);
+
+                diff.setParameters(0.5); // set the time parameter
+                writer.println(phit + "\t" + psit + "\t" + logP + "\t" + Math.exp(logP)); // calculate the transition density of the point (0.0, 0.0) transitioning to (1.0, 1.0) in time t=1.0
+
+                //diff.setParameters(0.7); // change the time parameter
+                //System.out.println(diff.loglikwndtpd(0.0, 0.0, 1.0, 1.0)); // calculate the transition density for the same points, but for a different time (t=0.7)
+            }
+        }
+//        writer.println("time\tphi0\tpsi0\tphit\tpsit\tlogP\tdensity");
+//        for (int i0 = 0; i0 < gridSize; i0++) {
+//            double phi0 = (i0 + 0.5) * MaxDegrees / (double) gridSize;
+//            for (int j0 = 0; j0 < gridSize; j0++) {
+//                double psi0 = (j0 + 0.5) * MaxDegrees / (double) gridSize;
+//                // after t
+//                for (int i = 0; i < gridSize; i++) {
+//                    double phit = (i + 0.5) * MaxDegrees / (double) gridSize;
+//                    for (int j = 0; j < gridSize; j++) {
+////                        for (int t = 0; t <= maxTimeInterval; t++) {
+//                            // test time
+//                            double time = 0.5;//t * 1.0 / maxTimeInterval;
+//                            diff.setParameters(time); // set the time parameter
+//
+//                            double psit = (j + 0.5) * MaxDegrees / (double) gridSize;
+//
+//                            double logP = diff.loglikwndtpd(phi0, psi0, phit, psit);
+////                diff.setParameters(0.5); // set the time parameter
+//                            writer.println(time + "\t" + phi0 + "\t" + psi0 + "\t" + phit + "\t" + psit + "\t" + logP + "\t" + Math.exp(logP)); // calculate the transition density of the point (0.0, 0.0) transitioning to (1.0, 1.0) in time t=1.0
+//
+//                            //diff.setParameters(0.7); // change the time parameter
+//                            //System.out.println(diff.loglikwndtpd(0.0, 0.0, 1.0, 1.0)); // calculate the transition density for the same points, but for a different time (t=0.7)
+//                        }
+//                    }
+//                }
+//            }
+//        }
+        writer.flush();
+        writer.close();
 
         double[][] samples = diff.sampleByRejection(phi0, psi0, 1000);
         writer = new PrintWriter(new FileWriter("wrappedNormalSample.txt"));
