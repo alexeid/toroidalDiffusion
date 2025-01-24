@@ -442,22 +442,43 @@ public class WrappedBivariateDiffusion {
         return path;
     }
 
+    // return mu_t[2], the mean of WN after time t from [phi0, psi0]
+    public double[] wntpdMu(double phi0, double psi0, double t) {
+        setParameters(t);
+        SimpleMatrix x0 = new SimpleMatrix(2, 1);
+        x0.set(0, 0, phi0);
+        x0.set(1, 0, psi0);
+        SimpleMatrix mut = mu.plus(ExptA.mult(x0.plus(twokepivec).minus(mu)));
+        return new double[]{mut.get(0, 0), mut.get(1, 0)};
+    }
+
+
     // test how the params affect log likelihood and stationary dist
     public static void main(String[] args) throws IOException {
         WrappedBivariateDiffusion diff = new WrappedBivariateDiffusion();
-        double[] muarr = {Math.PI * 0.65, Math.PI * 0.8}; // mean of the diffusion
-        double[] sigmaarr = {0.5, 0.75}; // variance term
-        double[] alphaarr = {1.0, 1.0, 0.5}; // drift term
+        double[] muarr = {Math.PI, Math.PI * 0.5}; // mean of the diffusion
+        double[] sigmaarr = {1.0, 1.0}; // variance term
+        double[] alphaarr = {1.0, 0.5, 0.5}; // drift term
         diff.setParameters(muarr, alphaarr, sigmaarr); // set the diffusion parameters
         System.out.println(diff.loglikwndstat(0.0, 0.0)); // calculate the stationary density of the point (0.0, 0.0)
 
         final double MaxDegrees = 2 * Math.PI;
 
-        String filename = "wrappedNormalStationary.txt";
+        String filename = "parameters.txt";
+        PrintWriter writer = new PrintWriter(new FileWriter(filename));
+        writer.println("mu1\tmu2\tsigma1\tsigma2\talpha1\talpha2\talpha3\tlogP(0,0)");
+        writer.println(muarr[0] + "\t" + muarr[1] + "\t" + sigmaarr[0] + "\t" + sigmaarr[1] + "\t" +
+                alphaarr[0] + "\t" + alphaarr[1] + "\t" + alphaarr[2] + "\t" +
+                diff.loglikwndstat(0.0, 0.0));
+        writer.flush();
+        writer.close();
+
+
+        filename = "wrappedNormalStationary.txt";
         int gridSize = 10;//200;
         int maxTimeInterval = 50;
 
-        PrintWriter writer = new PrintWriter(new FileWriter(filename));
+        writer = new PrintWriter(new FileWriter(filename));
         writer.println("time\tphi\tpsi\tlogP\tdensity");
         for (int i = 0; i < gridSize; i++) {
             double phi = (i + 0.5) * MaxDegrees / (double) gridSize;
@@ -475,6 +496,7 @@ public class WrappedBivariateDiffusion {
         }
         writer.flush();
         writer.close();
+
 
         filename = "wrappedNormal.txt";
 
@@ -527,6 +549,26 @@ public class WrappedBivariateDiffusion {
         for (int i = 0; i < path.length; i++) {
             writer.println(path[i][0] + "\t" + path[i][1]);
         }
+        writer.flush();
+        writer.close();
+
+        /** after time t **/
+
+        filename = "muT.txt";
+        int N = 10000; // 10k
+
+        writer = new PrintWriter(new FileWriter(filename));
+        writer.println("time\tmu_t_phi\tmu_t_psi");
+        for (int t = 0; t < N; t++) {
+            // time
+            double time = t / 100.0;
+            diff.setParameters(time); // set the time parameter
+
+            double[] muT = diff.wntpdMu(0, 0, t);
+            //TODO std?
+            writer.println(time + "\t" + muT[0] + "\t" + muT[1]); // calculate the transition density of the point (0.0, 0.0) transitioning to (1.0, 1.0) in time t=1.0
+        }
+
         writer.flush();
         writer.close();
     }
