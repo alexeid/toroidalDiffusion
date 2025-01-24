@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static lphybeast.BEASTContext.getOperatorWeight;
 import static toroidaldiffusion.WrappedNormalConst.MAX_ANGLE_VALUE;
 
 
@@ -105,7 +106,8 @@ public class PhyloWrappedBivariateDiffusionToBeast implements GeneratorToBEAST<P
                 context.addStateNode(internalNodesSeqs, dihedralAngleAlignmentValue, false);
                 //TODO add WrappedRandomWalkOperator to sample internal node seq
                 WrappedRandomWalkOperator wrappedRWOp = new WrappedRandomWalkOperator();
-                wrappedRWOp.initByName("parameter", internalNodesSeqs, "windowSize", 0.1, "weight", 10.0);
+                wrappedRWOp.initByName("parameter", internalNodesSeqs, "windowSize", 0.1,
+                        "weight", getOperatorWeight(internalNodesSeqs.getDimension() - 1));
                 // TODO tree id?
                 wrappedRWOp.setID("" + "InternalNodeSeqs.WrappedRandomWalk");
                 context.addExtraOperator(wrappedRWOp);
