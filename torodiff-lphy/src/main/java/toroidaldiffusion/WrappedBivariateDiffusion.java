@@ -449,7 +449,11 @@ public class WrappedBivariateDiffusion {
         x0.set(0, 0, phi0);
         x0.set(1, 0, psi0);
         SimpleMatrix mut = mu.plus(ExptA.mult(x0.plus(twokepivec).minus(mu)));
-        return new double[]{mut.get(0, 0), mut.get(1, 0)};
+
+        // wrapped
+        double wrapPhit = ToroidalUtils.wrapToMaxAngle(mut.get(0, 0), WrappedNormalConst.MAX_ANGLE_VALUE);
+        double wrapPsit = ToroidalUtils.wrapToMaxAngle(mut.get(1, 0), WrappedNormalConst.MAX_ANGLE_VALUE);
+        return new double[]{wrapPhit, wrapPsit};
     }
 
 

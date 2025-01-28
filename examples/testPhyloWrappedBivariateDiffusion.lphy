@@ -9,7 +9,7 @@ data {
   mu = [3.14, 1.57];
   // fix, it is similar to mutation rate
   σ = [1, 1];
-  drift = [0.1, 0.05]; // drift = [1.0, 0.5];
+  //drift = [0.1, 0.05]; // drift = [1.0, 0.5];
   // driftCorr = alpha3 / sqrt(drift[0]*drift[1]); // 0.5 / sqrt(0.5) = 0.7071
   driftCorr = 0.7;
   // WNsd = [0.9803922, -0.9705387; -0.9705387, 1.9607843]
@@ -24,11 +24,11 @@ model {
 
   // angle and mu must be [0, 2pi)
   // 1.836767 2.718282 4.022859
-  // mu ~ LogNormal(meanlog=1, sdlog=0.2, replicates = 2);
+  //mu ~ LogNormal(meanlog=1, sdlog=0.2, replicates = 2);
   // 0.4082007 0.4965853 0.6041072
   //σ ~ LogNormal(meanlog=-0.7, sdlog=0.1, replicates = 2);
-  // 0.6212657 0.7557837 0.9194279
-  //drift ~ LogNormal(meanlog=-0.28, sdlog=0.1, replicates = 2);
+  // 0.05535465 0.07427358 0.09965855
+  drift ~ LogNormal(meanlog=-2.6, sdlog=0.15, replicates = 2);
   // correlation
   //driftCorr ~ Uniform(lower=0.0, upper=0.5);
 
