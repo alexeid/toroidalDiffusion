@@ -76,9 +76,10 @@ model {
 
         <!-- change topology  -->
         <operator id="psi.narrowExchange" spec="Exchange" tree="@psi2" weight="4.655536721746079"/>
-        <operator id="psi.subtreeSlide" spec="kernel.BactrianSubtreeSlide" size="0.7" tree="@psi2" weight="4.655536721746079"/>
         <operator id="psi.wideExchange" spec="Exchange" isNarrow="false" tree="@psi2" weight="1"/>
         <operator id="psi.wilsonBalding" spec="WilsonBalding" tree="@psi2" weight="1"/>
+<!-- subtreeSlide may change root   -->
+<!--        <operator id="psi.subtreeSlide" spec="kernel.BactrianSubtreeSlide" size="0.7" tree="@psi2" weight="4.655536721746079"/>-->
 
         <logger id="ScreenLogger" spec="Logger" logEvery="50000">
             <log idref="posterior"/>
