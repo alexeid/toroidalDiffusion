@@ -9,7 +9,7 @@ contour <- function(bvn, x_string, y_string, size, alpha){
   require("ggplot2")
   p <- ggplot(bvn, aes_string(x = x_string, y = y_string)) +
     geom_point(size=size, alpha = alpha) +
-    geom_density2d() +
+    #geom_density2d() +
     labs(title=paste0("mu1 = ", round(mu1,2), ", mu2 = ",
                       round(mu2,2), ", sampling ", N, " points")) +
     theme_bw()
