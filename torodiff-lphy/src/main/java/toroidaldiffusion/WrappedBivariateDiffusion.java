@@ -461,8 +461,8 @@ public class WrappedBivariateDiffusion {
     public static void main(String[] args) throws IOException {
         WrappedBivariateDiffusion diff = new WrappedBivariateDiffusion();
         double[] muarr = {Math.PI, Math.PI * 0.5}; // mean of the diffusion
-        double[] sigmaarr = {1.0, 1.0}; // variance term
-        double[] alphaarr = {0.1, 0.05, 0.05}; // drift term
+        double[] sigmaarr = {10, 10}; // variance term
+        double[] alphaarr = {1.0, 1.0, 0.7}; // drift term
         diff.setParameters(muarr, alphaarr, sigmaarr); // set the diffusion parameters
         System.out.println(diff.loglikwndstat(0.0, 0.0)); // calculate the stationary density of the point (0.0, 0.0)
 
@@ -561,7 +561,7 @@ public class WrappedBivariateDiffusion {
         writer.flush();
         writer.close();
 
-        double[][] path = diff.simulatePath(0, 0, 0.02, 1000);
+        double[][] path = diff.simulatePath(0, Math.PI, 0.02, 1000);
         writer = new PrintWriter(new FileWriter("wrappedNormalPath.txt"));
         writer.println("phi\tpsi");
         for (int i = 0; i < path.length; i++) {
@@ -572,23 +572,75 @@ public class WrappedBivariateDiffusion {
 
         /** after time t **/
 
+//        filename = "muT.txt";
+//        int N = 10000; // 10k
+//
+//        writer = new PrintWriter(new FileWriter(filename));
+//        writer.println("time\tmu_t_phi\tmu_t_psi");
+//        for (int t = 0; t < N; t++) {
+//            // time
+//            double time = t / 100.0;
+//            diff.setParameters(time); // set the time parameter
+//
+//            double[] muT = diff.wntpdMu(0, 0, t);
+//            //TODO std?
+//            writer.println(time + "\t" + muT[0] + "\t" + muT[1]); // calculate the transition density of the point (0.0, 0.0) transitioning to (1.0, 1.0) in time t=1.0
+//        }
+//
+//        writer.flush();
+//        writer.close();
+
+        /**
+         * store trajectory at fixed time interval
+         */
+
         filename = "muT.txt";
-        int N = 10000; // 10k
+        int steps = 1000;  // Number of steps
+        double dt = 0.02;  // Fixed time interval
+        double[][] trajectory = new double[steps + 1][2];  // +1 to include initial point
 
         writer = new PrintWriter(new FileWriter(filename));
         writer.println("time\tmu_t_phi\tmu_t_psi");
-        for (int t = 0; t < N; t++) {
-            // time
-            double time = t / 100.0;
-            diff.setParameters(time); // set the time parameter
 
-            double[] muT = diff.wntpdMu(0, 0, t);
-            //TODO std?
-            writer.println(time + "\t" + muT[0] + "\t" + muT[1]); // calculate the transition density of the point (0.0, 0.0) transitioning to (1.0, 1.0) in time t=1.0
+// Store initial point
+        double time = 0.0;
+        diff.setParameters(time);
+
+        double phi = 0;
+        double psi = Math.PI;
+//        double[] muT_0 = diff.wntpdMu(0, Math.PI, time);
+        trajectory[0][0] = phi;
+        trajectory[0][1] = psi;
+        writer.println(time + "\t" + phi + "\t" + psi);
+
+
+// Calculate trajectory at fixed time intervals
+        for (int i = 1; i <= steps; i++) {
+//            diff.setParameters(time);
+            double[] muT = diff.wntpdMu(trajectory[i-1][0], trajectory[i-1][1], dt);
+
+            trajectory[i][0] = muT[0];
+            trajectory[i][1] = muT[1];
+
+            time = i * dt;
+            writer.println(time + "\t" + muT[0] + "\t" + muT[1]);
         }
+
+//// Calculate trajectory at fixed time intervals
+//        for (int i = 1; i <= steps; i++) {
+//            time = i * dt;
+//            diff.setParameters(time);
+//            muT = diff.wntpdMu(0, Math.PI, time);
+//
+//            trajectory[i][0] = muT[0];
+//            trajectory[i][1] = muT[1];
+//
+//            writer.println(time + "\t" + muT[0] + "\t" + muT[1]);
+//        }
 
         writer.flush();
         writer.close();
+
     }
 
 }
