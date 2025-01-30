@@ -461,7 +461,7 @@ public class WrappedBivariateDiffusion {
     public static void main(String[] args) throws IOException {
         WrappedBivariateDiffusion diff = new WrappedBivariateDiffusion();
         double[] muarr = {Math.PI, Math.PI * 0.5}; // mean of the diffusion
-        double[] sigmaarr = {10, 10}; // variance term
+        double[] sigmaarr = {1, 1}; // variance term
         double[] alphaarr = {1.0, 1.0, 0.7}; // drift term
         diff.setParameters(muarr, alphaarr, sigmaarr); // set the diffusion parameters
         System.out.println(diff.loglikwndstat(0.0, 0.0)); // calculate the stationary density of the point (0.0, 0.0)
@@ -596,34 +596,27 @@ public class WrappedBivariateDiffusion {
 
         filename = "muT.txt";
         int steps = 1000;  // Number of steps
-        double dt = 0.02;  // Fixed time interval
         double[][] trajectory = new double[steps + 1][2];  // +1 to include initial point
 
         writer = new PrintWriter(new FileWriter(filename));
         writer.println("time\tmu_t_phi\tmu_t_psi");
 
 // Store initial point
-        double time = 0.0;
-        diff.setParameters(time);
-
+        final double dt = 0.5;  // Fixed time interval
         double phi = 0;
         double psi = Math.PI;
-//        double[] muT_0 = diff.wntpdMu(0, Math.PI, time);
         trajectory[0][0] = phi;
         trajectory[0][1] = psi;
-        writer.println(time + "\t" + phi + "\t" + psi);
-
+        writer.println(0 + "\t" + trajectory[0][0] + "\t" + trajectory[0][1]);
 
 // Calculate trajectory at fixed time intervals
         for (int i = 1; i <= steps; i++) {
-//            diff.setParameters(time);
             double[] muT = diff.wntpdMu(trajectory[i-1][0], trajectory[i-1][1], dt);
 
             trajectory[i][0] = muT[0];
             trajectory[i][1] = muT[1];
 
-            time = i * dt;
-            writer.println(time + "\t" + muT[0] + "\t" + muT[1]);
+            writer.println(i + "\t" + muT[0] + "\t" + muT[1]);
         }
 
 //// Calculate trajectory at fixed time intervals
