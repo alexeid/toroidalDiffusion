@@ -2,6 +2,7 @@ package toroidaldiffusion.evolution.likelihood;
 
 import beast.base.core.Description;
 import beast.base.core.Input;
+import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.TreeInterface;
 import beast.base.inference.Distribution;
 import beast.base.inference.State;
@@ -49,27 +50,42 @@ public class GenericDATreeLikelihood extends Distribution {
         // data
         tipValuesParam = daTreeModel.getTipsValuesParam();
         internalNodesParam = daTreeModel.getInternalNodesValuesParam();
+
+        if (internalNodesParam.getMinorDimension2() != tree.getInternalNodeCount())
+            throw new IllegalArgumentException("The internal node sequences parameter minor dim 2 must = number of internal nodes !");
     }
 
     /**
      * This assumes internal nodes sequences stored by the order of Nr
      * in the {@link RealParameter} {@link #internalNodesParam}.
      *
-     * @param nodeIndex It assumes nodeIndex is Nr, and index starts from 1 to the number of nodes.
+     * @param node can be any node
      * @return  whether the internal node sequences mapping to the node given a node index have been changed or not,
      *          where dirty means its value was changed.
      */
-    public boolean isInternalNodeSeqDirty(final int nodeIndex) {
-        // the index of entry that was changed last. Useful if it is known only a single value has changed in the array.
-        int dirtyI = internalNodesParam.getLastDirty();
+    public boolean isInternalNodeSeqDirty(final Node node) {
+        // TODO assuming tip sequences are fixed
+        if (node.isLeaf()) return false;
 
-        // assuming nodeIndex is Nr, and index starts from 1 to the number of nodes.
-        int rawI = (int) Math.floor((double) dirtyI / internalNodesParam.getMinorDimension1());
-        final int nr = rawI + tree.getLeafNodeCount();
-        if (nr > tree.getNodeCount())
-            throw new IllegalArgumentException("Node index (" + nr + ") must < nodes count (" + tree.getNodeCount() + ") ! ");
+        // assuming internalNodeIndex is Nr, and index starts from 1 to the number of nodes.
+        int nTips = tree.getLeafNodeCount();
+        final int nodeNr = node.getNr();
+        // the index to be used for internalNodesParam
+        int arrI = nodeNr - nTips;
 
-        return nr == nodeIndex;
+        // minor dim 2 = number of internal nodes
+        if (arrI >= internalNodesParam.getMinorDimension2())
+            throw new IllegalArgumentException("Internal node index (" + nodeNr + ") - nTips (" +
+                    tree.getLeafNodeCount() + ") cannot > the internal node sequences parameter 2nd minor dim (" +
+                    internalNodesParam.getMinorDimension2() + ") ! ");
+
+        // minor dim 1 = nsite * 2
+        int start = arrI * internalNodesParam.getMinorDimension1();
+        for (int i = start; i < start + internalNodesParam.getMinorDimension1(); i++) {
+            if (internalNodesParam.isDirty(i))
+                return true;
+        }
+        return false;
     }
 
     /**

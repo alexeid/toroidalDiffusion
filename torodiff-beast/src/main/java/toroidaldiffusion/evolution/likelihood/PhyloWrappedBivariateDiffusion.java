@@ -287,28 +287,30 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
         // if tips, always false
         //TODO the method has assumptions, check the detail before use
-        boolean seqUpdate = isInternalNodeSeqDirty(nodeNr) || isInternalNodeSeqDirty(parentNum);
+        boolean seqUpdate = isInternalNodeSeqDirty(node) || isInternalNodeSeqDirty(parent);
 //        boolean seqUpdate = false;
 
-//        int nodeUpdate = node.isDirty() | parent.isDirty();
-        int nodeUpdate = Tree.IS_DIRTY; // TODO caching not working
+        int nodeUpdate = node.isDirty() | parent.isDirty(); // TODO Likelihood incorrectly calculated:
+//        int nodeUpdate = Tree.IS_DIRTY;
 
-        final double branchRate = 1.0; //TODO branchRateModel.getRateForBranch(node);
+//        final double branchRate = 1.0; //TODO branchRateModel.getRateForBranch(node);
         // do not use getLength, code below to save time
-        final double branchTime = (parent.getHeight() - node.getHeight()) * branchRate;
+        final double branchTime = (parent.getHeight() - node.getHeight()); //* branchRate;
 
         if (branchTime == 0)
             throw new UnsupportedOperationException("0 branch length, such as SA, not supported !");
         if (branchTime < 1e-10)
             throw new ArithmeticException("Reject proposal : " +
                     "time is 0 at the branch between parent node " + parentNum + " and node " + nodeNr +
-                    " !\n" + "branch length = " + node.getLength() + ", branchRate = " + branchRate);
+                    " !\n" + "branch length = " + node.getLength() );//+ ", branchRate = " + branchRate);
 
         //TODO how to distinguish branch len change and internal node seq change, when topology is same
 
         // ====== 1. update the transition probability matrix(ices) if the branch len changes ======
         if (seqUpdate || nodeUpdate != Tree.IS_CLEAN || branchTime != branchLengths[nodeNr]) {
             this.branchLengths[nodeNr] = branchTime;
+            // signal to recalculate
+            nodeUpdate |= Tree.IS_DIRTY;
 
             //not here, already did in calculateLogP()
 //            setDiffusionParams();
@@ -331,7 +333,6 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
             }
             */
 
-//            nodeUpdate |= Tree.IS_DIRTY;
 //        }
 // TODO only some sites are changed
 //       else if (seqUpdate) { }
