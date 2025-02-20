@@ -170,8 +170,24 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
             DABranchLikelihoodCore daBranchLdCore = daBranchLdCores[n];
             try {
                 // caching branchLogLikelihoods[nodeNr]
-                if (updateBranch(daBranchLdCore, node) != Tree.IS_CLEAN) {
-                    this.branchLogLikelihoods[n] = daBranchLdCore.calculateBranchLogLikelihood();
+                if (updateBranch(node) != Tree.IS_CLEAN) {
+//                    this.branchLogLikelihoods[n] = daBranchLdCore.calculateBranchLogLikelihood();
+                    final int nodeNr = node.getNr();
+                    final Node parent = node.getParent();
+                    double branchTime = this.branchLengths[nodeNr];
+
+                    try {
+                        // must call updateBranch(node) before use computeBranchLK
+                        this.branchLogLikelihoods[n] = daBranchLdCore.computeBranchLK(daTreeModel, parent, node, branchTime);
+                    } catch (Exception e) {
+//                        final Node parent = node.getParent();
+                        System.err.println("parent (" + parent.getNr() +") = " + parent.getID() +
+                                ", node (" + node.getNr() + ") = " + node.getID() + ", branchTime = " + branchTime);
+                        System.err.println("mu = " + Arrays.toString(getMuArr()) +
+                                ", sigma = " + Arrays.toString(sigmaInput.get().getDoubleValues()) +
+                                ", alpha = " + Arrays.toString(getAlphaArr(driftInput.get().getDoubleValues(), getDriftCorr())));
+                        throw new RuntimeException(e);
+                    }
                 }
 //            System.out.println("logP = " + logP);
             } catch (ArithmeticException e) {
@@ -200,6 +216,51 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
 //        System.out.println("tree logP = " + logP);
         return logP;
+    }
+
+    /**
+     * Main method to check if this branch LK requires update or not
+     * @param node  the child node used to identify the branch
+     * @return  the integer to represent if it is dirty using {@link Tree#IS_CLEAN} and so on.
+     */
+    protected int updateBranch(final Node node) {
+        // the branch between node and parent
+        // root is excluded from node when creating DABranchLikelihoodCore
+        final Node parent = node.getParent();
+        final int nodeNr = node.getNr();
+        final int parentNum = parent.getNr();
+
+        // if tips, always false
+        //TODO the method has assumptions, check the detail before use
+        boolean seqUpdate = isInternalNodeSeqDirty(node) || isInternalNodeSeqDirty(parent);
+//        boolean seqUpdate = false;
+
+        int nodeUpdate = node.isDirty() | parent.isDirty();
+//        int nodeUpdate = Tree.IS_DIRTY;
+
+//        final double branchRate = 1.0; //TODO branchRateModel.getRateForBranch(node);
+        // do not use getLength, code below to save time
+        final double branchTime = (parent.getHeight() - node.getHeight()); //* branchRate;
+
+        if (branchTime == 0)
+            throw new UnsupportedOperationException("0 branch length, such as SA, not supported !");
+        if (branchTime < 1e-10)
+            throw new ArithmeticException("Reject proposal : " +
+                    "time is 0 at the branch between parent node " + parentNum + " and node " + nodeNr +
+                    " !\n" + "branch length = " + node.getLength() );//+ ", branchRate = " + branchRate);
+
+        //TODO how to distinguish branch len change and internal node seq change, when topology is same
+
+        // ====== 1. update the transition probability matrix(ices) if the branch len changes ======
+        if (seqUpdate || nodeUpdate != Tree.IS_CLEAN || branchTime != branchLengths[nodeNr]) {
+            // signal to recalculate
+            nodeUpdate |= Tree.IS_DIRTY;
+
+            // update branch length here
+            this.branchLengths[nodeNr] = branchTime;
+        }
+
+        return nodeUpdate;
     }
 
     // implement caching
@@ -295,92 +356,6 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         return alphaarr;
     }
 
-    protected int updateBranch(final DABranchLikelihoodCore daBranchLdCore, final Node node) {
-        // the branch between node and parent
-        // root is excluded from node when creating DABranchLikelihoodCore
-        final Node parent = node.getParent();
-        final int nodeNr = node.getNr();
-        final int parentNum = parent.getNr();
-
-        // if tips, always false
-        //TODO the method has assumptions, check the detail before use
-        boolean seqUpdate = isInternalNodeSeqDirty(node) || isInternalNodeSeqDirty(parent);
-//        boolean seqUpdate = false;
-
-        int nodeUpdate = node.isDirty() | parent.isDirty();
-//        int nodeUpdate = Tree.IS_DIRTY;
-
-//        final double branchRate = 1.0; //TODO branchRateModel.getRateForBranch(node);
-        // do not use getLength, code below to save time
-        final double branchTime = (parent.getHeight() - node.getHeight()); //* branchRate;
-
-        if (branchTime == 0)
-            throw new UnsupportedOperationException("0 branch length, such as SA, not supported !");
-        if (branchTime < 1e-10)
-            throw new ArithmeticException("Reject proposal : " +
-                    "time is 0 at the branch between parent node " + parentNum + " and node " + nodeNr +
-                    " !\n" + "branch length = " + node.getLength() );//+ ", branchRate = " + branchRate);
-
-        //TODO how to distinguish branch len change and internal node seq change, when topology is same
-
-        // ====== 1. update the transition probability matrix(ices) if the branch len changes ======
-        if (seqUpdate || nodeUpdate != Tree.IS_CLEAN || branchTime != branchLengths[nodeNr]) {
-            this.branchLengths[nodeNr] = branchTime;
-            // signal to recalculate
-            nodeUpdate |= Tree.IS_DIRTY;
-
-            //not here, already did in calculateLogP()
-//            setDiffusionParams();
-
-            /*TODO
-            daBranchLdCore.setNodeMatrixForUpdate(); // TODO review the index
-            // rate category
-            for (int i = 0; i < siteModel.getCategoryCount(); i++) {
-                final double jointBranchRate = siteModel.getRateForCategory(i, node) * branchRate;
-                // pass the reference of array for caching probability,
-                // Note: cannot move it in this class because of multithreading by nodes.
-                double[] probabilities = daBranchLdCore.getProbRef();
-                double[] iexp = daBranchLdCore.getIexpRef();
-                // this new code is faster
-                substitutionModel.getTransiProbs(parent.getHeight(), node.getHeight(),
-                        jointBranchRate, iexp, probabilities);
-                //System.out.println(node.getNr() + " " + Arrays.toString(probabilities));
-
-                daBranchLdCore.setNodeMatrix(i, probabilities); //cannot rm arraycopy
-            }
-            */
-
-//        }
-// TODO only some sites are changed
-//       else if (seqUpdate) { }
-
-        // ====== 2. recalculate likelihood if either child node wasn't clean ======
-//        if (nodeUpdate != Tree.IS_CLEAN) {
-
-            // TODO caching
-//            daBranchLdCore.setBranchLdForUpdate();
-
-            // pairs of values, dimension is 2 (angles) * N_sites
-            double[] parentNodeValues = daTreeModel.getNodeValue(parent);
-            double[] childNodeValues = daTreeModel.getNodeValue(node);
-            try {
-                // populate branchLd[][excl. root],
-                // Require to set dt before loglikwndtpd
-                daBranchLdCore.calculateBranchLd(parentNodeValues, childNodeValues, branchTime);
-            } catch (Exception e) {
-                System.err.println("parent (" + parent.getNr() +") = " + parent.getID() +
-                        ", node (" + node.getNr() + ") = " + node.getID() + ", branchTime = " + branchTime);
-                System.err.println("mu = " + Arrays.toString(getMuArr()) +
-                        ", sigma = " + Arrays.toString(sigmaInput.get().getDoubleValues()) +
-                        ", alpha = " + Arrays.toString(getAlphaArr(driftInput.get().getDoubleValues(), getDriftCorr())));
-                throw new RuntimeException(e);
-            }
-        }
-
-        return nodeUpdate;
-    }
-
-
     //****** multi-threading ******//
 
 
@@ -404,8 +379,8 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
                 final Node node = tree.getNode(branchNr);
 
                 // caching branchLogLikelihoods[nodeNr]
-                if (updateBranch(core, node) != Tree.IS_CLEAN)
-                    branchLogLikelihoods[branchNr] = core.calculateBranchLogLikelihood();
+                if (updateBranch(node) != Tree.IS_CLEAN)
+                    branchLogLikelihoods[branchNr] = core.sumSiteLogLikelihood();
 
                 logP += branchLogLikelihoods[branchNr];
             }

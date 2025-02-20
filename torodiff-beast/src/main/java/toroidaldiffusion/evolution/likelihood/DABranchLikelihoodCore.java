@@ -1,6 +1,8 @@
 package toroidaldiffusion.evolution.likelihood;
 
+import beast.base.evolution.tree.Node;
 import toroidaldiffusion.WrappedBivariateDiffusion;
+import toroidaldiffusion.evolution.tree.DATreeModel;
 
 /**
  * data augmentation likelihood core based on a branch for multithreading.
@@ -89,32 +91,17 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
 
     //============ branch likelihood ============
 
-    //TODO need to cache per site to avoid recalculation, when only the sequence at a site is changed
-//    public void calculateBranchLd(final double[] parentNodeValues, final double[] childNodeValues) {
-//
-//        //todo: bug: k+2, check the length and final index within the bound
-//
-//        assert parentNodeValues.length == nrOfSites * 2;
-//        for (int k = 0; k < nrOfSites; k++) {
-//            // pairs of values, dimension is 2 (angles) * N_sites
-//
-//            double phi0 = parentNodeValues[k];
-//            double psi0 = parentNodeValues[k + 1];
-//
-//            double phit = childNodeValues[k];
-//            double psit = childNodeValues[k + 1];
-//
-//            // diff.setParameters(muarr, alphaarr, sigmaarr), only once in the init method
-//            branchLogLd[currentBrLdIndex][k] = diff.loglikwndtpd(phi0, psi0, phit, psit);
-//
-//            if (branchLogLd[currentBrLdIndex][k] == 0) {
-//                throw new RuntimeException("\nBranch above node " + getBranchNr() + " likelihood = 0 !\n" +
-//                        "At site " + k); //+ ", child node = " + childNode + ", parent node = " + parentNode);
-//            }
-//
-//        } // end k  nrOfSites
-//
-//    }
+    public double computeBranchLK(DATreeModel daTreeModel, Node parent, Node node, double branchTime) {
+        // pairs of values, dimension is 2 (angles) * N_sites
+        double[] parentNodeValues = daTreeModel.getNodeValue(parent);
+        double[] childNodeValues = daTreeModel.getNodeValue(node);
+
+        // populate branchLd[][excl. root],
+        // Require to set dt before loglikwndtpd
+        computeSiteLK(parentNodeValues, childNodeValues, branchTime);
+
+        return sumSiteLogLikelihood();
+    }
 
     /**
      * set mu, sigma, alpha, before this method
@@ -122,7 +109,7 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
      * @param childNodeValues    pairs of angles at the child node, length is nrOfSites * 2.
      * @param branchTime         branch time (length) from parent to child
      */
-    public void calculateBranchLd(final double[] parentNodeValues, final double[] childNodeValues, double branchTime) {
+    protected void computeSiteLK(final double[] parentNodeValues, final double[] childNodeValues, double branchTime) {
 
         assert parentNodeValues.length == nrOfSites * 2;
         assert childNodeValues.length == nrOfSites * 2;
@@ -166,7 +153,7 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
      * It can be also used for the site likelihoods at the root.
      * @return           logged likelihood
      */
-    public double calculateBranchLogLikelihood() {
+    protected double sumSiteLogLikelihood() {
         double logP = 0;
         // siteLd[].length == nrOfSites
         for (int k = 0; k < nrOfSites; k++) {
