@@ -138,7 +138,6 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 //        likelihoodCallers.add(new DABranchLikelihoodCallable(cores));
     }
 
-
     /**
      * This method samples the sequences based on the tree and site model.
      */
@@ -181,11 +180,14 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
             }
         } // end n loop
 
-        // TODO multiply the stationary density on the root
-        // the pairs of angles flatten to 1d, length = nsite * 2;
-        double[] rootValues = daTreeModel.getNodeValue(tree.getRoot());
-        // rootIndex = nNode - 1
-        this.branchLogLikelihoods[rootIndex] = calculateRootLogLikelihood(rootValues, diff);
+        // caching root likelihood branchLogLikelihoods[rootIndex]
+        Node root = tree.getRoot();
+        if (updateRoot(root) != Tree.IS_CLEAN) {
+            // the pairs of angles flatten to 1d, length = nsite * 2;
+            double[] rootValues = daTreeModel.getNodeValue(root);
+            // rootIndex = nNode - 1
+            this.branchLogLikelihoods[rootIndex] = calculateRootLogLikelihood(rootValues, diff);
+        }
 
         // sum logP
         logP =0;
@@ -198,6 +200,21 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
 //        System.out.println("tree logP = " + logP);
         return logP;
+    }
+
+    // implement caching
+    protected int updateRoot(final Node root) {
+        //TODO the method has assumptions, check the detail before use
+        boolean seqUpdate = isInternalNodeSeqDirty(root);
+//        boolean seqUpdate = false;
+        int nodeUpdate = root.isDirty();
+//        int nodeUpdate = Tree.IS_DIRTY;
+
+        if (seqUpdate || nodeUpdate != Tree.IS_CLEAN) {
+            // signal to recalculate
+            nodeUpdate |= Tree.IS_DIRTY;
+        }
+        return nodeUpdate;
     }
 
     // the stationary density on the root
@@ -290,7 +307,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         boolean seqUpdate = isInternalNodeSeqDirty(node) || isInternalNodeSeqDirty(parent);
 //        boolean seqUpdate = false;
 
-        int nodeUpdate = node.isDirty() | parent.isDirty(); // TODO Likelihood incorrectly calculated:
+        int nodeUpdate = node.isDirty() | parent.isDirty();
 //        int nodeUpdate = Tree.IS_DIRTY;
 
 //        final double branchRate = 1.0; //TODO branchRateModel.getRateForBranch(node);
