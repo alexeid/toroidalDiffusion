@@ -87,7 +87,7 @@ model {
             <log idref="prior"/>
             <log idref="lambda"/>
         </logger>
-        <logger id="Logger" spec="Logger" fileName="estTree.log" logEvery="50">
+        <logger id="Logger" spec="Logger" fileName="fixTree.log" logEvery="50">
             <log idref="posterior"/>
             <log idref="likelihood"/>
             <log idref="prior"/>
@@ -96,7 +96,7 @@ model {
             <log idref="PhyloWrappedBivariateDiffusion"/>
             <log idref="internalNodes"/>
         </logger>
-        <logger id="psi2.treeLogger" spec="Logger" fileName="estTree.trees" logEvery="50" mode="tree">
+        <logger id="psi2.treeLogger" spec="Logger" fileName="fixTree.trees" logEvery="50" mode="tree">
             <log idref="psi2"/>
         </logger>
     </run>
