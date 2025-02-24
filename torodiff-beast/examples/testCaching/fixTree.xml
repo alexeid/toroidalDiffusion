@@ -52,7 +52,7 @@ model {
                 <distribution id="YuleModel" spec="beast.base.evolution.speciation.YuleModel" birthDiffRate="@lambda" tree="@psi2"/>
             </distribution>
             <distribution id="likelihood" spec="CompoundDistribution">
-                <distribution id="PhyloWrappedBivariateDiffusion" spec="toroidaldiffusion.evolution.likelihood.PhyloWrappedBivariateDiffusion">
+                <distribution id="PhyloWrappedBivariateDiffusion" spec="toroidaldiffusion.evolution.likelihood.PhyloWrappedBivariateDiffusion" useSitewiseUpdate = "true">
                     <parameter id="mu" spec="parameter.RealParameter" dimension="2" estimate="false" name="mu" upper="6.283185307179586">3.14 1.57</parameter>
                     <parameter id="sigma" spec="parameter.RealParameter" dimension="2" name="sigma">1.0 1.0</parameter>
                     <parameter id="drift" spec="parameter.RealParameter" dimension="2" estimate="false" name="drift">0.1 0.05</parameter>

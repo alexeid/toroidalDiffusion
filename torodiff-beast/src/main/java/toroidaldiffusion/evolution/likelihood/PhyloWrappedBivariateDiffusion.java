@@ -31,6 +31,12 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     final public Input<Function> driftCorrInput = new Input<>("driftCorr", "the correlation of two drift terms, " +
             "ranged within (-1, 1), so that it always satisfies alpha1*alpha2 > alpha3^2.");
 
+    //boolean used to switch between recalculate_branchLogP & recalculate_total_LogP
+    final public Input<Boolean> sitewiseUpdateInput = new Input<>("useSitewiseUpdate",
+            "If true, update likelihood site by site instead of full branch recalculation", true);
+
+    protected boolean sitewiseUpdate;
+
 
     /****** calculation engine ******/
     protected WrappedBivariateDiffusion diff = new WrappedBivariateDiffusion();
@@ -74,12 +80,19 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     protected double[] branchLengths; // length = nodeCount-1
     protected double[] storedBranchLengths;
 
+
     /**
      * caching log likelihoods for each of branch
      * root index is used to store frequencies prior at root
      */
     protected double[] branchLogLikelihoods; // length = nodeCount
     protected double[] storedBranchLogLikelihoods;
+
+    /**
+     * Total likelihoods
+     */
+    protected double totalLK;
+    protected double storedTotalLK;
 
 
     public PhyloWrappedBivariateDiffusion(){}
@@ -96,6 +109,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         if (driftInput.get().getDimension() != 2)
             throw new IllegalArgumentException("Expected two drift terms in 'driftInput'. Found: " + driftInput.get().getDimension());
 
+        sitewiseUpdate = sitewiseUpdateInput.get();
         // set mu, sigma, alpha
         setDiffusionParams();
 
@@ -123,6 +137,9 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
             daBranchLdCores[n] = new DABranchLikelihoodCore(n, siteCount, diff);
         }
         tree.getRoot().makeDirty(Tree.IS_FILTHY);
+
+        totalLK = recalculate_branchLogP();
+        storedTotalLK = totalLK;
         // root special
 //        daRootLdCores = new DABranchLikelihoodCore(getRootIndex(), siteCount, diff);
 
@@ -151,8 +168,20 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
      *
      * @return the log likelihood.
      */
+
     @Override
     public double calculateLogP() {
+        if (sitewiseUpdate) {
+            logP = recalculate_total_LogP();
+        } else {
+            logP = recalculate_branchLogP();
+        }
+        return logP;
+    }
+
+
+
+    public double recalculate_branchLogP() {
         //TODO beagle
 //        if (beagle != null) {
 //            logP = beagle.calculateLogP();
@@ -170,6 +199,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
             DABranchLikelihoodCore daBranchLdCore = daBranchLdCores[n];
             try {
                 // caching branchLogLikelihoods[nodeNr]
+                // recalcualte
                 if (updateBranch(node) != Tree.IS_CLEAN) {
 //                    this.branchLogLikelihoods[n] = daBranchLdCore.calculateBranchLogLikelihood();
                     final int nodeNr = node.getNr();
@@ -218,11 +248,170 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         return logP;
     }
 
-    /**
-     * Main method to check if this branch LK requires update or not
-     * @param node  the child node used to identify the branch
-     * @return  the integer to represent if it is dirty using {@link Tree#IS_CLEAN} and so on.
-     */
+    public double recalculate_total_LogP() {
+        setDiffusionParams();
+
+        double logP = this.totalLK;
+        final int rootIndex = getRootIndex();
+
+        // Process all branches except root
+        for (int n = 0; n < rootIndex-1; n++) {
+            final Node node = tree.getNode(n);
+
+            if (updateBranch(node) != Tree.IS_CLEAN) {
+                final int nodeNr = node.getNr();
+                final Node parent = node.getParent();
+                double branchTime = this.branchLengths[nodeNr];
+
+                // Get the core for this branch
+                DABranchLikelihoodCore daBranchLdCore = daBranchLdCores[n];
+
+                // Get changed sites
+                int[] changedSites = determineChangedSites(node, parent);
+
+                double[] oldTerms = new double[changedSites.length];
+                double[] newTerms = new double[changedSites.length];
+
+                // Calculate old and new terms for changed sites
+                for (int i = 0; i < changedSites.length; i++) {
+                    int siteIndex = changedSites[i];
+                    oldTerms[i] = daBranchLdCore.computeSingleSiteLK(
+                            daTreeModel.getNodeValue(parent),
+                            daTreeModel.getNodeValue(node),
+                            storedBranchLengths[nodeNr],
+                            siteIndex
+                    );
+                    newTerms[i] = daBranchLdCore.computeSingleSiteLK(
+                            daTreeModel.getNodeValue(parent),
+                            daTreeModel.getNodeValue(node),
+                            branchTime,
+                            siteIndex
+                    );
+                }
+
+                // Update total likelihood by site
+                logP = update_log_LK(logP, oldTerms, newTerms);
+            }
+        }
+
+//        // Handle root
+//        Node root = tree.getRoot();
+//        if (updateRoot(root) != Tree.IS_CLEAN) {
+//            double[] rootValues = daTreeModel.getNodeValue(root);
+//            this.branchLogLikelihoods[rootIndex] = calculateRootLogLikelihood(rootValues, diff);
+//            logP += this.branchLogLikelihoods[rootIndex];
+//        }
+
+        this.totalLK = logP;
+        return logP;
+    }
+
+    protected class UpdateStats {
+        protected int updateCount = 0;
+        protected double maxDelta = 0;
+        protected int RECOMPUTE_THRESHOLD = 1000;
+        protected static final int MIN_THRESHOLD = 100;
+        protected static final int MAX_THRESHOLD = 10000;
+        protected static final double ERROR_TOLERANCE = 1e-6;
+    }
+
+    protected UpdateStats updateStats = new UpdateStats();
+
+
+    protected double update_log_LK(double current_total, double[] oldTerms, double[] newTerms){
+        // Calculate sums
+        double oldSum = 0;
+        for (double term : oldTerms) oldSum += term;
+
+        double newSum = 0;
+        for (double term : newTerms) newSum += term;
+
+        // Update total
+        double updated = current_total - oldSum + newSum;
+
+        // Track updates
+        updateStats.updateCount++;
+        double delta = Math.abs(newSum - oldSum);
+        updateStats.maxDelta = Math.max(updateStats.maxDelta, delta);
+
+        // Check if recomputation needed
+        if (updateStats.updateCount >= updateStats.RECOMPUTE_THRESHOLD) {
+            // Recompute from scratch
+            double exact = recalculate_branchLogP();
+            double error = Math.abs(updated - exact);
+
+            // Adjust threshold based on error
+            if (error > UpdateStats.ERROR_TOLERANCE) {
+                // If error too large, reduce threshold to check more often
+                updateStats.RECOMPUTE_THRESHOLD = Math.max(
+                        updateStats.RECOMPUTE_THRESHOLD / 2,
+                        UpdateStats.MIN_THRESHOLD
+                );
+                updated = exact;  // Use exact value if error too large
+            } else {
+                // If error acceptable, allow more updates before next check
+                updateStats.RECOMPUTE_THRESHOLD = Math.min(
+                        updateStats.RECOMPUTE_THRESHOLD * 2,
+                        UpdateStats.MAX_THRESHOLD
+                );
+            }
+
+            // Reset counters
+            updateStats.updateCount = 0;
+            updateStats.maxDelta = 0;
+        }
+
+        return updated;
+
+    }
+
+
+    protected int[] determineChangedSites(Node parent, Node node) {
+        // For storing changed site indices
+        boolean[] changedFlags = new boolean[daTreeModel.getSiteCount()];
+        int changedCount = 0;
+
+        // Check both node and parent if they're internal nodes
+        Node[] nodesToCheck = {parent, node};
+        for (Node currentNode : nodesToCheck) {
+            if (!currentNode.isLeaf()) {
+                int arrI = currentNode.getNr() - tree.getLeafNodeCount();
+                int start = arrI * internalNodesParam.getMinorDimension1();
+
+                // Check each site
+                for (int k = 0; k < daTreeModel.getSiteCount(); k++) {
+                    if (!changedFlags[k]) {  // Only check if not already marked changed
+                        int phiIndex = start + (k * 2);
+                        int psiIndex = phiIndex + 1;
+
+                        if (internalNodesParam.isDirty(phiIndex) ||
+                                internalNodesParam.isDirty(psiIndex)) {
+                            changedFlags[k] = true;
+                            changedCount++;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Create result array with exact size needed
+        int[] changeSites = new int[changedCount];
+        int pos = 0;
+        for (int k = 0; k < changedFlags.length; k++) {
+            if (changedFlags[k]) {
+                changeSites[pos++] = k;
+            }
+        }
+
+        return changeSites;
+    }
+
+
+        /**
+         * Main method to check if this branch LK requires update or not
+         * @param node  the child node used to identify the branch
+         * @return  the integer to represent if it is dirty using {@link Tree#IS_CLEAN} and so on.
+         */
     protected int updateBranch(final Node node) {
         // the branch between node and parent
         // root is excluded from node when creating DABranchLikelihoodCore
@@ -262,6 +451,15 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
         return nodeUpdate;
     }
+
+    //update_total logLK of changed sites
+//    protected int update_total_lk (double){
+//
+//    }
+
+
+
+
 
     // implement caching
     protected int updateRoot(final Node root) {
@@ -446,6 +644,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         System.arraycopy(branchLengths, 0, storedBranchLengths, 0, getNrOfBranches());
         System.arraycopy(branchLogLikelihoods, 0, storedBranchLogLikelihoods, 0, getNrOfBranches()+1);
 
+        storedTotalLK = totalLK;
         // store logP after all stored
         super.store(); // storedLogP = logP; isDirty = false
     }
@@ -477,6 +676,8 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
         System.arraycopy(storedBranchLengths, 0, branchLengths, 0, getNrOfBranches());
         System.arraycopy(storedBranchLogLikelihoods, 0, branchLogLikelihoods, 0, getNrOfBranches()+1);
+
+        totalLK = storedTotalLK;
 
         // store logP after all stored
         super.restore(); // logP = storedLogP; isDirty = false
