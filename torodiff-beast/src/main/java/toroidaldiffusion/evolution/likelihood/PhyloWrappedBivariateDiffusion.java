@@ -136,10 +136,13 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
             // init by the node below the branch
             daBranchLdCores[n] = new DABranchLikelihoodCore(n, siteCount, diff);
         }
-        tree.getRoot().makeDirty(Tree.IS_FILTHY);
+        tree.getRoot().makeDirty(Tree.IS_FILTHY); //init: recalculate the whole tree
 
-        totalLK = recalculate_branchLogP();
-        storedTotalLK = totalLK;
+        totalLK = noCachLogP();
+
+        //bug:
+//        storedTotalLK = totalLK;
+
         // root special
 //        daRootLdCores = new DABranchLikelihoodCore(getRootIndex(), siteCount, diff);
 
@@ -172,16 +175,16 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
     @Override
     public double calculateLogP() {
         if (sitewiseUpdate) {
-            logP = recalculate_total_LogP();
+            logP = recalculateTotalLogP();
         } else {
-            logP = recalculate_branchLogP();
+            logP = noCachLogP();
         }
         return logP;
     }
 
 
-
-    public double recalculate_branchLogP() {
+//code style: changes to capital
+    public double noCachLogP() {
         //TODO beagle
 //        if (beagle != null) {
 //            logP = beagle.calculateLogP();
@@ -197,17 +200,19 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         for (int n = 0; n < rootIndex-1; n++) {
             final Node node = tree.getNode(n);
             DABranchLikelihoodCore daBranchLdCore = daBranchLdCores[n];
-            try {
-                // caching branchLogLikelihoods[nodeNr]
-                // recalcualte
-                if (updateBranch(node) != Tree.IS_CLEAN) {
-//                    this.branchLogLikelihoods[n] = daBranchLdCore.calculateBranchLogLikelihood();
-                    final int nodeNr = node.getNr();
-                    final Node parent = node.getParent();
-                    double branchTime = this.branchLengths[nodeNr];
+                try {
+                        final Node parent = node.getParent();
+    //                    double branchTime = this.branchLengths[nodeNr];
+                        double branchTime = (parent.getHeight() - node.getHeight());
+
+                    // Check for invalid branch times
+                    if (branchTime == 0)
+                        throw new UnsupportedOperationException("0 branch length, such as SA, not supported!");
+                    if (branchTime < 1e-10)
+                        throw new ArithmeticException("Reject proposal: time is 0 at the branch!");
 
                     try {
-                        // must call updateBranch(node) before use computeBranchLK
+                        // must call updateBranch(node) before use computeBranchLK  //get branchTime first
                         this.branchLogLikelihoods[n] = daBranchLdCore.computeBranchLK(daTreeModel, parent, node, branchTime);
                     } catch (Exception e) {
 //                        final Node parent = node.getParent();
@@ -218,7 +223,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
                                 ", alpha = " + Arrays.toString(getAlphaArr(driftInput.get().getDoubleValues(), getDriftCorr())));
                         throw new RuntimeException(e);
                     }
-                }
+
 //            System.out.println("logP = " + logP);
             } catch (ArithmeticException e) {
                 Log.err.println(e.getMessage());
@@ -227,13 +232,14 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         } // end n loop
 
         // caching root likelihood branchLogLikelihoods[rootIndex]
-        Node root = tree.getRoot();
-        if (updateRoot(root) != Tree.IS_CLEAN) {
-            // the pairs of angles flatten to 1d, length = nsite * 2;
+            Node root = tree.getRoot();
+
+            //remove IF tree.isDirty
+                // the pairs of angles flatten to 1d, length = nsite * 2;
             double[] rootValues = daTreeModel.getNodeValue(root);
-            // rootIndex = nNode - 1
+                // rootIndex = nNode - 1
             this.branchLogLikelihoods[rootIndex] = calculateRootLogLikelihood(rootValues, diff);
-        }
+
 
         // sum logP
         logP =0;
@@ -248,15 +254,22 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         return logP;
     }
 
-    public double recalculate_total_LogP() {
+    public double recalculateTotalLogP() {
         setDiffusionParams();
 
         double logP = this.totalLK;
         final int rootIndex = getRootIndex();
 
+        //three branches are affected by each single changed site
+        int affectedCount = 3;
+        double[] oldTerms = new double[affectedCount];
+        double[] newTerms = new double[affectedCount];
+
         // Process all branches except root
         for (int n = 0; n < rootIndex-1; n++) {
             final Node node = tree.getNode(n);
+            // Get changed sites
+            int[] changedSites = determineChangedSites(node);
 
             if (updateBranch(node) != Tree.IS_CLEAN) {
                 final int nodeNr = node.getNr();
@@ -265,12 +278,6 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
                 // Get the core for this branch
                 DABranchLikelihoodCore daBranchLdCore = daBranchLdCores[n];
-
-                // Get changed sites
-                int[] changedSites = determineChangedSites(node, parent);
-
-                double[] oldTerms = new double[changedSites.length];
-                double[] newTerms = new double[changedSites.length];
 
                 // Calculate old and new terms for changed sites
                 for (int i = 0; i < changedSites.length; i++) {
@@ -288,11 +295,12 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
                             siteIndex
                     );
                 }
-
-                // Update total likelihood by site
-                logP = update_log_LK(logP, oldTerms, newTerms);
             }
+
         }
+
+        // Update total likelihood by site
+        logP = update_log_LK(logP, oldTerms, newTerms);
 
 //        // Handle root
 //        Node root = tree.getRoot();
@@ -337,7 +345,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         // Check if recomputation needed
         if (updateStats.updateCount >= updateStats.RECOMPUTE_THRESHOLD) {
             // Recompute from scratch
-            double exact = recalculate_branchLogP();
+            double exact = noCachLogP();
             double error = Math.abs(updated - exact);
 
             // Adjust threshold based on error
@@ -365,46 +373,94 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
     }
 
+    /**
+     * Returns an array of site indices that have changed for the given node.
+     * If no sites changed, returns an empty array.
+     */
+    public int[] determineChangedSites(final Node node) {
+        // Tips never change
+        if (node.isLeaf()) return new int[0];
 
-    protected int[] determineChangedSites(Node parent, Node node) {
-        // For storing changed site indices
-        boolean[] changedFlags = new boolean[daTreeModel.getSiteCount()];
-        int changedCount = 0;
+        // Calculate array index for this node
+        int nTips = tree.getLeafNodeCount();
+        final int nodeNr = node.getNr();
+        int arrI = nodeNr - nTips;
 
-        // Check both node and parent if they're internal nodes
-        Node[] nodesToCheck = {parent, node};
-        for (Node currentNode : nodesToCheck) {
-            if (!currentNode.isLeaf()) {
-                int arrI = currentNode.getNr() - tree.getLeafNodeCount();
-                int start = arrI * internalNodesParam.getMinorDimension1();
+        // Validate index
+        if (arrI >= internalNodesParam.getMinorDimension2())
+            throw new IllegalArgumentException("Internal node index (" + nodeNr + ") - nTips (" +
+                    tree.getLeafNodeCount() + ") cannot > the internal node sequences parameter 2nd minor dim (" +
+                    internalNodesParam.getMinorDimension2() + ") ! ");
 
-                // Check each site
-                for (int k = 0; k < daTreeModel.getSiteCount(); k++) {
-                    if (!changedFlags[k]) {  // Only check if not already marked changed
-                        int phiIndex = start + (k * 2);
-                        int psiIndex = phiIndex + 1;
+        // Get number of sites
+        int nSites = daTreeModel.getSiteCount();
 
-                        if (internalNodesParam.isDirty(phiIndex) ||
-                                internalNodesParam.isDirty(psiIndex)) {
-                            changedFlags[k] = true;
-                            changedCount++;
-                        }
-                    }
-                }
+        // Use a list to collect changed site indices
+        List<Integer> changedSites = new ArrayList<>();
+
+        // For each site, check if either phi or psi is dirty
+        int start = arrI * internalNodesParam.getMinorDimension1();
+        for (int k = 0; k < nSites; k++) {
+            int phiIndex = start + (k * 2);
+            int psiIndex = phiIndex + 1;
+
+            if (internalNodesParam.isDirty(phiIndex) || internalNodesParam.isDirty(psiIndex)) {
+                changedSites.add(k);
             }
         }
 
-        // Create result array with exact size needed
-        int[] changeSites = new int[changedCount];
-        int pos = 0;
-        for (int k = 0; k < changedFlags.length; k++) {
-            if (changedFlags[k]) {
-                changeSites[pos++] = k;
-            }
+
+        // Convert to primitive int array
+        int[] result = new int[changedSites.size()];
+        for (int i = 0; i < changedSites.size(); i++) {
+            result[i] = changedSites.get(i);
         }
 
-        return changeSites;
+        return result;
     }
+
+
+//    protected int[] determineChangedSites(Node parent, Node node) { //find out changed site index
+//        // For storing changed site indices
+//        boolean[] changedFlags = new boolean[daTreeModel.getSiteCount()];
+//        int changedCount = 0;
+//
+//        // Check both node and parent if they're internal nodes
+//        Node[] nodesToCheck = {parent, node};
+//        for (Node currentNode : nodesToCheck) {
+//            if (!currentNode.isLeaf()) {
+//                int arrI = currentNode.getNr() - tree.getLeafNodeCount();
+//                int start = arrI * internalNodesParam.getMinorDimension1();
+//
+//                // Check each site
+//                for (int k = 0; k < daTreeModel.getSiteCount(); k++) {
+//                    if (!changedFlags[k]) {  // Only check if not already marked changed
+//                        int phiIndex = start + (k * 2);
+//                        int psiIndex = phiIndex + 1;
+//
+//                        if (internalNodesParam.isDirty(phiIndex) ||
+//                                internalNodesParam.isDirty(psiIndex)) {
+//                            changedFlags[k] = true;
+//                            changedCount++;
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//
+//        // Create result array with exact size needed
+//        int[] changeSites = new int[changedCount];
+//        int pos = 0;
+//        for (int k = 0; k < changedFlags.length; k++) {
+//            if (changedFlags[k]) {
+//                changeSites[pos++] = k;
+//            }
+//        }
+//
+//        return changeSites;
+//    }
+
+
 
 
         /**
@@ -421,7 +477,7 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
 
         // if tips, always false
         //TODO the method has assumptions, check the detail before use
-        boolean seqUpdate = isInternalNodeSeqDirty(node) || isInternalNodeSeqDirty(parent);
+        boolean seqUpdate = isInternalNodeSeqDirty(node) || isInternalNodeSeqDirty(parent); //return i
 //        boolean seqUpdate = false;
 
         int nodeUpdate = node.isDirty() | parent.isDirty();
@@ -446,10 +502,10 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
             nodeUpdate |= Tree.IS_DIRTY;
 
             // update branch length here
-            this.branchLengths[nodeNr] = branchTime;
+//            this.branchLengths[nodeNr] = branchTime;
         }
 
-        return nodeUpdate;
+        return nodeUpdate;  //return tree_dirty: no caching likelihood
     }
 
     //update_total logLK of changed sites
