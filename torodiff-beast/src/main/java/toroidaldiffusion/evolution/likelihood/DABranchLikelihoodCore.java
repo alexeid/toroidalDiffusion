@@ -17,7 +17,7 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
     // 1st dimension index is used to determine the current values or stored values,
     // 2nd dimension is to store likelihood at each site.
     protected double[][] siteLogLd;
-//    protected double[] storedSiteLogLd;
+    protected double[] storedSiteLogLd;
 
     // caching mechanism : index (0 or 1) for 1st dimension
     protected int currentIndex = 0;
@@ -143,42 +143,6 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
 
         } // end k  nrOfSites
 
-    }
-
-    public double computeSingleSiteLK(final double[] parentNodeValues,
-                                         final double[] childNodeValues,
-                                         double branchTime,
-                                         int siteIndex) {
-        assert parentNodeValues.length == nrOfSites * 2;
-        assert childNodeValues.length == nrOfSites * 2;
-        assert siteIndex < nrOfSites;
-
-        // Switch index as before
-        currentIndex = 1 - currentIndex;
-
-        // Set parameters for this branch time
-        diff.setParameters(branchTime);
-
-        // Calculate for specific site
-        double phi0 = parentNodeValues[siteIndex * 2];
-        double psi0 = parentNodeValues[siteIndex * 2 + 1];
-        double phit = childNodeValues[siteIndex * 2];
-        double psit = childNodeValues[siteIndex * 2 + 1];
-
-        double siteLikelihood = diff.loglikwndtpd(phi0, psi0, phit, psit);
-
-        // Store in array and do error check
-        siteLogLd[currentIndex][siteIndex] = siteLikelihood;
-
-        if (siteLikelihood == 0) {
-            throw new RuntimeException("\nBranch above node " + getBranchNr() +
-                    ", siteLogLd[" + siteIndex + "] = " + siteLikelihood +
-                    ", branchTime = " + branchTime +
-                    "\nphi0 = " + phi0 + ", psi0 = " + psi0 +
-                    ", phit = " + phit + ", psit = " + psit);
-        }
-
-        return siteLikelihood;
     }
 
 
