@@ -1,37 +1,95 @@
-<project>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.linguaphylo</groupId>
+        <artifactId>linguaphylo</artifactId>
+        <version>1.6.0</version>
+    </parent>
+
+<!--    <groupId>io.github.linguaphylo</groupId>-->
+    <!-- ${project.name}   -->
+    <artifactId>toroidaldiffusion-root</artifactId>
+    <!-- ${project.version}   -->
+    <version>${revision}</version>
+    <packaging>pom</packaging>
+
+    <properties>
+        <lphy.vision>1.6.1</lphy.vision>
+        <lphybeast.vision>1.2.1</lphybeast.vision>
+        <revision>0.0.1-SNAPSHOT</revision>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- more https://github.com/cko/predefined_maven_properties/blob/master/README.md   -->
+<!--        <name>${project.name}</name>-->
+<!--        <version>${project.version}</version>-->
+        <url>https://github.com/alexeid/toroidalDiffusion</url>
+    </properties>
+
+    <modules>
+        <module>../LPhyBeast</module>
+        <module>torodiff-lphy</module>
+        <module>torodiff-studio</module>
+        <module>torodiff-beast</module>
+        <module>torodiff-lphybeast</module>
+    </modules>
+
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>7</source>
-                    <target>7</target>
-                </configuration>
+                <version>3.13.0</version>
             </plugin>
         </plugins>
     </build>
 
-    <!-- more https://github.com/cko/predefined_maven_properties/blob/master/README.md   -->
-    <properties>
-        <name>${project.name}</name>
-        <version>${project.version}</version>
-    </properties>
-
-    <groupId>lphy</groupId>
-    <!-- ${project.name}   -->
-    <artifactId>toroidalDiffusion</artifactId>
-    <!-- ${project.version}   -->
-    <version>0.0.1</version>
-
     <dependencies>
+<!--        <dependency>-->
+<!--            <groupId>io.github.linguaphylo</groupId>-->
+<!--            <artifactId>lphy-base</artifactId>-->
+<!--            <version>1.6.0-SNAPSHOT</version>-->
+<!--        </dependency>-->
+
+        <!-- jaxb-api -->
         <dependency>
-            <groupId>io.github.linguaphylo</groupId>
-            <artifactId>lphy</artifactId>
-            <version>1.3.1</version>
+            <groupId>javax.activation</groupId>
+            <artifactId>activation</artifactId>
+            <version>1.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>2.3.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>4.0.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-core</artifactId>
+            <version>4.0.5</version>
         </dependency>
 
+       <dependency>
+            <groupId>org.biojava</groupId>
+            <artifactId>biojava-core</artifactId>
+            <version>7.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.biojava</groupId>
+            <artifactId>biojava-alignment</artifactId>
+            <version>7.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.biojava</groupId>
+            <artifactId>biojava-structure</artifactId>
+            <version>7.1.1</version>
+        </dependency>
         <dependency>
             <groupId>org.ejml</groupId>
             <artifactId>ejml-core</artifactId>
@@ -47,5 +105,27 @@
             <artifactId>ejml-simple</artifactId>
             <version>0.38</version>
         </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.13</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.13</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.vecmath</groupId>
+            <artifactId>vecmath</artifactId>
+            <version>1.5.2</version>
+        </dependency>
     </dependencies>
+    <repositories>
+        <repository>
+            <id>maven_central</id>
+            <name>Maven Central</name>
+            <url>https://repo.maven.apache.org/maven2/</url>
+        </repository>
+    </repositories>
 </project>

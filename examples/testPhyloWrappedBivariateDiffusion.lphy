@@ -1,0 +1,39 @@
+data {
+  l = 20; // sites
+  n = 10; // taxa
+  taxa = taxa(names=1:n); // taxa names integer must start from 1 for beast xml
+  i = n+1;
+  j = 2*n-1;
+  // tips id starts from 1
+  internalNodesID = i:j;
+  mu = [3.14, 1.57];
+  // fix, it is similar to mutation rate
+  σ = [1, 1];
+  //drift = [0.1, 0.05]; // drift = [1.0, 0.5];
+  // driftCorr = alpha3 / sqrt(drift[0]*drift[1]); // 0.5 / sqrt(0.5) = 0.7071
+  driftCorr = 0.7;
+  // WNsd = [0.9803922, -0.9705387; -0.9705387, 1.9607843]
+}
+model {
+  // 7.538461 20.085537 53.516071
+  λ ~ LogNormal(meanlog=3, sdlog=0.5);
+  // 0.7557974 2.0137527 5.3654594
+  //λ ~ LogNormal(meanlog=0.7, sdlog=0.5);
+  ψ ~ Yule(lambda=λ, taxa=taxa);
+  ψ2 = setInternalNodesID(tree = ψ, internalNodesID = internalNodesID);
+
+  // angle and mu must be [0, 2pi)
+  // 1.836767 2.718282 4.022859
+  //mu ~ LogNormal(meanlog=1, sdlog=0.2, replicates = 2);
+  // 0.4082007 0.4965853 0.6041072
+  //σ ~ LogNormal(meanlog=-0.7, sdlog=0.1, replicates = 2);
+  // 0.05535465 0.07427358 0.09965855
+  drift ~ LogNormal(meanlog=-2.6, sdlog=0.15, replicates = 2);
+  // correlation
+  //driftCorr ~ Uniform(lower=0.0, upper=0.5);
+
+  // the root sequence is sampled from equilibrium distribution
+  X ~ PhyloWrappedBivariateDiffusion(mu=mu, sigma=σ, drift=drift, driftCorr=driftCorr, L=l, tree=ψ2);
+}
+
+

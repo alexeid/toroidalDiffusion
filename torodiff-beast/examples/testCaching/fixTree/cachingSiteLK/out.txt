@@ -1,0 +1,64 @@
+Random number seed: 1738286199043
+
+File: fixTree.xml seed: 1738286199043 threads: 1
+Loading package SSM v1.2.0 FastRelaxedClockLogNormal v1.2.0 torodiff-beast v0.0.1 feast v10.3.1 starbeast3 v1.1.8 CCD v1.0.3 Mascot v3.0.7 TreeStat2 v0.2.0 SA v2.1.1 BEAST.base v2.7.7 BEASTLabs v2.0.2 BEAST.app v2.7.7 BEAST_CLASSIC v1.6.3 MM v1.2.1 bdtree v0.0.1 ORC v1.2.0 lphybeast v1.1.0 torodiff-beast v0.0.1   torodiff-beast v0.0.1     
+===============================================================================
+Citations for this model:
+
+Bouckaert, Remco, Timothy G. Vaughan, Joëlle Barido-Sottani, Sebastián Duchêne, Mathieu Fourment, 
+Alexandra Gavryushkina, Joseph Heled, Graham Jones, Denise Kühnert, Nicola De Maio, Michael Matschiner, 
+Fábio K. Mendes, Nicola F. Müller, Huw A. Ogilvie, Louis du Plessis, Alex Popinga, Andrew Rambaut, 
+David Rasmussen, Igor Siveroni, Marc A. Suchard, Chieh-Hsi Wu, Dong Xie, Chi Zhang, Tanja Stadler, 
+Alexei J. Drummond 
+  BEAST 2.5: An advanced software platform for Bayesian evolutionary analysis. 
+  PLoS computational biology 15, no. 4 (2019): e1006650.
+
+Bouckaert RR. An efficient coalescent epoch model for Bayesian phylogenetic inference. Systematic Biology, syac015, 2022
+
+===============================================================================
+Start likelihood: -775.0357047033248 
+         Sample      posterior     likelihood          prior         lambda
+Warning: Overwriting file fixTree.log
+Warning: Overwriting file fixTree.trees
+              0      -774.7344      -791.8185        17.0840        29.5619 --
+           5000      -770.1533      -787.7400        17.5866        39.9351 --
+          10000      -760.1716      -777.8684        17.6968        31.7054 --
+          15000      -808.6425      -826.2286        17.5861        19.1370 --
+          20000      -868.9257      -885.5578        16.6320        19.1370 --
+          25000      -867.2215      -884.7722        17.5506        28.2448 --
+          30000      -832.2126      -850.0881        17.8755        28.2448 --
+          35000      -842.3666      -859.6310        17.2643        28.2448 2m34s/Msamples
+          40000      -838.9315      -856.0601        17.1286        28.2448 2m33s/Msamples
+          45000      -850.2602      -867.6170        17.3567        26.7446 2m34s/Msamples
+          50000      -838.1229      -855.5208        17.3978        34.3857 2m34s/Msamples
+          55000      -805.3254      -822.4925        17.1670        21.1414 2m32s/Msamples
+          60000      -812.8332      -831.0734        18.2401        26.1282 2m33s/Msamples
+          65000      -846.3044      -863.4260        17.1216        19.3928 2m34s/Msamples
+          70000      -835.1908      -853.2755        18.0847        25.8950 2m35s/Msamples
+          75000      -846.3969      -862.4226        16.0256        35.5037 2m36s/Msamples
+          80000      -823.1228      -840.6941        17.5712        22.5789 2m35s/Msamples
+          85000      -847.8787      -862.9701        15.0914        35.1544 2m35s/Msamples
+          90000      -841.1260      -858.8469        17.7208        19.5937 2m35s/Msamples
+          95000      -806.0114      -824.1312        18.1197        26.3058 2m35s/Msamples
+         100000      -803.5924      -820.8918        17.2994        36.3753 2m35s/Msamples
+
+Operator                                                                                     Tuning    #accept    #reject      Pr(m)  Pr(acc|m)
+toroidaldiffusion.operator.WrappedRandomWalkOperator(InternalNodeSeqs.WrappedRandomWalk)    0.20587      25984      56461    0.82501    0.31517 
+kernel.BactrianScaleOperator(lambda.scale)                                                  0.68370         42         95    0.00134    0.30657 
+kernel.BactrianScaleOperator(psi2.rootAgeScale)                                             0.25167        151       1148    0.01342    0.11624 
+kernel.BactrianNodeOperator(psi.uniform)                                                    0.63798       2447       3817    0.06250    0.39064 
+TreeStretchOperator(psi2.BICEPSTreeFlex)                                                    0.09759       2568       3854    0.06250    0.39988 
+EpochFlexOperator(psi.BICEPSEpochAll)                                                       0.18941        819       1310    0.02181    0.38469 
+EpochFlexOperator(psi.BICEPSEpochTop)                                                       0.18378        537        768    0.01342    0.41149 Try setting scale factor to about 0.189
+
+     Tuning: The value of the operator's tuning parameter, or '-' if the operator can't be optimized.
+    #accept: The total number of times a proposal by this operator has been accepted.
+    #reject: The total number of times a proposal by this operator has been rejected.
+      Pr(m): The probability this operator is chosen in a step of the MCMC (i.e. the normalized weight).
+  Pr(acc|m): The acceptance probability (#accept as a fraction of the total proposals for this operator).
+
+
+Total calculation time: 15.756 seconds
+Done!
+End likelihood: -803.5924468634464
+

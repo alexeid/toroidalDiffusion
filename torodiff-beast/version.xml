@@ -1,0 +1,27 @@
+<package name='torodiff-beast' version='0.0.1'>
+    <depends on='BEAST.base' atleast='2.7.7'/>
+    <depends on='BEAST.app' atleast='2.7.7'/>
+    <depends on='BEASTLabs' atleast='2.0.2'/>
+
+
+    <!-- add BEAST2 service below  -->
+
+    <service type="beast.base.core.BEASTInterface">
+        <provider classname="toroidaldiffusion.evolution.likelihood.DABranchLikelihoodCore"/>
+        <provider classname="toroidaldiffusion.evolution.likelihood.GenericDATreeLikelihood"/>
+        <provider classname="toroidaldiffusion.evolution.likelihood.PhyloWrappedBivariateDiffusion"/>
+        <provider classname="toroidaldiffusion.evolution.tree.DATreeModel"/>
+        <provider classname="toroidaldiffusion.evolution.tree.DihedralAngleTreeModel"/>
+        <provider classname="toroidaldiffusion.operator.WrappedRandomWalkOperator"/>
+        <provider classname="toroidaldiffusion.operator.DriftOperator"/>
+    </service>
+
+
+<!--    <packageapp description="A command-line program that takes an LPhy model specification including a data block, and produces a BEAST 2 XML input file."-->
+<!--                class="lphybeast.LPhyBeastCMD"-->
+<!--                args=""-->
+<!--    />-->
+
+
+</package>
+
