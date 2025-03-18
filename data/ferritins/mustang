@@ -1,0 +1,51 @@
+################################################################################
+## This is a valid description file.                                          ##
+##                                                                            ##
+## Line starting with '>' symbol is treated as PATH to the directory          ##
+## containing structures to be aligned                                        ##
+##                                                                            ##
+## Lines starting with '+' symbol are treated as file names of your           ##
+## structures.                                                                ##
+##                                                                            ##
+## If PATH is specified (as in this example file) using the '>', then         ##
+## subsequently at '+' lines, only filenames should be provided.              ##
+## However, when PATH ('>') line is NOT provided, then the                    ##
+## absolute/relative paths of the structure files should be provided          ##
+## at the '+' lines.                                                          ##
+##                                                                            ##
+## All the lines NOT starting with '>' and '+' are simply ignored.            ##
+##                                                                            ##
+## Do NOT use comments in the same lines containng PATH and FILENAMES.        ##
+##                                                                            ##
+################################################################################
+
+
+> ./data/test/pdbs/ferritins   
+
++1BCFA.pdb
++1jigA.pdb
++1nfvA.pdb
++1uvhA.pdb
++2jd70.pdb
++1bg7A.pdb
++1o9rA.pdb
++1vlgA.pdb
++2uw1A.pdb
++1dpsA.pdb
++1jtsA.pdb
++1otkA.pdb
++1za0A.pdb
++1eumA.pdb
++1krqA.pdb
++1qghA.pdb
++2chpA.pdb
++2vzbA.pdb
++1jgcA.pdb
++1lb3A.pdb
++1r03A.pdb
++1ji4A.pdb
++2fkzA.pdb
++3e6sA.pdb
++1ji5A.pdb
++1tjoA.pdb
++2fzfA.pdb
