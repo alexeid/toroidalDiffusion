@@ -190,7 +190,6 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
                             int changeSiteindexParent = determineChangedsiteIndex(parent);
                             int changeSiteindexChildren = determineChangedsiteIndex(node);
 
-
                             if (changeSiteindexChildren != -1) {
                                 this.branchLogLikelihoods[n] = daBranchLdCore.computeBranchLKbySite(daTreeModel, parent, node, branchTime, changeSiteindexChildren);
                             } else {

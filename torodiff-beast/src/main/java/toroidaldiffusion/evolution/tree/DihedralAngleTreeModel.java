@@ -2,6 +2,7 @@ package toroidaldiffusion.evolution.tree;
 
 import beast.base.core.Input;
 import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.Tree;
 import beast.base.evolution.tree.TreeInterface;
 import beast.base.inference.Distribution;
 import beast.base.inference.State;
@@ -109,6 +110,11 @@ public class DihedralAngleTreeModel extends Distribution implements DATreeModel 
     public int getLeafNodeCount() {
         return getTree().getLeafNodeCount();
     }
+
+    public int getNodeCount() {return getTree().getNodeCount(); }
+
+    public Node getNode(int nr) {return getTree().getNode(nr); }
+
 
     /**
      * Assuming the internal node sequences are arranged in the order of the BEAST node numbers Nr.

@@ -14,6 +14,8 @@
         <provider classname="toroidaldiffusion.evolution.tree.DihedralAngleTreeModel"/>
         <provider classname="toroidaldiffusion.operator.WrappedRandomWalkOperator"/>
         <provider classname="toroidaldiffusion.operator.DriftOperator"/>
+        <provider classname="toroidaldiffusion.operator.DAGibbsOperator"/>
+
     </service>
 
 

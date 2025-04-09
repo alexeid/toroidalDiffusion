@@ -170,7 +170,7 @@ public class WrappedBivariateDiffusion {
             double integral2 = cte * s * ((q2 + s2) * c2st + 2.0 * q * s * s2st - 2.0 * q2 * e2st + q2 - s2);
             double integral3 = cte * (-s * (s * c2st + q * s2st) + (e2st - 1.0) * q2 + s2);
 
-            Gammat = Sigmamat.scale(integral1).plus(ASigma.scale(integral2)).plus(ASigmaA.scale(integral3));
+            Gammat = Sigmamat.scale(integral1).plus(ASigma.scale(integral2)).plus(ASigmaA.scale(integral3)); //covariance calculation: Γₜ = s(t)(½)A⁻¹Σ + i(t)Σ
 
             double eqt = Math.exp(q * t);
             double cqt = (eqt + 1.0 / eqt) / 2.0;
@@ -265,6 +265,7 @@ public class WrappedBivariateDiffusion {
             for (int wek2 = 0; wek2 < lk; wek2++) {
                 int index = wek1 * lk + wek2;
 
+                // iterate through the different wrapping values for the two dihedral angles (φ and ψ): (-2pi, 0, 2pi)
                 double exponent = xmuinvSigmaAxmudivtwo + (xmuinvSigmaA.get(0, 0) * twokpi.get(wek1, 0) + xmuinvSigmaA.get(1, 0) * twokpi.get(wek2, 0) + vstores.get(index, 0) - lognormconstSigmaA);
 
                 if (exponent <= etrunc) {
@@ -275,12 +276,13 @@ public class WrappedBivariateDiffusion {
 
                 if (logweightswindsinitial.get(index, 0) > Double.NEGATIVE_INFINITY) {
                     twokepivec.set(1, 0, twokpi.get(wek2, 0));
-                    SimpleMatrix mut = mu.plus(ExptA.mult(x0.plus(twokepivec).minus(mu)));
-                    SimpleMatrix xmut = new SimpleMatrix(2, 1);
+                    SimpleMatrix mut = mu.plus(ExptA.mult(x0.plus(twokepivec).minus(mu))); // Expected mean at time t
+                    SimpleMatrix xmut = new SimpleMatrix(2, 1); //deviation vector
                     xmut.set(0, 0, x.get(2, 0) - mut.get(0, 0));
                     xmut.set(1, 0, x.get(3, 0) - mut.get(1, 0));
 
                     SimpleMatrix xmutinvGammat = invGammat.mult(xmut);
+                    //multiplies the deviation by the inverse covariance matrix (Γt−1)
                     double xmutinvGammatxmutdiv2 = (xmutinvGammat.get(0, 0) * xmut.get(0, 0) + xmutinvGammat.get(1, 0) * xmut.get(1, 0)) / 2.0;
 
                     double logtpdintermediate = Double.NEGATIVE_INFINITY;
@@ -319,6 +321,7 @@ public class WrappedBivariateDiffusion {
         xmu.set(0, 0, x.get(0, 0) - mu.get(0, 0));
         xmu.set(1, 0, x.get(1, 0) - mu.get(1, 0));
 
+        //Quadratic Form: It calculates part of the quadratic form that appears in the exponent of the normal density:
         xmuinvSigmaA = invSigmaA.mult(xmu);
         double xmuinvSigmaAxmudivtwo = (xmuinvSigmaA.get(0) * xmu.get(0) + xmuinvSigmaA.get(1) * xmu.get(1)) / 2.0;
 
@@ -455,7 +458,6 @@ public class WrappedBivariateDiffusion {
         double wrapPsit = ToroidalUtils.wrapToMaxAngle(mut.get(1, 0), WrappedNormalConst.MAX_ANGLE_VALUE);
         return new double[]{wrapPhit, wrapPsit};
     }
-
 
     // test how the params affect log likelihood and stationary dist
     public static void main(String[] args) throws IOException {
@@ -650,5 +652,18 @@ public class WrappedBivariateDiffusion {
         writer.close();
 
     }
+
+    public SimpleMatrix getGammat() {
+        return Gammat;
+    }
+
+    public SimpleMatrix getExptA() {
+        return ExptA;
+    }
+
+    public SimpleMatrix getInvSigmaA() {
+        return invSigmaA;
+    }
+
 
 }
