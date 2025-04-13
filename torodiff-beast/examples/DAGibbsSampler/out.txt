@@ -1,0 +1,50 @@
+
+===============================================================================
+Start likelihood: -775.0357047033248 
+         Sample      posterior     likelihood          prior         lambda
+Warning: Overwriting file fixTree.log
+Warning: Overwriting file fixTree.trees
+              0      -774.6979      -791.7720        17.0740        29.5619 --
+           5000      -788.4917      -805.2973        16.8056        21.5837 --
+          10000      -813.0949      -828.0420        14.9471        24.7902 --
+          15000      -862.5723      -877.0171        14.4447        16.1409 --
+          20000      -920.9384      -933.2781        12.3397        19.0768 --
+          25000      -855.2165      -867.3091        12.0926        20.3190 --
+          30000     -1012.8902     -1024.2716        11.3814         9.5169 --
+          35000      -871.9376      -887.5976        15.6600        15.2888 9m43s/Msamples
+          40000      -757.2129      -774.2122        16.9992        32.4371 9m35s/Msamples
+          45000      -819.4583      -836.5355        17.0771        29.4903 9m26s/Msamples
+          50000      -887.7127      -902.6566        14.9439        14.7564 9m23s/Msamples
+          55000      -833.0437      -850.2371        17.1934        33.9838 9m22s/Msamples
+          60000      -862.1374      -878.2655        16.1280        31.4169 9m21s/Msamples
+          65000      -808.5252      -824.4505        15.9253        14.9165 9m18s/Msamples
+          70000      -853.9485      -869.4115        15.4630        21.7978 9m21s/Msamples
+          75000      -814.1995      -828.5459        14.3463        18.0211 9m21s/Msamples
+          80000      -731.1619      -743.4132        12.2513        41.0026 9m22s/Msamples
+          85000      -832.2360      -846.5896        14.3535        20.8736 9m23s/Msamples
+          90000      -772.4661      -784.8338        12.3676        12.9192 9m23s/Msamples
+          95000      -837.7620      -849.8094        12.0473        17.2082 9m24s/Msamples
+         100000      -902.3107      -910.8452         8.5344        18.4679 9m27s/Msamples
+
+Operator                                                                         Tuning    #accept    #reject      Pr(m)  Pr(acc|m)
+toroidaldiffusion.operator.DAGibbsOperator(InternalNodeSeqs.DAGibbsOperator)          -      14684      28670    0.43411    0.33870 
+kernel.BactrianScaleOperator(lambda.scale)                                      0.64622        113        297    0.00434    0.27561 
+kernel.BactrianScaleOperator(psi2.rootAgeScale)                                 0.34200         27       4321    0.04341    0.00621 Try setting scale factor to about 0.171
+kernel.BactrianNodeOperator(psi.uniform)                                        0.63152       8508      11638    0.20210    0.42232 Try setting scale factor to about 0.889
+TreeStretchOperator(psi2.BICEPSTreeFlex)                                        0.09820       8094      12237    0.20210    0.39811 
+EpochFlexOperator(psi.BICEPSEpochAll)                                           0.20949       2655       4486    0.07052    0.37180 
+EpochFlexOperator(psi.BICEPSEpochTop)                                           0.20123       1572       2699    0.04341    0.36806 
+
+     Tuning: The value of the operator's tuning parameter, or '-' if the operator can't be optimized.
+    #accept: The total number of times a proposal by this operator has been accepted.
+    #reject: The total number of times a proposal by this operator has been rejected.
+      Pr(m): The probability this operator is chosen in a step of the MCMC (i.e. the normalized weight).
+  Pr(acc|m): The acceptance probability (#accept as a fraction of the total proposals for this operator).
+
+
+Total calculation time: 57.939 seconds
+Done!
+End likelihood: -902.3107509364314
+Disconnected from the target VM, address: '127.0.0.1:59646', transport: 'socket'
+
+Process finished with exit code 0
