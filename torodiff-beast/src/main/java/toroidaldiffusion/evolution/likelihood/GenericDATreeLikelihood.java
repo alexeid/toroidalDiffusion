@@ -19,6 +19,10 @@ public class GenericDATreeLikelihood extends Distribution {
     final public Input<DATreeModel> daTreeModelInput = new Input<>("daTreeModel",
             "States in all nodes with the beast.tree", Input.Validate.REQUIRED);
 
+    public DATreeModel getDaTreeModel() {
+        return daTreeModel;
+    }
+
     /**
      * {@link DATreeModel}
      */

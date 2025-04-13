@@ -187,14 +187,41 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
                             this.branchLogLikelihoods[n] = daBranchLdCore.computeBranchLK(daTreeModel, parent, node, branchTime);
                         } else if (seqUpdate) {
                             //determine changed site in the sequence: for both parent and children
-                            int changeSiteindexParent = determineChangedsiteIndex(parent);
-                            int changeSiteindexChildren = determineChangedsiteIndex(node);
+//                            int changeSiteindexParent = determineChangedsiteIndex(parent);
+//                            int changeSiteindexChildren = determineChangedsiteIndex(node);
+//
+                            //If changeSites List = empty, boolean NoChangedSites = True
+                            List changeSiteindexParent = determineChangedsiteIndex(parent);
+                            List changeSiteindexChildren = determineChangedsiteIndex(node);
 
-                            if (changeSiteindexChildren != -1) {
-                                this.branchLogLikelihoods[n] = daBranchLdCore.computeBranchLKbySite(daTreeModel, parent, node, branchTime, changeSiteindexChildren);
-                            } else {
-                                this.branchLogLikelihoods[n] = daBranchLdCore.computeBranchLKbySite(daTreeModel, parent, node, branchTime, changeSiteindexParent);
+                            //The whole branch is changed (Gibb's sampler) - recalculate whole branch likelihood
+                            //todo: check conditions
+                            if (changeSiteindexParent.size() == daTreeModel.getSiteCount() || changeSiteindexChildren.size() == daTreeModel.getSiteCount()) {
+
+                                // Full recalculation for all sites
+                                this.branchLogLikelihoods[n] = daBranchLdCore.computeBranchLK(daTreeModel, parent, node, branchTime);
                             }
+
+                            //Some sites have been changed e.g. Wrapped RandomWalk Operator
+                            else {
+                                boolean noChangedSitesInChildren = detectChangedSites(changeSiteindexChildren);
+
+                                if (!noChangedSitesInChildren) { //changed sites found in Children, use children index
+                                    this.branchLogLikelihoods[n] = daBranchLdCore.computeBranchLKbySite(daTreeModel, parent, node, branchTime, changeSiteindexChildren);
+                                }
+                                else{ //changed sites found in Parent, use parent index
+                                    if (changeSiteindexParent.isEmpty()) {
+                                        throw new IllegalArgumentException("No changed sites found in both parents and children");
+                                    }
+                                    this.branchLogLikelihoods[n] = daBranchLdCore.computeBranchLKbySite(daTreeModel, parent, node, branchTime, changeSiteindexParent);
+                                }
+                            }
+
+//                            if (changeSiteindexChildren != -1) {
+//                                this.branchLogLikelihoods[n] = daBranchLdCore.computeBranchLKbySite(daTreeModel, parent, node, branchTime, changeSiteindexChildren);
+//                            } else {
+//                                this.branchLogLikelihoods[n] = daBranchLdCore.computeBranchLKbySite(daTreeModel, parent, node, branchTime, changeSiteindexParent);
+//                            }
                         }
 
                     } catch (Exception e) {
@@ -242,10 +269,13 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
      * @return int k
      */
 
-    public int determineChangedsiteIndex(final Node node) {
+    public List<Integer> determineChangedsiteIndex(final Node node) {
+
+        // Create a list to store all changed site indices
+        List<Integer> changedSites = new ArrayList<>();
 
         //tips never change
-        if(node.isLeaf()) return -1;
+        if(node.isLeaf()) return changedSites;
 
         //get the numb of tips
         int nTips = tree.getLeafNodeCount();
@@ -265,26 +295,25 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
         // minor dim 1 = nsite * 2
         int start = arrI * internalNodesParam.getMinorDimension1();
 
-//        for (int i = start; i < start + internalNodesParam.getMinorDimension1(); i++) {
-//            if (internalNodesParam.isDirty(i)) {
-//                if (i % 2 == 0) {
-//                    return i/internalNodesParam.getMinorDimension2();
-//                }
-//                return (i+1)/internalNodesParam.getMinorDimension2();
-//            }
-//        }
-
         for (int k = 0; k < nSites; k++) {
             int phiIndex = start + (k * 2);
             int psiIndex = phiIndex + 1;
 
             if (internalNodesParam.isDirty(phiIndex) || internalNodesParam.isDirty(psiIndex)) {
-                return k;
+                changedSites.add(k);
             }
         }
 
-        //no changed sites found
-        return -1;
+        return changedSites;
+    }
+
+
+    /**
+     * Detect if any sites have been changed
+     */
+    public boolean detectChangedSites(List<Integer> changedSites) {
+        boolean noChangeSitesdFound = changedSites.isEmpty();
+     return noChangeSitesdFound;
     }
 
     /**
@@ -574,6 +603,14 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
      */
     public DABranchLikelihoodCore getDaBranchLdCores(int branchNr) {
         return daBranchLdCores[branchNr];
+    }
+
+    /**
+     * Get diff
+     * @return
+     */
+    public WrappedBivariateDiffusion getDiff() {
+        return diff;
     }
 
 

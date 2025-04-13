@@ -4,6 +4,8 @@ import beast.base.evolution.tree.Node;
 import toroidaldiffusion.WrappedBivariateDiffusion;
 import toroidaldiffusion.evolution.tree.DATreeModel;
 
+import java.util.List;
+
 /**
  * data augmentation likelihood core based on a branch for multithreading.
  * the branch is defined above the selected child node.
@@ -103,7 +105,7 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
         return sumSiteLogLikelihood();
     }
 
-    public double computeBranchLKbySite(DATreeModel daTreeModel, Node parent, Node node, double branchTime, int changeSiteindex) {
+    public double computeBranchLKbySite(DATreeModel daTreeModel, Node parent, Node node, double branchTime, List changeSiteindex) {
         // pairs of values, dimension is 2 (angles) * N_sites
         double[] parentNodeValues = daTreeModel.getNodeValue(parent);
         double[] childNodeValues = daTreeModel.getNodeValue(node);
@@ -159,33 +161,39 @@ public class DABranchLikelihoodCore extends AbstrDALikelihoodCore {
 
 
     public void computeSingleSiteLK(final double[] parentNodeValues, final double[] childNodeValues, double branchTime,
-                                      int siteIndex) {
+                                      List changedSites) {
         assert parentNodeValues.length == nrOfSites * 2;
         assert childNodeValues.length == nrOfSites * 2;
-        assert siteIndex < nrOfSites;
+
+        //A list of sites have been changed
+        assert changedSites.size() < nrOfSites;
 
         // Set parameters for this branch time
         diff.setParameters(branchTime);
 
-        // Calculate for specific site
-        double phi0 = parentNodeValues[siteIndex * 2];
-        double psi0 = parentNodeValues[siteIndex * 2 + 1];
-        double phit = childNodeValues[siteIndex * 2];
-        double psit = childNodeValues[siteIndex * 2 + 1];
+        for (int k = 0; k < changedSites.size(); k++) {
+            int siteIndex = (int) changedSites.get(k);
 
-        double siteLikelihood = diff.loglikwndtpd(phi0, psi0, phit, psit);
+            // Calculate for specific site
+            double phi0 = parentNodeValues[siteIndex * 2];
+            double psi0 = parentNodeValues[siteIndex * 2 + 1];
+            double phit = childNodeValues[siteIndex * 2];
+            double psit = childNodeValues[siteIndex * 2 + 1];
 
-        // Store in array and do error check
-        siteLogLd[siteIndex] = siteLikelihood;
+            double siteLikelihood = diff.loglikwndtpd(phi0, psi0, phit, psit);
 
-        if (siteLikelihood == 0) {
-            throw new RuntimeException("\nBranch above node " + getBranchNr() +
-                    ", siteLogLd[" + siteIndex + "] = " + siteLikelihood +
-                    ", branchTime = " + branchTime +
-                    "\nphi0 = " + phi0 + ", psi0 = " + psi0 +
-                    ", phit = " + phit + ", psit = " + psit);
+            // Store in array and do error check
+            siteLogLd[siteIndex] = siteLikelihood;
+
+            if (siteLikelihood == 0) {
+                throw new RuntimeException("\nBranch above node " + getBranchNr() +
+                        ", siteLogLd[" + changedSites + "] = " + siteLikelihood +
+                        ", branchTime = " + branchTime +
+                        "\nphi0 = " + phi0 + ", psi0 = " + psi0 +
+                        ", phit = " + phit + ", psit = " + psit);
+            }
+
         }
-
     }
 
     /**
