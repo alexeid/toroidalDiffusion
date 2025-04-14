@@ -69,10 +69,10 @@ public class DAGibbsOperator extends Operator {
 //        }
 
         // 3. Prepare the sampler with this node
-        sampler.update(node, daTreeModel);
+//        sampler.setNode();
 
         // 4. Perform Gibbs sampling to get new angles
-        double[] proposedAngles = sampler.gibbsSampling(daTreeModel);
+        double[] proposedAngles = sampler.gibbsSampling(node, daTreeModel);
 
         // 5. Calculate Hastings ratio
 //        double logHastingsRatio = sampler.calculateLogHastingsRatio(currentAngles, proposedAngles, daTreeModel);

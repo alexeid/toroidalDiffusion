@@ -10,8 +10,8 @@ import java.util.Random;
 public class DihedralAngleGibbsSampler {
 
     private WrappedBivariateDiffusion diff; //calculation engine
-    private Node node; //node to perform samplling on
-    private double[] newAngles; //
+//    private Node node; //node to perform samplling on
+//    private double[] newAngles; //
     private double logForwardDensity;
     private double logBackwardDensity;
     public double logHastingsratio;
@@ -26,28 +26,17 @@ public class DihedralAngleGibbsSampler {
         this.diff = diff;
     }
 
-    /**
-     * Updates all fields needed for sampling. Call this method before each sampling operation.
-     *
-     * @param node The node to perform Gibbs sampling on
-     * @param daTreeModel The tree model containing sequence data
-     * @return This sampler instance for method chaining
-     */
-    public DihedralAngleGibbsSampler update(Node node, DihedralAngleTreeModel daTreeModel) {
+
+    public double[] gibbsSampling (Node node, DihedralAngleTreeModel daTreeModel) {
         // Set node
-        this.node = node;
+//        this.node = node;
 
         // Initialize newAngles array based on site count
         int siteCount = daTreeModel.getSiteCount();
-        this.newAngles = new double[siteCount * 2];
+        double[] newAngles = new double[siteCount * 2];
         this.logBackwardDensity = 0;
         this.logForwardDensity = 0;
-        this.logHastingsratio = logBackwardDensity - logForwardDensity;
-
-        return this;
-    }
-
-    public double[] gibbsSampling (DihedralAngleTreeModel daTreeModel) {
+        this.logHastingsratio = 0;
 
 //        //node index
 //        final int nodeNr = node.getNr(); //the randomly picked node
@@ -56,7 +45,7 @@ public class DihedralAngleGibbsSampler {
 //        final int ch2Nr = node.getChild(1).getNr();
 
         // 1. Verify fields are initialized
-        if (node == null || diff == null || newAngles == null) {
+        if (node == null || diff == null ) {
             throw new IllegalStateException("Sampler not properly initialized. Call update() first.");
         }
 
@@ -86,57 +75,11 @@ public class DihedralAngleGibbsSampler {
 
             // Extract parameters for children
             for (int i = 0; i < daTreeModel.getSiteCount(); i++) {
-                double phiCh1 = child1NodeValues[i*2];
-                double psiCh1 = child1NodeValues[i*2 + 1];
-
-                double phiCh2 = child2NodeValues[i*2];
-                double psiCh2 = child2NodeValues[i*2 + 1];
-
-                double[] child1Dist = getBivariateNormalParameters(diff, phiCh1, psiCh1, child1BranchTime);
-                double[] child2Dist = getBivariateNormalParameters(diff, phiCh2, psiCh2, child2BranchTime);
-
-                double[] combinedDistWithOffset = getRotatedCombinedDistribution(stationaryDist, child1Dist, child2Dist);
-
-                // Save the combined distribution (without phiOffset and psiOffset)
-                // Extract the offset for sampling
-                double offsetPhi = combinedDistWithOffset[5];
-                double offsetPsi = combinedDistWithOffset[6];
-
-//                // Save combined distribution (without phiOffset and psiOffset)
-////                double[] combinedDist = new double[5];
-//                System.arraycopy(combinedDistWithOffset, 0, combinedDist, 0, 5);
-//
-//                //Sample new Angles (proposed angles)
-////                double[] sample = sampleFromBivariateNormal(combinedDist);
-
-                double[] sample = sampleFromBivariateNormal(combinedDistWithOffset);
-
-
-                // Rotate back
-                double proposedPhi = (sample[0] - offsetPhi) % (2 * Math.PI);
-                double proposedPsi = (sample[1] - offsetPsi) % (2 * Math.PI);
-
-                // Ensure positive angles
-                if (proposedPhi < 0) proposedPhi += 2 * Math.PI;
-                if (proposedPsi < 0) proposedPsi += 2 * Math.PI;
-
-                //Current angles
-                double currentPhi = nodeValues[i*2];
-                double currentPsi = nodeValues[i*2 + 1];
-
-                newAngles[i * 2] = proposedPhi;
-                newAngles[i * 2 + 1] = proposedPsi;
-
-
-                // Calculate density of the proposed angles under the combined distribution
-                logForwardDensity += logBivariateNormalWrappedPDF(proposedPhi, proposedPsi, combinedDistWithOffset);
-                // Calculate density of the current angles under the combined distribution
-                logBackwardDensity += logBivariateNormalWrappedPDF(currentPhi, currentPsi, combinedDistWithOffset);
-
-                logHastingsratio = logBackwardDensity - logForwardDensity;
+                sample(i, nodeValues, child1NodeValues, child2NodeValues,
+                        child1BranchTime, child2BranchTime, stationaryDist, newAngles);
             }
 
-        } else {
+        } else { // not root
             //get parent node
             final Node parent = node.getParent();
             //parent branch time
@@ -153,61 +96,61 @@ public class DihedralAngleGibbsSampler {
             for (int i = 0; i < daTreeModel.getSiteCount(); i++) {
                 double phiPr = parentNodeValues[i * 2];
                 double psiPr = parentNodeValues[i * 2 + 1];
-
-                double phiCh1 = child1NodeValues[i * 2];
-                double psiCh1 = child1NodeValues[i * 2 + 1];
-
-                double phiCh2 = child2NodeValues[i * 2];
-                double psiCh2 = child2NodeValues[i * 2 + 1];
-
                 double[] parentDist = getBivariateNormalParameters(diff, phiPr, psiPr, parentBranchTime);
-                double[] child1Dist = getBivariateNormalParameters(diff, phiCh1, psiCh1, child1BranchTime);
-                double[] child2Dist = getBivariateNormalParameters(diff, phiCh2, psiCh2, child2BranchTime);
 
-                // Get combined distribution
-                double[] combinedDistWithOffset = getRotatedCombinedDistribution(parentDist, child1Dist, child2Dist);
-
-                // Save the combined distribution (without phiOffset and psiOffset)
-                // Extract the offset for sampling
-                double offsetPhi = combinedDistWithOffset[5];
-                double offsetPsi = combinedDistWithOffset[6];
-
-                // Save combined distribution (without phiOffset and psiOffset)
-                double[] combinedDist = new double[5];
-                System.arraycopy(combinedDistWithOffset, 0, combinedDist, 0, 5);
-
-                //Sample new Angles (proposed angles)
-                double[] sample = sampleFromBivariateNormal(combinedDist);
-
-                // Rotate back
-                double proposedPhi = (sample[0] - offsetPhi) % (2 * Math.PI);
-                double proposedPsi = (sample[1] - offsetPsi) % (2 * Math.PI);
-
-                // Ensure positive angles
-                if (proposedPhi < 0) proposedPhi += 2 * Math.PI;
-                if (proposedPsi < 0) proposedPsi += 2 * Math.PI;
-
-                //Current angles
-                double currentPhi = nodeValues[i*2];
-                double currentPsi = nodeValues[i*2 + 1];
-
-                newAngles[i * 2] = proposedPhi;
-                newAngles[i * 2 + 1] = proposedPsi;
-
-
-                // Calculate density of the proposed angles under the combined distribution
-                logForwardDensity += logBivariateNormalWrappedPDF(proposedPhi, proposedPsi, combinedDist);
-                // Calculate density of the current angles under the combined distribution
-                logBackwardDensity += logBivariateNormalWrappedPDF(currentPhi, currentPsi, combinedDist);
-
-                logHastingsratio = logBackwardDensity - logForwardDensity;
-
+                sample(i, nodeValues, child1NodeValues, child2NodeValues,
+                        child1BranchTime, child2BranchTime, parentDist, newAngles);
             }
 
         }
+
+        logHastingsratio = logBackwardDensity - logForwardDensity;
         return newAngles;
     }
 
+    private void sample(int siteI, double[] nodeValues, double[] child1NodeValues, double[] child2NodeValues,
+                        double child1BranchTime, double child2BranchTime, double[] parentDistParams, double[] newAngles) {
+        final int curPhi = siteI *2;
+        final int curPsi = siteI *2 + 1;
+
+        double[] child1Dist = getBivariateNormalParameters(diff,
+                child1NodeValues[curPhi], child1NodeValues[curPsi], child1BranchTime);
+        double[] child2Dist = getBivariateNormalParameters(diff,
+                child2NodeValues[curPhi], child2NodeValues[curPsi], child2BranchTime);
+
+        double[] combinedDistWithOffset = getRotatedCombinedDistribution(parentDistParams, child1Dist, child2Dist);
+
+        // Save the combined distribution (without phiOffset and psiOffset)
+        // Extract the offset for sampling
+        double offsetPhi = combinedDistWithOffset[5];
+        double offsetPsi = combinedDistWithOffset[6];
+
+//                // Save combined distribution (without phiOffset and psiOffset)
+////                double[] combinedDist = new double[5];
+//                System.arraycopy(combinedDistWithOffset, 0, combinedDist, 0, 5);
+//
+//                //Sample new Angles (proposed angles)
+////                double[] sample = sampleFromBivariateNormal(combinedDist);
+
+        double[] sample = sampleFromBivariateNormal(combinedDistWithOffset);
+
+
+        // Rotate back
+        double proposedPhi = (sample[0] - offsetPhi) % (2 * Math.PI);
+        double proposedPsi = (sample[1] - offsetPsi) % (2 * Math.PI);
+
+        // Ensure positive angles
+        if (proposedPhi < 0) proposedPhi += 2 * Math.PI;
+        if (proposedPsi < 0) proposedPsi += 2 * Math.PI;
+
+        newAngles[curPhi] = proposedPhi;
+        newAngles[curPsi] = proposedPsi;
+
+        // Calculate density of the proposed angles under the combined distribution
+        logForwardDensity += logBivariateNormalWrappedPDF(proposedPhi, proposedPsi, combinedDistWithOffset);
+        // Calculate density of the current angles under the combined distribution
+        logBackwardDensity += logBivariateNormalWrappedPDF(nodeValues[curPhi], nodeValues[curPsi], combinedDistWithOffset);
+    }
 
 
     /**
