@@ -44,7 +44,9 @@ public class DAGibbsOperator extends Operator {
         final int nodeNr = tree.getLeafNodeCount() + Randomizer.nextInt(tree.getInternalNodeCount());
         final Node node = daTreeModel.getNode(nodeNr);
 
-        RealParameter internalNodesAngles = (RealParameter) InputUtil.get(parameterInput, this);
+        RealParameter internalNodesAngles = parameterInput.get();
+
+        //RealParameter internalNodesAngles = (RealParameter) InputUtil.get(parameterInput, this);
 
         // 2. calculate the index of this internal node (subtract leaf node count)
         int paramIndex = nodeNr - daTreeModel.getLeafNodeCount();
@@ -74,22 +76,33 @@ public class DAGibbsOperator extends Operator {
         // 4. Perform Gibbs sampling to get new angles
         double[] proposedAngles = sampler.gibbsSampling(node, daTreeModel);
 
+//        // Accept the proposal
+        for (int i = 0; i < proposedAngles.length; i++) {
+            internalNodesAngles.setValue(startInclusive + i, proposedAngles[i]);
+        }
+
         // 5. Calculate Hastings ratio
 //        double logHastingsRatio = sampler.calculateLogHastingsRatio(currentAngles, proposedAngles, daTreeModel);
         double logHastingsRatio = sampler.getLogHastingsratio();
 
-        // 6. Apply Metropolis-Hastings acceptance criteria
-        if (logHastingsRatio >= 0.0 || Math.log(Randomizer.nextDouble()) < logHastingsRatio) {
-            // Accept the proposal
-            for (int i = 0; i < proposedAngles.length; i++) {
-                internalNodesAngles.setValue(startInclusive + i, proposedAngles[i]);
-            }
-            return logHastingsRatio;
-        } else {
-            // Reject the proposal - no changes needed as we haven't modified the parameter yet
-            return Double.NEGATIVE_INFINITY;  // Return -Infinity to signal rejection
+        return logHastingsRatio;
 
-        }
-        //todo: what to return? since we have calculated ratio for a list of angles
+
+//        // 6. if logHR > log(1) = accept
+//        if (logHastingsRatio >= 0.0 || Math.log(Randomizer.nextDouble()) < logHastingsRatio) {
+//            // Accept the proposal
+//            for (int i = 0; i < proposedAngles.length; i++) {
+//                internalNodesAngles.setValue(startInclusive + i, proposedAngles[i]);
+//            }
+//            return logHastingsRatio;
+////            return 0.0;
+//
+//        } else {
+//            // Reject the proposal - no changes needed as we haven't modified the parameter yet
+//            return Double.NEGATIVE_INFINITY;  // Return -Infinity to signal rejection
+////
+//        }
+        //todo: what to return? since we have calculated ratio for a list of angle
+
     }
 }

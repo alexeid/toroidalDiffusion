@@ -8,7 +8,7 @@ import toroidaldiffusion.evolution.tree.DihedralAngleTreeModel;
 
 import java.util.Random;
 
-public class DihedralAngleGibbsSampler {
+public class DihedralAngleGibbsSampler2 {
 
     private WrappedBivariateDiffusion diff; //calculation engine
     private double logForwardDensity;
@@ -19,6 +19,7 @@ public class DihedralAngleGibbsSampler {
 
     /**
      * Set the diff for calculation
+     *
      * @param diff The wrapped bivariate diffusion model with parameters
      */
     public void setDiff(WrappedBivariateDiffusion diff) {
@@ -26,8 +27,7 @@ public class DihedralAngleGibbsSampler {
     }
 
 
-    public double[] gibbsSampling (Node node, DihedralAngleTreeModel daTreeModel) {
-        // Initialize newAngles array based on site count
+    public double[] gibbsSampling(Node node, DihedralAngleTreeModel daTreeModel) {
         int siteCount = daTreeModel.getSiteCount();
         double[] newAngles = new double[siteCount * 2];
         this.logBackwardDensity = 0;
@@ -35,138 +35,133 @@ public class DihedralAngleGibbsSampler {
         this.logHastingsratio = 0;
 
         // 1. Verify fields are initialized
-        if (node == null || diff == null ) {
+        if (node == null || diff == null) {
             throw new IllegalStateException("Sampler not properly initialized. Call update() first.");
         }
 
         double[] nodeValues = daTreeModel.getNodeValue(node);
 
         // Get 2 child nodes for both root and internalnodes
+        final Node parent = node.getParent(); //if node is root return null
         final Node child1 = node.getChild(0);
         final Node child2 = node.getChild(1);
 
-        //2 child nodes values
-        double[] child1NodeValues = daTreeModel.getNodeValue(child1);
-        double[] child2NodeValues = daTreeModel.getNodeValue(child2);
-
-        //2 child nodes branch time
+        //branch time
+        final double parentBranchTime = parent.getHeight() - node.getHeight();
         final double child1BranchTime = node.getHeight() - child1.getHeight();
         final double child2BranchTime = node.getHeight() - child2.getHeight();
 
-        // Handle root node properly. Sampling from: stationary distribution + 2 children
-        if (node.isRoot()) {
+        //nodes values
+        double[] parentNodeValues = daTreeModel.getNodeValue(parent);
+        double[] child1NodeValues = daTreeModel.getNodeValue(child1);
+        double[] child2NodeValues = daTreeModel.getNodeValue(child2);
 
-            if (child1BranchTime < 0 || child2BranchTime < 0) {
-                throw new IllegalArgumentException("Negative branch time detected");
-            }
 
-            //get stationary distribution parameter
-            double[] stationaryDist = getStationaryDistributionParameters();
+        //check each site, construct distribution
+        for (int i = 0; i < daTreeModel.getSiteCount(); i++) {
+            int phiIndex = i * 2;
+            int psiIndex = i * 2 + 1;
 
-            // Extract parameters for children
-            for (int i = 0; i < daTreeModel.getSiteCount(); i++) {
-                sample(i, nodeValues, child1NodeValues, child2NodeValues,
-                        child1BranchTime, child2BranchTime, stationaryDist, newAngles);
-            }
+            double parentPhi = parentNodeValues[phiIndex];
+            double parentPsi = parentNodeValues[psiIndex];
 
-        } else { // not root (internal nodes)
-            //get parent node
-            final Node parent = node.getParent();
-            //parent branch time
-            final double parentBranchTime = parent.getHeight() - node.getHeight();
+            double c1Phi = child1NodeValues[phiIndex];
+            double c1Psi = child1NodeValues[psiIndex];
 
-            if (parentBranchTime < 0 || child1BranchTime < 0 || child2BranchTime < 0) {
-                throw new IllegalArgumentException("Negative branch time detected");
-            }
+            double c2Phi = child2NodeValues[phiIndex];
+            double c2Psi = child2NodeValues[psiIndex];
 
-            //Parent sequence values
-            double[] parentNodeValues = daTreeModel.getNodeValue(parent);
+            //For root: parentDist = null
+            double[] parentDist = getBivariateNormalParameters(diff,
+                    parentPhi, parentPsi, parentBranchTime);
+            double[] child1Dist = getBivariateNormalParameters(diff,
+                    c1Phi, c1Psi, child1BranchTime);
+            double[] child2Dist = getBivariateNormalParameters(diff,
+                    c2Phi, c2Psi, child2BranchTime);
 
-            //extract the BivariateNormalParameters for parent, ch1 and ch2
-            for (int i = 0; i < daTreeModel.getSiteCount(); i++) {
-                double phiPr = parentNodeValues[i * 2];
-                double psiPr = parentNodeValues[i * 2 + 1];
-                double[] parentDist = getBivariateNormalParameters(diff, phiPr, psiPr, parentBranchTime);
+            double[] combinedDistWithOffset = getRotatedCombinedDistribution(parentDist, child1Dist, child2Dist);
 
-                sample(i, nodeValues, child1NodeValues, child2NodeValues,
-                        child1BranchTime, child2BranchTime, parentDist, newAngles);
-            }
+            double[] proposedAnglePair = sample(combinedDistWithOffset);
 
+            newAngles[phiIndex] = proposedAnglePair[0];
+            newAngles[psiIndex] = proposedAnglePair[1];
+
+            // Calculate density of the proposed angles under the combined distribution
+            logForwardDensity += logBivariateNormalWrappedPDF(proposedAnglePair[0], proposedAnglePair[1], combinedDistWithOffset);
+            // Calculate density of the current angles under the combined distribution
+            logBackwardDensity += logBivariateNormalWrappedPDF(nodeValues[phiIndex], nodeValues[psiIndex], combinedDistWithOffset);
         }
 
-        //propose - current
-        logHastingsratio = logForwardDensity - logBackwardDensity;
         return newAngles;
     }
 
-    private void sample(int siteI, double[] nodeValues, double[] child1NodeValues, double[] child2NodeValues,
-                        double child1BranchTime, double child2BranchTime, double[] parentDistParams, double[] newAngles) {
-        final int curPhi = siteI *2;
-        final int curPsi = siteI *2 + 1;
+    private double[] sample(double[] combinedDistWithOffset) {
 
-        double[] child1Dist = getBivariateNormalParameters(diff,
-                child1NodeValues[curPhi], child1NodeValues[curPsi], child1BranchTime);
-        double[] child2Dist = getBivariateNormalParameters(diff,
-                child2NodeValues[curPhi], child2NodeValues[curPsi], child2BranchTime);
-
-        double[] combinedDistWithOffset = getRotatedCombinedDistribution(parentDistParams, child1Dist, child2Dist);
+//        double[] parentDist = getBivariateNormalParameters(diff,
+//                parentPhi, parentPsi, parentBranchTime);
+//        double[] child1Dist = getBivariateNormalParameters(diff,
+//                c1Phi, c1Psi, child1BranchTime);
+//        double[] child2Dist = getBivariateNormalParameters(diff,
+//                c2Phi, c2Psi, child2BranchTime);
+//
+//        double[] combinedDistWithOffset = getRotatedCombinedDistribution(parentDist, child1Dist, child2Dist);
 
         // Save the combined distribution (without phiOffset and psiOffset)
+
         // Extract the offset for sampling
         double offsetPhi = combinedDistWithOffset[5];
         double offsetPsi = combinedDistWithOffset[6];
 
+        //sample one pair of angles
         double[] sample = sampleFromBivariateNormal(combinedDistWithOffset);
 
         // Rotate back
-        double proposedPhi = ToroidalUtils.wrapToMaxAngle((sample[0] - offsetPhi));
+        double proposedPhi = ToroidalUtils.wrapToMaxAngle((sample[0] - offsetPhi)); //is it necessary - offset?
         double proposedPsi = ToroidalUtils.wrapToMaxAngle((sample[1] - offsetPsi));
+        double[] proposedPair = new double[2];
+        proposedPair[0] = proposedPhi;
+        proposedPair[1] = proposedPsi;
 
-        newAngles[curPhi] = proposedPhi;
-        newAngles[curPsi] = proposedPsi;
-
-        // Calculate density of the proposed angles under the combined distribution
-        logForwardDensity += logBivariateNormalWrappedPDF(proposedPhi, proposedPsi, combinedDistWithOffset);
-        // Calculate density of the current angles under the combined distribution
-        logBackwardDensity += logBivariateNormalWrappedPDF(nodeValues[curPhi], nodeValues[curPsi], combinedDistWithOffset);
+        return proposedPair;
     }
 
 
     /**
      * Gets the parameters of the stationary wrapped bivariate normal distribution
      * @return Array containing [mean_phi, mean_psi, variance_phi, variance_psi, covariance]
-     */
-    public double[] getStationaryDistributionParameters() {
-        // The mean of the stationary distribution is simply mu
-        double mean_phi = diff.mu.get(0, 0);
-        double mean_psi = diff.mu.get(1, 0);
-
-        // invSigmaA which already contains 2 * Σ⁻¹ * A
-        // invert to get A⁻¹ * Σ / 2
-        SimpleMatrix invSigmaA = diff.getInvSigmaA();
-        SimpleMatrix statCovar = invSigmaA.invert();
-
-        // Extract components
-        double var_phi = statCovar.get(0, 0);
-        double var_psi = statCovar.get(1, 1);
-        double covar = statCovar.get(0, 1);
-
-        return new double[] {
-                mean_phi,
-                mean_psi,
-                var_phi,
-                var_psi,
-                covar
-        };
-    }
+    //     */
+//    public double[] getStationaryDistributionParameters() {
+//        // The mean of the stationary distribution is simply mu
+//        double mean_phi = diff.mu.get(0, 0);
+//        double mean_psi = diff.mu.get(1, 0);
+//
+//        // invSigmaA which already contains 2 * Σ⁻¹ * A
+//        // invert to get A⁻¹ * Σ / 2
+//        SimpleMatrix invSigmaA = diff.getInvSigmaA();
+//        SimpleMatrix statCovar = invSigmaA.invert();
+//
+//        // Extract components
+//        double var_phi = statCovar.get(0, 0);
+//        double var_psi = statCovar.get(1, 1);
+//        double covar = statCovar.get(0, 1);
+//
+//        return new double[] {
+//                mean_phi,
+//                mean_psi,
+//                var_phi,
+//                var_psi,
+//                covar
+//        };
+//    }
 
 
     /**
      * Extracts parameters of the bivariate normal distribution
+     *
      * @param diff The WrappedBivariateDiffusion instance with the model parameters
      * @param phi0 Initial phi angle
      * @param psi0 Initial psi angle
-     * @param t Time
+     * @param t    Time
      * @return Array containing [mean_phi, mean_psi, variance_phi, variance_psi, covariance]
      */
     public double[] getBivariateNormalParameters(WrappedBivariateDiffusion diff,
@@ -175,17 +170,7 @@ public class DihedralAngleGibbsSampler {
         // Update time-dependent parameters in the diffusion model
         diff.setParameters(t);
 
-//        SimpleMatrix mu = diff.mu;
-//        SimpleMatrix ExptA = diff.getExptA();
         SimpleMatrix Gammat = diff.getGammat();
-
-        // Prepare initial angles
-//        SimpleMatrix x0 = new SimpleMatrix(2, 1);
-//        x0.set(0, 0, phi0);
-//        x0.set(1, 0, psi0);
-
-        // Calculate expected mean at time t
-//        SimpleMatrix mut = mu.plus(ExptA.mult(x0.minus(mu)));
 
         // Get covariance matrix at time t
         double var_phi = Gammat.get(0, 0);
@@ -193,9 +178,9 @@ public class DihedralAngleGibbsSampler {
         double covar = Gammat.get(0, 1);
 
         // Return all parameters as an array
-        return new double[] {
-                phi0,  // phi
-                psi0,  // psi
+        return new double[]{
+                phi0,
+                psi0,
                 var_phi,        // variance_phi
                 var_psi,        // variance_psi
                 covar           // covariance
@@ -293,7 +278,7 @@ public class DihedralAngleGibbsSampler {
         double comb_m2 = (comb_prec11 * comb_pm2 - comb_prec12 * comb_pm1) / comb_det;
 
         // Return the parameters of the combined distribution
-        return new double[] {comb_m1, comb_m2, comb_v1, comb_v2, comb_cv};
+        return new double[]{comb_m1, comb_m2, comb_v1, comb_v2, comb_cv};
     }
 
 
@@ -311,7 +296,7 @@ public class DihedralAngleGibbsSampler {
         double prec22 = v1 / det;
         double prec12 = -cv / det;
 
-        return new double[] {prec11, prec22, prec12};
+        return new double[]{prec11, prec22, prec12};
     }
 
     /**
@@ -328,12 +313,13 @@ public class DihedralAngleGibbsSampler {
         double pm1 = prec11 * m1 + prec12 * m2;
         double pm2 = prec12 * m1 + prec22 * m2;
 
-        return new double[] {pm1, pm2};
+        return new double[]{pm1, pm2};
     }
 
     /**
      * For a set of angle pairs {(φ₁,ψ₁), (φ₂,ψ₂), (φ₃,ψ₃)}, find offsets (δφ,δψ) such that
      * ∑ₖ,ⱼ ||(φₖ+δφ,ψₖ+δψ) - (φⱼ+δφ,ψⱼ+δψ)||² is minimised
+     *
      * @param angles
      * @return bestOffsets for phi and psi
      */
@@ -343,8 +329,8 @@ public class DihedralAngleGibbsSampler {
         double PI2 = 2 * Math.PI;
 
         // Try these offsets (in radians)
-        double[] possibleOffsets = {0, Math.PI/4, Math.PI/2, 3*Math.PI/4, Math.PI,
-                5*Math.PI/4, 3*Math.PI/2, 7*Math.PI/4};
+        double[] possibleOffsets = {0, Math.PI / 4, Math.PI / 2, 3 * Math.PI / 4, Math.PI,
+                5 * Math.PI / 4, 3 * Math.PI / 2, 7 * Math.PI / 4};
 
         // Try all combinations of offsets
         for (double offset1 : possibleOffsets) {
@@ -359,10 +345,10 @@ public class DihedralAngleGibbsSampler {
                 // Calculate total pairwise distances
                 double totalDistance = 0;
                 for (int i = 0; i < rotatedAngles.length; i++) {
-                    for (int j = i+1; j < rotatedAngles.length; j++) {
+                    for (int j = i + 1; j < rotatedAngles.length; j++) {
                         double dx = rotatedAngles[i][0] - rotatedAngles[j][0];
                         double dy = rotatedAngles[i][1] - rotatedAngles[j][1];
-                        totalDistance += dx*dx + dy*dy;
+                        totalDistance += dx * dx + dy * dy;
                     }
                 }
 
@@ -383,7 +369,7 @@ public class DihedralAngleGibbsSampler {
      * This handles the circular nature of angular data.
      *
      * @param distributionParam An array containing [mean1, mean2, variance1, variance2, covariance]
-     * @param offset An array containing [offset1, offset2] to be added to the means
+     * @param offset            An array containing [offset1, offset2] to be added to the means
      * @return A new array containing the rotated distribution parameters
      */
     private double[] rotateDistribution(double[] distributionParam, double[] offset) {
@@ -415,17 +401,17 @@ public class DihedralAngleGibbsSampler {
         // Calculate Cholesky decomposition
         double a11 = Math.sqrt(var1);
         double a21 = covar / a11;
-        double a22 = Math.sqrt(var2 - a21*a21);
+        double a22 = Math.sqrt(var2 - a21 * a21);
 
         // Generate two independent standard normal samples
         double z1 = random.nextGaussian();
         double z2 = random.nextGaussian();
 
         // Transform to correlated bivariate normal
-        double x1 = mean1 + a11*z1;
-        double x2 = mean2 + a21*z1 + a22*z2;
+        double x1 = mean1 + a11 * z1;
+        double x2 = mean2 + a21 * z1 + a22 * z2;
 
-        return new double[] {x1, x2};
+        return new double[]{x1, x2};
     }
 
 //    // getBivariateNormalParameters: 1. Extract all distributions as [mean1, mean2, var1, var2, covar]
@@ -491,7 +477,6 @@ public class DihedralAngleGibbsSampler {
 
         return combinedDistWithOffset;
     }
-
 
     /**
      * Find pdf for constructed bivariate normal distribution
