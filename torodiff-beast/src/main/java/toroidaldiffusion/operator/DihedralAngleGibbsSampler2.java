@@ -46,36 +46,34 @@ public class DihedralAngleGibbsSampler2 {
         final Node child1 = node.getChild(0);
         final Node child2 = node.getChild(1);
 
+        //if node is root, node.getParent() = null
+        boolean isRoot = parent == null;
+
         //branch time
-        final double parentBranchTime = parent.getHeight() - node.getHeight();
+        //final double parentBranchTime = parent.getHeight() - node.getHeight();
+        final double parentBranchTime = isRoot ? 0.0 : parent.getHeight() - node.getHeight();
         final double child1BranchTime = node.getHeight() - child1.getHeight();
         final double child2BranchTime = node.getHeight() - child2.getHeight();
 
         // nodes values at all sites
-        double[] parentNodeValues = daTreeModel.getNodeValue(parent);
+        double[] parentNodeValues = isRoot ? null : daTreeModel.getNodeValue(parent);
         double[] child1NodeValues = daTreeModel.getNodeValue(child1);
         double[] child2NodeValues = daTreeModel.getNodeValue(child2);
 
-
         //check each site, construct distribution
         for (int i = 0; i < daTreeModel.getSiteCount(); i++) {
+
             int phiIndex = i * 2;
             int psiIndex = i * 2 + 1;
 
-//            double parentPhi = parentNodeValues[phiIndex];
-//            double parentPsi = parentNodeValues[psiIndex];
-//            double c1Phi = child1NodeValues[phiIndex];
-//            double c1Psi = child1NodeValues[psiIndex];
-//            double c2Phi = child2NodeValues[phiIndex];
-//            double c2Psi = child2NodeValues[psiIndex];
-
-            Pair parentPair = new Pair(parentNodeValues[phiIndex], parentNodeValues[psiIndex]);
+            Pair parentPair = isRoot ? null : new Pair(parentNodeValues[phiIndex], parentNodeValues[psiIndex]);
             Pair c1Pair = new Pair(child1NodeValues[phiIndex], child1NodeValues[psiIndex]);
             Pair c2Pair = new Pair(child2NodeValues[phiIndex], child2NodeValues[psiIndex]);
+
             // get offset
             Pair offset = getOffsetMean(parentPair, c1Pair, c2Pair);
             // Apply offset to mean
-            Pair offsetMeanParent = offsetMean(parentPair, offset);
+            Pair offsetMeanParent = isRoot ? null : offsetMean(parentPair, offset);
             Pair offsetMeanChild1 = offsetMean(c1Pair, offset);
             Pair offsetMeanChild2 = offsetMean(c2Pair, offset);
 
@@ -87,45 +85,49 @@ public class DihedralAngleGibbsSampler2 {
             double[] combinedDist = combineBivariateNormals(offsetMeanParent, parentCM, offsetMeanChild1, child1CM,
                     offsetMeanChild2, child2CM);
 
-//            double[] combinedDistWithOffset = getRotatedCombinedDistribution(parentCM, child1Dist, child2Dist);
+            Pair proposedAnglePair = sample(combinedDist, offset);
 
-            double[] proposedAnglePair = sample(combinedDistWithOffset);
-
-            newAngles[phiIndex] = proposedAnglePair[0];
-            newAngles[psiIndex] = proposedAnglePair[1];
+            newAngles[phiIndex] = proposedAnglePair.getPhi();
+            newAngles[psiIndex] = proposedAnglePair.getPsi();
 
             // Calculate density of the proposed angles under the combined distribution
-            logForwardDensity += logBivariateNormalWrappedPDF(proposedAnglePair[0], proposedAnglePair[1], combinedDistWithOffset);
+            logForwardDensity += logBivariateNormalWrappedPDF(proposedAnglePair.getPhi(), proposedAnglePair.getPsi(), combinedDist);
             // Calculate density of the current angles under the combined distribution
-            logBackwardDensity += logBivariateNormalWrappedPDF(nodeValues[phiIndex], nodeValues[psiIndex], combinedDistWithOffset);
+            logBackwardDensity += logBivariateNormalWrappedPDF(nodeValues[phiIndex], nodeValues[psiIndex], combinedDist);
+
         }
 
         return newAngles;
     }
 
-    private Pair sample(double[] combinedDistWithOffset) {
+    public Pair sample(double[] combinedDist, Pair offset) {
 
-//        double[] parentDist = getBivariateNormalParameters(diff,
-//                parentPhi, parentPsi, parentBranchTime);
-//        double[] child1Dist = getBivariateNormalParameters(diff,
-//                c1Phi, c1Psi, child1BranchTime);
-//        double[] child2Dist = getBivariateNormalParameters(diff,
-//                c2Phi, c2Psi, child2BranchTime);
-//
-//        double[] combinedDistWithOffset = getRotatedCombinedDistribution(parentDist, child1Dist, child2Dist);
+        double phi = combinedDist[0];
+        double psi = combinedDist[1];
+        double varPhi = combinedDist[2];
+        double varPsi = combinedDist[3];
+        double covar = combinedDist[4];
 
-        // Save the combined distribution (without phiOffset and psiOffset)
+        // Calculate Cholesky decomposition
+        double a11 = Math.sqrt(varPhi);
+        double a21 = covar / a11;
+        double a22 = Math.sqrt(varPsi - a21 * a21);
+
+        // Generate two independent standard normal samples: z1, z2 ∼N(0,1)
+        double z1 = random.nextGaussian();
+        double z2 = random.nextGaussian();
+
+        // Transform to correlated bivariate normal
+        double sampledPhi = phi + a11 * z1;
+        double sampledPsi = psi + a21 * z1 + a22 * z2;
 
         // Extract the offset for sampling
-        double offsetPhi = combinedDistWithOffset[5];
-        double offsetPsi = combinedDistWithOffset[6];
-
-        //sample one pair of angles
-        Pair sample = sampleFromBivariateNormal(combinedDistWithOffset);
+        double offsetPhi = offset.getPhi();
+        double offsetPsi = offset.getPsi();
 
         // Rotate back
-        double proposedPhi = ToroidalUtils.wrapToMaxAngle((sample[0] - offsetPhi)); //is it necessary - offset?
-        double proposedPsi = ToroidalUtils.wrapToMaxAngle((sample[1] - offsetPsi));
+        double proposedPhi = ToroidalUtils.wrapToMaxAngle((sampledPhi - offsetPhi)); //+ or - offset?
+        double proposedPsi = ToroidalUtils.wrapToMaxAngle((sampledPsi - offsetPsi));
 
         return new Pair(proposedPhi, proposedPsi);
     }
@@ -203,65 +205,44 @@ public class DihedralAngleGibbsSampler2 {
      * @return double[] An array containing [mean1, mean2, variance1, variance2, covariance] for the combined distribution
      */
     public double[] combineBivariateNormals(Pair parent, CovarianceMatrix parentMat, Pair child1, CovarianceMatrix child1Mat, Pair child2, CovarianceMatrix child2Mat) {
-        // Extract parameters for each distribution
-        // For parent
-//        double m1_p = parent[0];
-//        double m2_p = parent[1];
-//        double v1_p = parent[2];
-//        double v2_p = parent[3];
-//        double cv_p = parent[4];
 
-        // For child1
-//        double m1_c1 = child1[0];
-//        double m2_c1 = child1[1];
-//        double v1_c1 = child1[2];
-//        double v2_c1 = child1[3];
-//        double cv_c1 = child1[4];
+        boolean isRoot = parent == null || parentMat == null;
 
-        // For child2
-//        double m1_c2 = child2[0];
-//        double m2_c2 = child2[1];
-//        double v1_c2 = child2[2];
-//        double v2_c2 = child2[3];
-//        double cv_c2 = child2[4];
+        double[] prec_p;
+        double[] pm_p;
+        if (isRoot){
+            prec_p = new double[]{0, 0, 0}; //if isRoot, covariance matrices = 0
+            pm_p = new double[]{0, 0, 0};
+        } else {
+            // For parent
+            prec_p = calculatePrecisionMatrix(parentMat.getVarPhi(), parentMat.getVarPsi(), parentMat.getCovar());
+            pm_p = calculatePrecisionTimesMean(prec_p, parent);
+
+        }
 
         // Calculate precision matrices (inverse of covariance matrices)
         // For parent
-        double[] prec_p = calculatePrecisionMatrix(parentMat.getVarPhi(), parentMat.getVarPsi(), parentMat.getCovar());
+        //double[] prec_p = calculatePrecisionMatrix(parentMat.getVarPhi(), parentMat.getVarPsi(), parentMat.getCovar());
         double prec11_p = prec_p[0];
         double prec22_p = prec_p[1];
         double prec12_p = prec_p[2];
 
+        //For child1
         double[] prec_c1 = calculatePrecisionMatrix(child1Mat.getVarPhi(), child1Mat.getVarPsi(), child1Mat.getCovar());
         double prec11_c1 = prec_c1[0];
         double prec22_c1 = prec_c1[1];
         double prec12_c1 = prec_c1[2];
 
+        //For child2
         double[] prec_c2 = calculatePrecisionMatrix(child2Mat.getVarPhi(), child2Mat.getVarPsi(), child2Mat.getCovar());
         double prec11_c2 = prec_c2[0];
         double prec22_c2 = prec_c2[1];
         double prec12_c2 = prec_c2[2];
 
         // Calculate precision * mean for each distribution
-//        double[] mean_p = {parent.getPhi(), parent.getPsi()};
-//        double[] mean_c1 = {child1.getPhi(), child1.getPsi()};
-//        double[] mean_c2 = {child2.getPhi(), child2.getPsi()};
-
-        double[] pm_p = calculatePrecisionTimesMean(prec_p, parent);
+        //double[] pm_p = calculatePrecisionTimesMean(prec_p, parent);
         double[] pm_c1 = calculatePrecisionTimesMean(prec_c1, child1);
         double[] pm_c2 = calculatePrecisionTimesMean(prec_c2, child2);
-
-        //for parent
-//        double pm1_p = pm_p[0];
-//        double pm2_p = pm_p[1];
-
-        //for child1
-//        double pm1_c1 = pm_c1[0];
-//        double pm2_c1 = pm_c1[1];
-
-        //for child2
-//        double pm1_c2 = pm_c2[0];
-//        double pm2_c2 = pm_c2[1];
 
         // Sum these products
         double sum_pm1 = pm_p[0] + pm_c1[0] + pm_c2[0];
@@ -372,7 +353,6 @@ public class DihedralAngleGibbsSampler2 {
      * Rotates a bivariate normal distribution by applying offsets to the mean components.
      * This handles the circular nature of angular data.
      *
-     * @param distributionParam An array containing [mean1, mean2, variance1, variance2, covariance]
      * @param offset            An array containing [offset1, offset2] to be added to the means
      * @return A new array containing the rotated distribution parameters
      */
@@ -406,43 +386,35 @@ public class DihedralAngleGibbsSampler2 {
         return new Pair(x1, x2);
     }
 
-//    // getBivariateNormalParameters: 1. Extract all distributions as [mean1, mean2, var1, var2, covar]
-//    public double[] sampleNodesAngles(double[] parentDist, double[] child1Dist, double[] child2Dist) {
-//
-//        // Get combined distribution with rotation information
-//        double[] combinedDistWithOffset = getRotatedCombinedDistribution(parentDist, child1Dist, child2Dist);
-//
-//        // Extract the distribution parameters and offset
-//        double[] combinedDist = new double[5]; // First 5 elements are the distribution parameters
-//        System.arraycopy(combinedDistWithOffset, 0, combinedDist, 0, 5);
-//
-//        double offsetPhi = combinedDistWithOffset[5];
-//        double offsetPsi = combinedDistWithOffset[6];
-//
-//        // 6. Sample from combined distribution
-//        double[] sample = sampleFromBivariateNormal(combinedDist);
-//
-//        // 7. Rotate back
-//        double phi = (sample[0] - offsetPhi) % (2*Math.PI);
-//        double psi = (sample[1] - offsetPsi) % (2*Math.PI);
-//
-//        // Ensure positive angles
-//        if (phi < 0) phi += 2*Math.PI;
-//        if (psi < 0) psi += 2*Math.PI;
-//
-//        return new double[] {phi, psi};
-//    }
 
     private Pair getOffsetMean(Pair parent, Pair child1, Pair child2) {
-        // Extract mean angles for optimal rotation
-        double[][] meanAngles = {
-                {parent.getPhi(), parent.getPsi()},
-                {child1.getPhi(), child1.getPsi()},
-                {child2.getPhi(), child2.getPsi()}
-        };
+        boolean isRoot = parent == null;
+
+        double[][] meanAngles;
+        double[] offset;
+
+        if (isRoot) {
+            meanAngles = new double[][]{
+                    {child1.getPhi(), child1.getPsi()},
+                    {child2.getPhi(), child2.getPsi()}
+            };
+            offset = findOptimalRotation(meanAngles);
+        } else{
+            meanAngles = new double[][]{
+                    {parent.getPhi(), parent.getPsi()},
+                    {child1.getPhi(), child1.getPsi()},
+                    {child2.getPhi(), child2.getPsi()}
+            };
+            offset = findOptimalRotation(meanAngles);
+        }
+//        // Extract mean angles for optimal rotation
+//        double[][] meanAngles = {
+//                {parent.getPhi(), parent.getPsi()},
+//                {child1.getPhi(), child1.getPsi()},
+//                {child2.getPhi(), child2.getPsi()}
+//        };
 
         // Find optimal offset for phi and psi
-        double[] offset = findOptimalRotation(meanAngles);
         return new Pair(offset[0], offset[1]);
     }
 
@@ -482,12 +454,58 @@ public class DihedralAngleGibbsSampler2 {
      * f(x₁, x₂) = (1/(2π|Σ|^(1/2))) * exp(-0.5 * (x-μ)ᵀ Σ⁻¹ (x-μ))
      * Find the best offset to minimise distance between  [phi, psi] and distribution mean
      */
-    public double logBivariateNormalWrappedPDF(double phi, double psi, double[] params) {
-        double mean1 = params[0];
-        double mean2 = params[1];
-        double var1 = params[2];
-        double var2 = params[3];
-        double covar = params[4];
+//    public double logBivariateNormalWrappedPDF(double phi, double psi, double[] combineDist) {
+//        double mean1 = combineDist[0];
+//        double mean2 = combineDist[1];
+//        double var1 = combineDist[2];
+//        double var2 = combineDist[3];
+//        double covar = combineDist[4];
+//
+//        // Create angle arrays for finding optimal rotation
+//        double[][] angles = {
+//                {phi, psi},
+//                {mean1, mean2}
+//        };
+//
+//        //         todo: do we need to rotate sampled angles and current angles closet to the combined distribution mean?
+//        double[] offset = findOptimalRotation(angles);
+//
+//        // Apply rotation to make angles closest to the mean
+//        double offsetPhi = ToroidalUtils.wrapToMaxAngle(phi + offset[0]);
+//        double offsetPsi = ToroidalUtils.wrapToMaxAngle(psi + offset[1]);
+//
+//        // Apply same rotation to the mean
+//        double offsetMean1 = ToroidalUtils.wrapToMaxAngle(mean1 + offset[0]);
+//        double offsetMean2 = ToroidalUtils.wrapToMaxAngle(mean2 + offset[1]);
+//
+//        // Calculate precision matrix elements
+//        double[] prec = calculatePrecisionMatrix(var1, var2, covar);
+//        double prec11 = prec[0];
+//        double prec22 = prec[1];
+//        double prec12 = prec[2];
+//
+//        // Calculate determinant of covariance matrix
+//        double det = var1 * var2 - covar * covar;
+//
+//        // Calculate deviation from mean
+//        double dx = offsetPhi - offsetMean1;
+//        double dy = offsetPsi - offsetMean2;
+//
+//        // Calculate the exponent part (Mahalanobis distance)
+//        double exponent = -0.5 * (prec11*dx*dx + 2*prec12*dx*dy + prec22*dy*dy);
+//
+//        // Calculate log normalization constant
+//        double logNormConst = -Math.log(2 * Math.PI) - 0.5 * Math.log(det);
+//
+//        return logNormConst + exponent;
+//    }
+
+    public double logBivariateNormalWrappedPDF(double phi, double psi, double[] combineDist) {
+        double mean1 = combineDist[0];
+        double mean2 = combineDist[1];
+        double var1 = combineDist[2];
+        double var2 = combineDist[3];
+        double covar = combineDist[4];
 
         // Create angle arrays for finding optimal rotation
         double[][] angles = {
@@ -495,17 +513,16 @@ public class DihedralAngleGibbsSampler2 {
                 {mean1, mean2}
         };
 
-//         Find the optimal rotation
-//         todo: do we need to rotate sampled angles and current angles closet to the combined distribution mean?
+        //         todo: do we need to rotate sampled angles and current angles closet to the combined distribution mean?
         double[] offset = findOptimalRotation(angles);
 
         // Apply rotation to make angles closest to the mean
-        double rotatedPhi = ToroidalUtils.wrapToMaxAngle(phi + offset[0]);
-        double rotatedPsi = ToroidalUtils.wrapToMaxAngle(psi + offset[1]);
+        double offsetPhi = ToroidalUtils.wrapToMaxAngle(phi + offset[0]);
+        double offsetPsi = ToroidalUtils.wrapToMaxAngle(psi + offset[1]);
 
         // Apply same rotation to the mean
-        double rotatedMean1 = ToroidalUtils.wrapToMaxAngle(mean1 + offset[0]);
-        double rotatedMean2 = ToroidalUtils.wrapToMaxAngle(mean2 + offset[1]);
+        double offsetMean1 = ToroidalUtils.wrapToMaxAngle(mean1 + offset[0]);
+        double offsetMean2 = ToroidalUtils.wrapToMaxAngle(mean2 + offset[1]);
 
         // Calculate precision matrix elements
         double[] prec = calculatePrecisionMatrix(var1, var2, covar);
@@ -517,8 +534,8 @@ public class DihedralAngleGibbsSampler2 {
         double det = var1 * var2 - covar * covar;
 
         // Calculate deviation from mean
-        double dx = rotatedPhi - rotatedMean1;
-        double dy = rotatedPsi - rotatedMean2;
+        double dx = offsetPhi - offsetMean1;
+        double dy = offsetPsi - offsetMean2;
 
         // Calculate the exponent part (Mahalanobis distance)
         double exponent = -0.5 * (prec11*dx*dx + 2*prec12*dx*dy + prec22*dy*dy);

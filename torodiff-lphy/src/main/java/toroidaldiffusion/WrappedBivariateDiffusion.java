@@ -175,7 +175,7 @@ public class WrappedBivariateDiffusion {
             double eqt = Math.exp(q * t);
             double cqt = (eqt + 1.0 / eqt) / 2.0;
             double sqt = (eqt - 1.0 / eqt) / 2.0;
-            ExptA = SimpleMatrix.identity(2).scale(cqt + s * sqt / q).minus(A.scale((sqt / q))).scale(1.0 / est);
+            ExptA = SimpleMatrix.identity(2).scale(cqt + s * sqt / q).minus(A.scale((sqt / q))).scale(1.0 / est); // e⁻ᵗᴬ
 
             double z = 1.0 / (Gammat.get(0, 0) * Gammat.get(1, 1) - Gammat.get(0, 1) * Gammat.get(1, 0));
             invGammat.set(0, 0, z * Gammat.get(1, 1));
@@ -248,7 +248,7 @@ public class WrappedBivariateDiffusion {
         x.set(2, phit);
         x.set(3, psit);
 
-        SimpleMatrix xmu = new SimpleMatrix(2, 1);
+        SimpleMatrix xmu = new SimpleMatrix(2, 1); //deviation vector
         xmu.set(0, 0, x.get(0, 0) - mu.get(0, 0));
         xmu.set(1, 0, x.get(1, 0) - mu.get(1, 0));
 
