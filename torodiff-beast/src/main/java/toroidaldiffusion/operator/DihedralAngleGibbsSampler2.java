@@ -14,7 +14,7 @@ public class DihedralAngleGibbsSampler2 {
 
     private WrappedBivariateDiffusion diff; //calculation engine
     public double logHastingsratio;
-    public double varianceInflation = 100;
+//    public double varianceInflation = 100;
     private final Random random = new Random();
 
     /**
@@ -27,7 +27,7 @@ public class DihedralAngleGibbsSampler2 {
     }
 
 
-    public double[] gibbsSampling(Node node, DihedralAngleTreeModel daTreeModel) {
+    public double[] gibbsSampling(Node node, DihedralAngleTreeModel daTreeModel, double varianceInflation) {
         int siteCount = daTreeModel.getSiteCount();
         double[] newAngles = new double[siteCount * 2];
         double logBackwardDensity = 0;
@@ -82,8 +82,8 @@ public class DihedralAngleGibbsSampler2 {
             CovarianceMatrix child1CM = new CovarianceMatrix(diff, child1BranchTime);
             CovarianceMatrix child2CM = new CovarianceMatrix(diff, child2BranchTime);
 
-            BivariateNormalDistParam combinedDistParam = combineBivariateNormals(offsetMeanParent, parentCM, offsetMeanChild1, child1CM,
-                    offsetMeanChild2, child2CM);
+            BivariateNormalDistParam combinedDistParam = combineBivariateNormals(offsetMeanParent, parentCM,
+                    offsetMeanChild1, child1CM, offsetMeanChild2, child2CM, varianceInflation);
 
             // in original frame of reference
             Pair proposedAnglePair = sample(combinedDistParam, offset);
@@ -137,15 +137,20 @@ public class DihedralAngleGibbsSampler2 {
      * This is used for Gibbs-like sampling at an internal node of a tree,
      * combining bivariate distribution from a parent node and two child nodes.
      * e.g.
-     * @param parent = a mean vector(μ) of biviriate distribution: [meanPhi, meanPsi]
-     * @param parentcovMatrix =  a covariance matrix (Σ) containing [invVarPsi, invVarPhi, invCovar]
-     * Combining Precision Matrices Σ-1 (Ω): Ω_Combined = Ω_Parent + Ω_Ch1 + Ω_Ch2
-     * Combining Precision * Mean (Ω * μ): Ω_Combined * μ_Combined = Ω_Parent * μ_Parent + Ω_Ch1 * μ_Ch1 + Ω_Ch2 * μ_Ch2
-     * Recover combined covariance matrix: Σ_Combined = Ω_Combined^-1
-     * Recover combined mean: μ_Combined = Ω_Combined * μ_Combined * Ω_Combined^-1
+     *
+     * @param parent            = a mean vector(μ) of biviriate distribution: [meanPhi, meanPsi]
+     * @param parentcovMatrix   =  a covariance matrix (Σ) containing [invVarPsi, invVarPhi, invCovar]
+     *                          Combining Precision Matrices Σ-1 (Ω): Ω_Combined = Ω_Parent + Ω_Ch1 + Ω_Ch2
+     *                          Combining Precision * Mean (Ω * μ): Ω_Combined * μ_Combined = Ω_Parent * μ_Parent + Ω_Ch1 * μ_Ch1 + Ω_Ch2 * μ_Ch2
+     *                          Recover combined covariance matrix: Σ_Combined = Ω_Combined^-1
+     *                          Recover combined mean: μ_Combined = Ω_Combined * μ_Combined * Ω_Combined^-1
+     * @param varianceInflation
      * @return
      */
-    public BivariateNormalDistParam combineBivariateNormals(Pair parent, CovarianceMatrix parentcovMatrix, Pair child1, CovarianceMatrix ch1covMatrix, Pair child2, CovarianceMatrix ch2covMatrix) {
+    public BivariateNormalDistParam combineBivariateNormals(Pair parent, CovarianceMatrix parentcovMatrix,
+                                                            Pair child1, CovarianceMatrix ch1covMatrix,
+                                                            Pair child2, CovarianceMatrix ch2covMatrix,
+                                                            double varianceInflation) {
 
         boolean isRoot = parent == null || parentcovMatrix == null;
 
@@ -353,7 +358,8 @@ public class DihedralAngleGibbsSampler2 {
      * Multivariate Normal Distribution PDF: p(x)= 1/((2π)^d/2 * ∣Σ∣^0.5) * exp(−0.5(x−μ)T * Σ−1(x−μ))
      * @return the density of the given angle pair after offsetting to match distribution frame of reference
      */
-    public double logBivariateNormalWrappedPDF(double phi, double psi, Pair offset, BivariateNormalDistParam combinedDistParam) {
+    public double logBivariateNormalWrappedPDF(double phi, double psi, Pair offset,
+                                               BivariateNormalDistParam combinedDistParam) {
         double meanPhi = combinedDistParam.meanPhi;
         double meanPsi = combinedDistParam.meanPsi;
         double varPhi = combinedDistParam.varPhi;

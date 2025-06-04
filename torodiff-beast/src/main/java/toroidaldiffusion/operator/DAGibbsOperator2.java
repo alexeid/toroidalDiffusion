@@ -5,7 +5,6 @@ import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.TreeInterface;
 import beast.base.inference.Operator;
 import beast.base.inference.parameter.RealParameter;
-import beast.base.inference.util.InputUtil;
 import beast.base.util.Randomizer;
 import toroidaldiffusion.WrappedBivariateDiffusion;
 import toroidaldiffusion.evolution.likelihood.PhyloWrappedBivariateDiffusion;
@@ -19,17 +18,21 @@ public class DAGibbsOperator2 extends Operator {
     final public Input<RealParameter> parameterInput =
             new Input<>("parameter", "the parameter to operate a random walk on.",
                     Input.Validate.REQUIRED);
+    final public Input<Double> varianceInflationInput =
+            new Input<>("varianceInflation", "", 100.0);
 
     private DihedralAngleTreeModel daTreeModel;
     private WrappedBivariateDiffusion diff;
     private DihedralAngleGibbsSampler2 sampler;
-
+    private double varianceInflation = 100.0;
 
     @Override
     public void initAndValidate() {
         this.daTreeModel = (DihedralAngleTreeModel) PhyloWrappedBivariateDiffusionInput.get().getDaTreeModel();
         this.diff = PhyloWrappedBivariateDiffusionInput.get().getDiff();
         this.sampler = new DihedralAngleGibbsSampler2();//need to set parameters
+        this.varianceInflation = varianceInflationInput.get();
+
         sampler.setDiff(diff);
 
 //        super.initAndValidate();
@@ -63,7 +66,7 @@ public class DAGibbsOperator2 extends Operator {
         }
 
         // 4. Perform Gibbs sampling to get new angles
-        double[] proposedAngles = sampler.gibbsSampling(node, daTreeModel);
+        double[] proposedAngles = sampler.gibbsSampling(node, daTreeModel, varianceInflation);
 
 //        // Accept the proposal
         for (int i = 0; i < proposedAngles.length; i++) {
