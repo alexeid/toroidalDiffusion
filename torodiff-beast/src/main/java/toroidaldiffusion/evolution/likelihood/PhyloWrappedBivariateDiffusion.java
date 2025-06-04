@@ -217,11 +217,6 @@ public class PhyloWrappedBivariateDiffusion extends GenericDATreeLikelihood {
                                 }
                             }
 
-//                            if (changeSiteindexChildren != -1) {
-//                                this.branchLogLikelihoods[n] = daBranchLdCore.computeBranchLKbySite(daTreeModel, parent, node, branchTime, changeSiteindexChildren);
-//                            } else {
-//                                this.branchLogLikelihoods[n] = daBranchLdCore.computeBranchLKbySite(daTreeModel, parent, node, branchTime, changeSiteindexParent);
-//                            }
                         }
 
                     } catch (Exception e) {

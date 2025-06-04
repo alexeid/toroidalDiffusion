@@ -9,13 +9,12 @@ import toroidaldiffusion.evolution.tree.DihedralAngleTreeModel;
 
 import java.util.Random;
 
+
 public class DihedralAngleGibbsSampler2 {
 
     private WrappedBivariateDiffusion diff; //calculation engine
-//    private double logForwardDensity;
-//    private double logBackwardDensity;
     public double logHastingsratio;
-
+    public double varianceInflation = 100;
     private final Random random = new Random();
 
     /**
@@ -86,20 +85,24 @@ public class DihedralAngleGibbsSampler2 {
             BivariateNormalDistParam combinedDistParam = combineBivariateNormals(offsetMeanParent, parentCM, offsetMeanChild1, child1CM,
                     offsetMeanChild2, child2CM);
 
+            // in original frame of reference
             Pair proposedAnglePair = sample(combinedDistParam, offset);
 
             newAngles[phiIndex] = proposedAnglePair.getPhi();
             newAngles[psiIndex] = proposedAnglePair.getPsi();
 
             // Calculate density of the proposed angles under the combined distribution
-            logForwardDensity += logBivariateNormalWrappedPDF(proposedAnglePair.getPhi(), proposedAnglePair.getPsi(), combinedDistParam);
+            logForwardDensity += logBivariateNormalWrappedPDF(proposedAnglePair.getPhi(), proposedAnglePair.getPsi(), offset, combinedDistParam);
             // Calculate density of the current angles under the combined distribution
-            logBackwardDensity += logBivariateNormalWrappedPDF(nodeValues[phiIndex], nodeValues[psiIndex], combinedDistParam);
+            logBackwardDensity += logBivariateNormalWrappedPDF(nodeValues[phiIndex], nodeValues[psiIndex], offset, combinedDistParam);
 
         }
         //propose - current
         logHastingsratio = logForwardDensity - logBackwardDensity;
         // all sites
+
+
+
         return newAngles;
     }
 
@@ -131,109 +134,125 @@ public class DihedralAngleGibbsSampler2 {
 
     /**
      * Combines three bivariate normal distributions into a single bivariate normal.
-     * This is used for Gibbs-like sampling at an internal node of a phylogenetic tree,
-     * combining information from a parent node and two child nodes.
-     *
-     * @param parent An array containing [mean1, mean2, variance1, variance2, covariance] for the parent node
-     * @param child1 An array containing [mean1, mean2, variance1, variance2, covariance] for the first child node
-     * @param child2 An array containing [mean1, mean2, variance1, variance2, covariance] for the second child node
-     * @return double[] An array containing [mean1, mean2, variance1, variance2, covariance] for the combined distribution
+     * This is used for Gibbs-like sampling at an internal node of a tree,
+     * combining bivariate distribution from a parent node and two child nodes.
+     * e.g.
+     * @param parent = a mean vector(μ) of biviriate distribution: [meanPhi, meanPsi]
+     * @param parentcovMatrix =  a covariance matrix (Σ) containing [invVarPsi, invVarPhi, invCovar]
+     * Combining Precision Matrices Σ-1 (Ω): Ω_Combined = Ω_Parent + Ω_Ch1 + Ω_Ch2
+     * Combining Precision * Mean (Ω * μ): Ω_Combined * μ_Combined = Ω_Parent * μ_Parent + Ω_Ch1 * μ_Ch1 + Ω_Ch2 * μ_Ch2
+     * Recover combined covariance matrix: Σ_Combined = Ω_Combined^-1
+     * Recover combined mean: μ_Combined = Ω_Combined * μ_Combined * Ω_Combined^-1
+     * @return
      */
-    public BivariateNormalDistParam combineBivariateNormals(Pair parent, CovarianceMatrix parentMat, Pair child1, CovarianceMatrix child1Mat, Pair child2, CovarianceMatrix child2Mat) {
+    public BivariateNormalDistParam combineBivariateNormals(Pair parent, CovarianceMatrix parentcovMatrix, Pair child1, CovarianceMatrix ch1covMatrix, Pair child2, CovarianceMatrix ch2covMatrix) {
 
-        boolean isRoot = parent == null || parentMat == null;
+        boolean isRoot = parent == null || parentcovMatrix == null;
 
-        double[] prec_p;
-        double[] pm_p;
+        double[] precMatrixParent;
+        double[] prectimesMeanParent;
+
+        //For parent
+        //IF isRoot = TRUE, covariance matrix = 0, mean vector = 0
         if (isRoot){
-            prec_p = new double[]{0, 0, 0}; //if isRoot, covariance matrices = 0
-            pm_p = new double[]{0, 0, 0};
+            precMatrixParent = new double[]{0, 0, 0};
+            prectimesMeanParent = new double[]{0, 0, 0};
         } else {
-            // For parent
-            prec_p = calculatePrecisionMatrix(parentMat.getVarPhi(), parentMat.getVarPsi(), parentMat.getCovar());
-            pm_p = calculatePrecisionTimesMean(prec_p, parent);
-
+            // Calculate precision matrices (Σ-1)
+            precMatrixParent = calculatePrecisionMatrix(parentcovMatrix.getVarPhi(), parentcovMatrix.getVarPsi(), parentcovMatrix.getCovar());
+            //Calculate Precision * Mean
+            prectimesMeanParent = calculatePrecisionTimesMean(precMatrixParent, parent);
         }
 
-        // Calculate precision matrices (inverse of covariance matrices)
-        // For parent
-        //double[] prec_p = calculatePrecisionMatrix(parentMat.getVarPhi(), parentMat.getVarPsi(), parentMat.getCovar());
-        double prec11_p = prec_p[0];
-        double prec22_p = prec_p[1];
-        double prec12_p = prec_p[2];
+        // Calculate precision matrices for child1 + child2
+        double[] precMatrixCh1 = calculatePrecisionMatrix(ch1covMatrix.getVarPhi(), ch1covMatrix.getVarPsi(), ch1covMatrix.getCovar());
+        double[] precMatrixCh2 = calculatePrecisionMatrix(ch2covMatrix.getVarPhi(), ch2covMatrix.getVarPsi(), ch2covMatrix.getCovar());
+
+        // Calculate precision * mean for child1 + child2
+        double[] prectimesMeanCh1 = calculatePrecisionTimesMean(precMatrixCh1, child1);
+        double[] prectimesMeanCh2 = calculatePrecisionTimesMean(precMatrixCh2, child2);
+
+//        //invVarPsi, invVarPhi, invCovar
+//        double invVarPsiParent = precMatrixParent[0];
+//        double invVarPhiParent = precMatrixParent[1];
+//        double invCovarParent = precMatrixParent[2];
 
         //For child1
-        double[] prec_c1 = calculatePrecisionMatrix(child1Mat.getVarPhi(), child1Mat.getVarPsi(), child1Mat.getCovar());
-        double prec11_c1 = prec_c1[0];
-        double prec22_c1 = prec_c1[1];
-        double prec12_c1 = prec_c1[2];
+//        double invVarPsiCh1 = precMatrixCh1[0];
+//        double invVarPhiCh1 = precMatrixCh1[1];
+//        double invCovarCh1 = precMatrixCh1[2];
 
         //For child2
-        double[] prec_c2 = calculatePrecisionMatrix(child2Mat.getVarPhi(), child2Mat.getVarPsi(), child2Mat.getCovar());
-        double prec11_c2 = prec_c2[0];
-        double prec22_c2 = prec_c2[1];
-        double prec12_c2 = prec_c2[2];
-
-        // Calculate precision * mean for each distribution
-        //double[] pm_p = calculatePrecisionTimesMean(prec_p, parent);
-        double[] pm_c1 = calculatePrecisionTimesMean(prec_c1, child1);
-        double[] pm_c2 = calculatePrecisionTimesMean(prec_c2, child2);
+//        double invVarPsiCh2 = precMatrixCh2[0];
+//        double invVarPhiCh2 = precMatrixCh2[1];
+//        double invCovarCh2 = precMatrixCh2[2];
 
         // Sum these products
-        double sum_pm1 = pm_p[0] + pm_c1[0] + pm_c2[0];
-        double sum_pm2 = pm_p[1] + pm_c1[1] +  pm_c2[1];
+        double sumPrectimesMean1 = prectimesMeanParent[0] + prectimesMeanCh1[0] + prectimesMeanCh2[0];
+        double sumPrectimesMean2 = prectimesMeanParent[1] + prectimesMeanCh1[1] +  prectimesMeanCh2[1];
 
         // Combine precision matrices (add them)
-        double comb_prec11 = prec11_p + prec11_c1 + prec11_c2;
-        double comb_prec22 = prec22_p + prec22_c1 + prec22_c2;
-        double comb_prec12 = prec12_p + prec12_c1 + prec12_c2;
+        double combInvVarPsi = precMatrixParent[0] + precMatrixCh1[0] + precMatrixCh2[0];
+        double combInvVarPhi = precMatrixParent[1] + precMatrixCh1[1] + precMatrixCh2[1];
+        double combInvCovar = precMatrixParent[2] + precMatrixCh1[2] + precMatrixCh2[2];
 
-        // Calculate combined covariance matrix (inverse of combined precision matrix)
-        double comb_det = comb_prec11 * comb_prec22 - comb_prec12 * comb_prec12;
-        double comb_v1 = comb_prec22 / comb_det;
-        double comb_v2 = comb_prec11 / comb_det;
-        double comb_cv = -comb_prec12 / comb_det;
+        // Recover combined covariance matrix (inverse of combined precision matrix)
+        double comb_det = combInvVarPsi * combInvVarPhi - combInvCovar * combInvCovar;  //det(Ω)=v1*v2 − cv2
+//        double combVarPhi = combInvVarPhi / comb_det;
+//        double combVarPsi = combInvVarPsi / comb_det;
+        double combVarPhi = (combInvVarPhi / comb_det) * varianceInflation;
+        double combVarPsi = (combInvVarPsi / comb_det) * varianceInflation;
+
+        double combCovar = -combInvCovar / comb_det;
 
         // Calculate combined means
-        double comb_m1 = (comb_prec22 * sum_pm1 - comb_prec12 * sum_pm2) / comb_det;
-        double comb_m2 = (comb_prec11 * sum_pm2 - comb_prec12 * sum_pm1) / comb_det;
+        double combMeanPhi = (combInvVarPhi * sumPrectimesMean1 - combInvCovar * sumPrectimesMean2) / comb_det;
+        double combMeanPsi = (combInvVarPsi * sumPrectimesMean2 - combInvCovar * sumPrectimesMean1) / comb_det;
 
         // Return the parameters of the combined distribution
-        return new BivariateNormalDistParam(comb_m1, comb_m2, comb_v1, comb_v2, comb_cv);
+        return new BivariateNormalDistParam(combMeanPhi, combMeanPsi, combVarPhi, combVarPsi, combCovar);
     }
 
 
     /**
      * Calculates the precision matrix (inverse of covariance matrix) for a bivariate normal distribution.
      *
-     * @param v1 Variance of the first variable
-     * @param v2 Variance of the second variable
-     * @param cv Covariance between the two variables
-     * @return double[] Array containing [precision11, precision22, precision12]
+     * @param varPhi Variance of phi
+     * @param varPsi Variance of psi
+     * @param covar Covariance between phi and psi
+     * Σ = [[varPhi covar]],
+            [covar varPsi]]
+     * Σ-1 = 1/det * [[varPsi -covar]], = [[invVarPsi invCovar]],
+     *                [-covar  varPhi]]    [invCovar  invVarPhi]]
+     * @return double[] Array containing [invVarPsi, invVarPhi, invCovar]
      */
-    private double[] calculatePrecisionMatrix(double v1, double v2, double cv) {
-        double det = v1 * v2 - cv * cv;
-        double prec11 = v2 / det;
-        double prec22 = v1 / det;
-        double prec12 = -cv / det;
+    public double[] calculatePrecisionMatrix(double varPhi, double varPsi, double covar) {
+        double det = varPhi * varPsi - covar * covar; // det = 1 / (varPsi*varPsi - covar^2)
+        double invVarPsi = varPsi / det;
+        double invVarPhi = varPhi / det;
+        double invCovar = -covar / det;
 
-        return new double[]{prec11, prec22, prec12};
+        return new double[]{invVarPsi, invVarPhi, invCovar};
     }
 
     /**
      * Calculates the product of precision matrix and mean vector.
      *
-     * @param prec Array containing precision matrix elements [prec11, prec22, prec12]
-     * @param mean Array containing means [mean1, mean2]
-     * @return double[] Array containing [prec*mean]_1, [prec*mean]_2
+     * @param precMatrix Σ-1(Ω) = [[invVarPsi invCovar]],
+     *                             [invCovar  invVarPhi]]
+     * @param mean mean vector(μ) of biviriate distribution [meanPhi, meanPsi]
+     *
+     * precMatrix * mean = [[invVarPsi invCovar]], * [meanPhi,
+     *                      [invCovar  invVarPhi]]    meanPsi]
+     * @return a vector = [prectimesMean1, prectimesMean2]
      */
-    private double[] calculatePrecisionTimesMean(double[] prec, Pair mean) {
-        double prec11 = prec[0], prec22 = prec[1], prec12 = prec[2];
+    public double[] calculatePrecisionTimesMean(double[] precMatrix, Pair mean) {
+        double invVarPsi = precMatrix[0], invVarPhi = precMatrix[1], invCovar = precMatrix[2];
 
-        double pm1 = prec11 * mean.getPhi() + prec12 * mean.getPsi();
-        double pm2 = prec12 * mean.getPhi() + prec22 * mean.getPsi();
+        double prectimesMean1 = invVarPsi * mean.getPhi() + invCovar * mean.getPsi(); //(Ω * μ)1 = invVarPsi * meanPhi + invCovar * meanPsi
+        double prectimesMean2 = invCovar * mean.getPhi() + invVarPhi * mean.getPsi(); //(Ω * μ)2 = invCovar * meanPhi + invVarPhi * meanPsi
 
-        return new double[]{pm1, pm2};
+        return new double[]{prectimesMean1, prectimesMean2};
     }
 
     /**
@@ -285,6 +304,7 @@ public class DihedralAngleGibbsSampler2 {
         return new Pair(bestOffset1, bestOffset2); // a pair of offsets for phi and psi
     }
 
+
     /**
      * Rotates a bivariate normal distribution by applying offsets to the anglePair components.
      * This handles the circular nature of angular data.
@@ -292,32 +312,15 @@ public class DihedralAngleGibbsSampler2 {
      * @param offset            An array containing [offset1, offset2] to be added to the means
      * @return A new array containing the rotated distribution parameters
      */
-    private Pair offsetAnglePairAndWrap(Pair anglePair, Pair offset) {
+    public Pair offsetAnglePairAndWrap(Pair anglePair, Pair offset) {
         // offset means only
         double newPhi = ToroidalUtils.wrapToMaxAngle(anglePair.getPhi() + offset.getPhi()); // offset mean1 (phi)
         double newPsi = ToroidalUtils.wrapToMaxAngle(anglePair.getPsi() + offset.getPsi()); // offset mean2 (psi)
         return new Pair(newPhi, newPsi);
     }
 
-    public Pair sampleFromBivariateNormal(Pair mean, CovarianceMatrix covMat) {
-        // Calculate Cholesky decomposition
-        double a11 = Math.sqrt(covMat.getVarPhi());
-        double a21 = covMat.getCovar() / a11;
-        double a22 = Math.sqrt(covMat.getVarPsi() - a21 * a21);
 
-        // Generate two independent standard normal samples
-        double z1 = random.nextGaussian();
-        double z2 = random.nextGaussian();
-
-        // Transform to correlated bivariate normal
-        double x1 = mean.getPhi() + a11 * z1;
-        double x2 = mean.getPsi() + a21 * z1 + a22 * z2;
-
-        return new Pair(x1, x2);
-    }
-
-
-    private Pair getOffsetMean(Pair parent, Pair child1, Pair child2) {
+    public Pair getOffsetMean(Pair parent, Pair child1, Pair child2) {
         boolean isRoot = parent == null;
 
         double[][] meanAngles;
@@ -337,18 +340,20 @@ public class DihedralAngleGibbsSampler2 {
             };
             offset = findOptimalRotation(meanAngles);
         }
-//        // Extract mean angles for optimal rotation
-//        double[][] meanAngles = {
-//                {parent.getPhi(), parent.getPsi()},
-//                {child1.getPhi(), child1.getPsi()},
-//                {child2.getPhi(), child2.getPsi()}
-//        };
 
-        // Find optimal offset for phi and psi
         return offset;
     }
 
-    public double logBivariateNormalWrappedPDF(double phi, double psi, BivariateNormalDistParam combinedDistParam) {
+
+    /**
+     *
+     * @param phi original frame of reference
+     * @param psi original frame of reference
+     * @param combinedDistParam offset frame of reference
+     * Multivariate Normal Distribution PDF: p(x)= 1/((2π)^d/2 * ∣Σ∣^0.5) * exp(−0.5(x−μ)T * Σ−1(x−μ))
+     * @return the density of the given angle pair after offsetting to match distribution frame of reference
+     */
+    public double logBivariateNormalWrappedPDF(double phi, double psi, Pair offset, BivariateNormalDistParam combinedDistParam) {
         double meanPhi = combinedDistParam.meanPhi;
         double meanPsi = combinedDistParam.meanPsi;
         double varPhi = combinedDistParam.varPhi;
@@ -358,39 +363,29 @@ public class DihedralAngleGibbsSampler2 {
         Pair angle = new Pair(phi, psi);
         Pair mean = new Pair(meanPhi, meanPsi);
 
-        // Create angle arrays for finding optimal rotation
-        double[][] angles = {
-                {phi, psi},
-                {meanPhi, meanPsi}
-        };
-
-        // TODO bad coding to use double[][] angles
-        //         todo: do we need to rotate sampled angles and current angles closet to the combined distribution mean?
-        Pair offset = findOptimalRotation(angles);
-
         // Apply rotation to make angles closest to the mean
         Pair offsetAngle = offsetAnglePairAndWrap(angle, offset);
 
-        // Apply same rotation to the mean
+        // Apply the same rotation to the mean
         Pair offsetMean = offsetAnglePairAndWrap(mean, offset);
 
-        // Calculate precision matrix elements
-        double[] prec = calculatePrecisionMatrix(varPhi, varPsi, covar);
-        double prec11 = prec[0];
-        double prec22 = prec[1];
-        double prec12 = prec[2];
-
+        // Calculate precision matrix elements: Σ−1
+        double[] precMatrix = calculatePrecisionMatrix(varPhi, varPsi, covar);
+        double invVarPsi = precMatrix[0];
+        double invVarPhi = precMatrix[1];
+        double invCovar = precMatrix[2];
         // Calculate determinant of covariance matrix
         double det = varPhi * varPsi - covar * covar;
 
-        // Calculate deviation from mean
+        // Calculate deviation from mean: (x − μ)
         double dx = offsetAngle.getPhi() - offsetMean.getPhi();
         double dy = offsetAngle.getPsi() - offsetMean.getPsi();
 
-        // Calculate the exponent part (Mahalanobis distance)
-        double exponent = -0.5 * (prec11*dx*dx + 2*prec12*dx*dy + prec22*dy*dy);
+        // Calculate the exponent part (Mahalanobis distance): (x−μ)T * Σ−1 * (x−μ)
+        // multivariate normal scalling factor = -0.5
+        double exponent = -0.5 * (invVarPsi*dx*dx + 2*invCovar*dx*dy + invVarPhi*dy*dy);
 
-        // Calculate log normalization constant
+        // Calculate log normalization constant: 1/((2π)^d/2 * ∣Σ∣^0.5)
         double logNormConst = -Math.log(2 * Math.PI) - 0.5 * Math.log(det);
 
         return logNormConst + exponent;
