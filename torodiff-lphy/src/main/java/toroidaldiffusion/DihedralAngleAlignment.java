@@ -5,6 +5,8 @@ import lphy.base.evolution.alignment.AugmentedAlignment;
 import lphy.base.evolution.tree.TimeTreeNode;
 import lphy.core.logger.TextFileFormatted;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -170,6 +172,7 @@ public class DihedralAngleAlignment implements AugmentedAlignment<Pair>, TextFil
 
     //*** for logging to file ***//
 
+    @Deprecated
     @Override
     public List<String> getTextForFile() {
         List<String> lines = new ArrayList<>();
@@ -218,6 +221,46 @@ public class DihedralAngleAlignment implements AugmentedAlignment<Pair>, TextFil
             //lines.add("");
 
         return lines;
+    }
+
+    @Override
+    public void writeToFile(BufferedWriter writer){
+        // Create and write the header line
+        try {
+            writer.write("Taxon");
+            for (int j = 0; j < nchar(); j++) {
+                writer.write("\tsite ");
+                writer.write(String.valueOf(j + 1));
+                writer.write("_phi");
+                writer.write("\tsite ");
+                writer.write(String.valueOf(j + 1));
+                writer.write("_psi");
+            }
+            writer.newLine();
+        } catch (IOException e) {
+        }
+
+        // Write the data rows for each taxon
+        String[] taxaNames = taxa.getTaxaNames();
+        try {
+            for (int i = 0; i < taxaNames.length; i++) {
+                writer.write(taxaNames[i]);  // Write the taxon name
+
+                for (int j = 0; j < nchar(); j++) {
+                    writer.write("\t");
+                    if (pairs[i][j] != null && pairs[i][j].getPhi() != null) {
+                        writer.write(pairs[i][j].getPhi().toString());
+                    }
+
+                    writer.write("\t");
+                    if (pairs[i][j] != null && pairs[i][j].getPsi() != null) {
+                        writer.write(pairs[i][j].getPsi().toString());
+                    }
+                }
+                writer.newLine();
+            }
+        } catch (IOException e) {
+        }
     }
 
     @Override

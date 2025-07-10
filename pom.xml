@@ -16,7 +16,7 @@
     <packaging>pom</packaging>
 
     <properties>
-        <lphy.vision>1.6.1</lphy.vision>
+        <lphy.vision>1.7.0</lphy.vision>
         <lphybeast.vision>1.2.1</lphybeast.vision>
         <revision>0.0.1-SNAPSHOT</revision>
         <maven.compiler.source>17</maven.compiler.source>

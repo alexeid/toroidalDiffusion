@@ -23,25 +23,29 @@ public class CovarianceMatrix {
         // Update time-dependent parameters in the diffusion model
         diff.setParameters(t);
 
-        SimpleMatrix Gammat = diff.getGammat();
+        //SimpleMatrix Gammat = diff.getGammat();
+        SimpleMatrix Sigmamat = diff.getSigmamat();
 
-        // Get covariance matrix at time t
-        this.varPhi = Gammat.get(0, 0);
-        this.varPsi = Gammat.get(1, 1);
-        this.covar = Gammat.get(0, 1);
-        if (this.covar != Gammat.get(1, 0))
-            throw new IllegalArgumentException("Covariance in digonal must be same !");
+//         Get covariance matrix at time t
+        //        this.varPsi = Gammat.get(1, 1);
+//        this.covar = Gammat.get(0, 1);
+//        if (this.covar != Gammat.get(1, 0))
+//            throw new IllegalArgumentException("Covariance in digonal must be same !");
+//    }
+        this.varPhi = Sigmamat.get(0, 0) * t;
+        this.varPsi = Sigmamat.get(1, 1) * t;
+        this.covar = 0.001;
     }
 
-    public double getVarPhi() {
-        return varPhi;
-    }
+        public double getVarPhi () {
+            return varPhi;
+        }
 
-    public double getVarPsi() {
-        return varPsi;
-    }
+        public double getVarPsi () {
+            return varPsi;
+        }
 
-    public double getCovar() {
-        return covar;
+        public double getCovar () {
+            return covar;
+        }
     }
-}

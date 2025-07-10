@@ -19,8 +19,8 @@ import java.text.DecimalFormat;
 public class ToroidalPlotAnimation {
 
     final static double[] muarr = {Math.PI * 0.65, Math.PI * 0.8}; // mean of the diffusion
-    final static double[] sigmaarr = {0.5, 0.75}; // variance term
-    final static double[] alphaarr = {1.0, 1.0, 0.5}; // drift term
+    final static double[] sigmaarr = {2, 2}; // variance term
+    final static double[] alphaarr = {5.0, 5.0, 0.5}; // drift term
 
     static ToroidalPlot toroidalPlot;
 
@@ -29,7 +29,7 @@ public class ToroidalPlotAnimation {
         WrappedBivariateDiffusion diff = new WrappedBivariateDiffusion();
         diff.setParameters(muarr, alphaarr, sigmaarr); // set the diffusion parameters
 
-        toroidalPlot = new ToroidalPlot(diff, 2000);
+        toroidalPlot = new ToroidalPlot(diff, 1000);
 
         // Dataset for path points
         Point2D[] path = toroidalPlot.path;

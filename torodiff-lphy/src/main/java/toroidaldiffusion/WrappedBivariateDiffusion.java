@@ -131,8 +131,8 @@ public class WrappedBivariateDiffusion {
         ASigma = ASigma.plus(ASigma.transpose());
 
 
-        s = A.trace() / 2.0;
-        q = Math.sqrt(Math.abs(A.minus(SimpleMatrix.identity(2).scale(s)).determinant()));
+        s = A.trace() / 2.0; //tr(A)/2 = (α₁ + α₂)/2 = r
+        q = Math.sqrt(Math.abs(A.minus(SimpleMatrix.identity(2).scale(s)).determinant())); //q = √|det(A - rI)| = √[(α₁ - α₂)²/4 + α₃²]
 
         weightswindsinitial = new SimpleMatrix(lk * lk, 1);
         vstores = new SimpleMatrix(lk * lk, 1);
@@ -173,9 +173,10 @@ public class WrappedBivariateDiffusion {
             Gammat = Sigmamat.scale(integral1).plus(ASigma.scale(integral2)).plus(ASigmaA.scale(integral3)); //covariance calculation: Γₜ = s(t)(½)A⁻¹Σ + i(t)Σ
 
             double eqt = Math.exp(q * t);
-            double cqt = (eqt + 1.0 / eqt) / 2.0;
-            double sqt = (eqt - 1.0 / eqt) / 2.0;
-            ExptA = SimpleMatrix.identity(2).scale(cqt + s * sqt / q).minus(A.scale((sqt / q))).scale(1.0 / est); // e⁻ᵗᴬ
+            double cqt = (eqt + 1.0 / eqt) / 2.0; //cosh(qt)
+            double sqt = (eqt - 1.0 / eqt) / 2.0; // sinh(qt)
+            ExptA = SimpleMatrix.identity(2).scale(cqt + s * sqt / q).minus(A.scale((sqt / q))).scale(1.0 / est); // e⁻ᵗᴬ = a(t)I - b(t)A = (1/e^(st)) × [(cosh(qt) + s×sinh(qt)/q)I - A×(sinh(qt)/q)]
+            //ExptA = SimpleMatrix.identity(2).scale(a_t).minus(A.scale(b_t)); a(t) = e^(-st) × (cosh(qt) + s×sinh(qt)/q); b(t) = e^(-st) × sinh(qt)/q
 
             double z = 1.0 / (Gammat.get(0, 0) * Gammat.get(1, 1) - Gammat.get(0, 1) * Gammat.get(1, 0));
             invGammat.set(0, 0, z * Gammat.get(1, 1));
@@ -249,8 +250,8 @@ public class WrappedBivariateDiffusion {
         x.set(3, psit);
 
         SimpleMatrix xmu = new SimpleMatrix(2, 1); //deviation vector
-        xmu.set(0, 0, x.get(0, 0) - mu.get(0, 0));
-        xmu.set(1, 0, x.get(1, 0) - mu.get(1, 0));
+        xmu.set(0, 0, x.get(0, 0) - mu.get(0, 0)); // φ₀ - μφ
+        xmu.set(1, 0, x.get(1, 0) - mu.get(1, 0)); // ψ₀ - μψ
 
         xmuinvSigmaA = invSigmaA.mult(xmu);
         double xmuinvSigmaAxmudivtwo = (xmuinvSigmaA.get(0) * xmu.get(0) + xmuinvSigmaA.get(1) * xmu.get(1)) / 2.0;
@@ -266,6 +267,7 @@ public class WrappedBivariateDiffusion {
                 int index = wek1 * lk + wek2;
 
                 // iterate through the different wrapping values for the two dihedral angles (φ and ψ): (-2pi, 0, 2pi)
+                // Log probability of initial position under stationary distribution
                 double exponent = xmuinvSigmaAxmudivtwo + (xmuinvSigmaA.get(0, 0) * twokpi.get(wek1, 0) + xmuinvSigmaA.get(1, 0) * twokpi.get(wek2, 0) + vstores.get(index, 0) - lognormconstSigmaA);
 
                 if (exponent <= etrunc) {
@@ -276,13 +278,14 @@ public class WrappedBivariateDiffusion {
 
                 if (logweightswindsinitial.get(index, 0) > Double.NEGATIVE_INFINITY) {
                     twokepivec.set(1, 0, twokpi.get(wek2, 0));
-                    SimpleMatrix mut = mu.plus(ExptA.mult(x0.plus(twokepivec).minus(mu))); // Expected mean at time t
+
+                    SimpleMatrix mut = mu.plus(ExptA.mult(x0.plus(twokepivec).minus(mu))); // Expected mean at time t, μₜ = μ + e^{At}(x₀ + 2πk - μ)
                     SimpleMatrix xmut = new SimpleMatrix(2, 1); //deviation vector
-                    xmut.set(0, 0, x.get(2, 0) - mut.get(0, 0));
+                    xmut.set(0, 0, x.get(2, 0) - mut.get(0, 0)); //xmut = [φₜ - μₜφ, ψₜ - μₜψ]ᵀ
                     xmut.set(1, 0, x.get(3, 0) - mut.get(1, 0));
 
                     SimpleMatrix xmutinvGammat = invGammat.mult(xmut);
-                    //multiplies the deviation by the inverse covariance matrix (Γt−1)
+                    //multiplies the deviation by the inverse covariance matrix (Γt−1), (xmut)ᵀ * Γₜ⁻¹ * xmut / 2
                     double xmutinvGammatxmutdiv2 = (xmutinvGammat.get(0, 0) * xmut.get(0, 0) + xmutinvGammat.get(1, 0) * xmut.get(1, 0)) / 2.0;
 
                     double logtpdintermediate = Double.NEGATIVE_INFINITY;
@@ -321,7 +324,7 @@ public class WrappedBivariateDiffusion {
         xmu.set(0, 0, x.get(0, 0) - mu.get(0, 0));
         xmu.set(1, 0, x.get(1, 0) - mu.get(1, 0));
 
-        //Quadratic Form: It calculates part of the quadratic form that appears in the exponent of the normal density:
+        //Quadratic Form: calculates part of the quadratic form that appears in the exponent of the normal density:
         xmuinvSigmaA = invSigmaA.mult(xmu);
         double xmuinvSigmaAxmudivtwo = (xmuinvSigmaA.get(0) * xmu.get(0) + xmuinvSigmaA.get(1) * xmu.get(1)) / 2.0;
 
@@ -665,5 +668,8 @@ public class WrappedBivariateDiffusion {
         return invSigmaA;
     }
 
+    public SimpleMatrix getSigmamat() {
+        return Sigmamat;
+    }
 
 }

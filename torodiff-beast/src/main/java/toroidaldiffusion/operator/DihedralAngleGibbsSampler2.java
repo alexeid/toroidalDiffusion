@@ -14,7 +14,6 @@ public class DihedralAngleGibbsSampler2 {
 
     private WrappedBivariateDiffusion diff; //calculation engine
     public double logHastingsratio;
-//    public double varianceInflation = 100;
     private final Random random = new Random();
 
     /**
@@ -32,7 +31,7 @@ public class DihedralAngleGibbsSampler2 {
         double[] newAngles = new double[siteCount * 2];
         double logBackwardDensity = 0;
         double logForwardDensity = 0;
-        this.logHastingsratio = 0;
+        //this.logHastingsratio = 0;
 
         // 1. Verify fields are initialized
         if (node == null || diff == null) {
@@ -70,7 +69,7 @@ public class DihedralAngleGibbsSampler2 {
             Pair c1Pair = new Pair(child1NodeValues[phiIndex], child1NodeValues[psiIndex]);
             Pair c2Pair = new Pair(child2NodeValues[phiIndex], child2NodeValues[psiIndex]);
 
-            // get offset
+            // Get offset
             Pair offset = getOffsetMean(parentPair, c1Pair, c2Pair);
             // Apply offset to mean
             Pair offsetMeanParent = isRoot ? null : offsetAnglePairAndWrap(parentPair, offset);
@@ -82,6 +81,7 @@ public class DihedralAngleGibbsSampler2 {
             CovarianceMatrix child1CM = new CovarianceMatrix(diff, child1BranchTime);
             CovarianceMatrix child2CM = new CovarianceMatrix(diff, child2BranchTime);
 
+            //offset distribution (in offset frame of reference)
             BivariateNormalDistParam combinedDistParam = combineBivariateNormals(offsetMeanParent, parentCM,
                     offsetMeanChild1, child1CM, offsetMeanChild2, child2CM, varianceInflation);
 
@@ -97,11 +97,9 @@ public class DihedralAngleGibbsSampler2 {
             logBackwardDensity += logBivariateNormalWrappedPDF(nodeValues[phiIndex], nodeValues[psiIndex], offset, combinedDistParam);
 
         }
-        //propose - current
-        logHastingsratio = logForwardDensity - logBackwardDensity;
+        //Hasting ratio: current - forward
+        logHastingsratio =  logBackwardDensity - logForwardDensity;
         // all sites
-
-
 
         return newAngles;
     }
@@ -177,21 +175,6 @@ public class DihedralAngleGibbsSampler2 {
         double[] prectimesMeanCh1 = calculatePrecisionTimesMean(precMatrixCh1, child1);
         double[] prectimesMeanCh2 = calculatePrecisionTimesMean(precMatrixCh2, child2);
 
-//        //invVarPsi, invVarPhi, invCovar
-//        double invVarPsiParent = precMatrixParent[0];
-//        double invVarPhiParent = precMatrixParent[1];
-//        double invCovarParent = precMatrixParent[2];
-
-        //For child1
-//        double invVarPsiCh1 = precMatrixCh1[0];
-//        double invVarPhiCh1 = precMatrixCh1[1];
-//        double invCovarCh1 = precMatrixCh1[2];
-
-        //For child2
-//        double invVarPsiCh2 = precMatrixCh2[0];
-//        double invVarPhiCh2 = precMatrixCh2[1];
-//        double invCovarCh2 = precMatrixCh2[2];
-
         // Sum these products
         double sumPrectimesMean1 = prectimesMeanParent[0] + prectimesMeanCh1[0] + prectimesMeanCh2[0];
         double sumPrectimesMean2 = prectimesMeanParent[1] + prectimesMeanCh1[1] +  prectimesMeanCh2[1];
@@ -205,6 +188,8 @@ public class DihedralAngleGibbsSampler2 {
         double comb_det = combInvVarPsi * combInvVarPhi - combInvCovar * combInvCovar;  //det(Ω)=v1*v2 − cv2
 //        double combVarPhi = combInvVarPhi / comb_det;
 //        double combVarPsi = combInvVarPsi / comb_det;
+
+        //variance
         double combVarPhi = (combInvVarPhi / comb_det) * varianceInflation;
         double combVarPsi = (combInvVarPsi / comb_det) * varianceInflation;
 
@@ -283,8 +268,12 @@ public class DihedralAngleGibbsSampler2 {
                 // Apply offset and measure total distance
                 double[][] rotatedAngles = new double[angles.length][2];
                 for (int i = 0; i < angles.length; i++) {
-                    rotatedAngles[i][0] = (angles[i][0] + offset1) % PI2;
-                    rotatedAngles[i][1] = (angles[i][1] + offset2) % PI2;
+
+                    rotatedAngles[i][0] = (angles[i][0] + offset1);
+                    rotatedAngles[i][1] = (angles[i][1] + offset2);
+
+                    if (rotatedAngles[i][0] > PI2) rotatedAngles[i][0] -= PI2;
+                    if (rotatedAngles[i][1] > PI2) rotatedAngles[i][1] -= PI2;
                 }
 
                 // Calculate total pairwise distances
@@ -314,7 +303,7 @@ public class DihedralAngleGibbsSampler2 {
      * Rotates a bivariate normal distribution by applying offsets to the anglePair components.
      * This handles the circular nature of angular data.
      *
-     * @param offset            An array containing [offset1, offset2] to be added to the means
+     * @param offset An array containing [offset1, offset2] to be added to the means
      * @return A new array containing the rotated distribution parameters
      */
     public Pair offsetAnglePairAndWrap(Pair anglePair, Pair offset) {
@@ -324,26 +313,25 @@ public class DihedralAngleGibbsSampler2 {
         return new Pair(newPhi, newPsi);
     }
 
-
     public Pair getOffsetMean(Pair parent, Pair child1, Pair child2) {
         boolean isRoot = parent == null;
 
-        double[][] meanAngles;
+        double[][] angles;
         Pair offset;
 
         if (isRoot) {
-            meanAngles = new double[][]{
+            angles = new double[][]{
                     {child1.getPhi(), child1.getPsi()},
                     {child2.getPhi(), child2.getPsi()}
             };
-            offset = findOptimalRotation(meanAngles);
+            offset = findOptimalRotation(angles);
         } else{
-            meanAngles = new double[][]{
+            angles = new double[][]{
                     {parent.getPhi(), parent.getPsi()},
                     {child1.getPhi(), child1.getPsi()},
                     {child2.getPhi(), child2.getPsi()}
             };
-            offset = findOptimalRotation(meanAngles);
+            offset = findOptimalRotation(angles);
         }
 
         return offset;
@@ -367,13 +355,13 @@ public class DihedralAngleGibbsSampler2 {
         double covar = combinedDistParam.covar;
 
         Pair angle = new Pair(phi, psi);
-        Pair mean = new Pair(meanPhi, meanPsi);
+//        Pair mean = new Pair(meanPhi, meanPsi);
 
-        // Apply rotation to make angles closest to the mean
+        // Apply offset to make angles closest to the mean
         Pair offsetAngle = offsetAnglePairAndWrap(angle, offset);
 
-        // Apply the same rotation to the mean
-        Pair offsetMean = offsetAnglePairAndWrap(mean, offset);
+        // TODO: here we don't need to apply offset to the distribution means again
+//        Pair offsetMean = offsetAnglePairAndWrap(mean, offset);
 
         // Calculate precision matrix elements: Σ−1
         double[] precMatrix = calculatePrecisionMatrix(varPhi, varPsi, covar);
@@ -384,8 +372,10 @@ public class DihedralAngleGibbsSampler2 {
         double det = varPhi * varPsi - covar * covar;
 
         // Calculate deviation from mean: (x − μ)
-        double dx = offsetAngle.getPhi() - offsetMean.getPhi();
-        double dy = offsetAngle.getPsi() - offsetMean.getPsi();
+        double dx = offsetAngle.getPhi() - meanPhi;
+        double dy = offsetAngle.getPsi() - meanPsi;
+//        double dx = offsetAngle.getPhi() - offsetMean.getPhi();
+//        double dy = offsetAngle.getPsi() - offsetMean.getPsi();
 
         // Calculate the exponent part (Mahalanobis distance): (x−μ)T * Σ−1 * (x−μ)
         // multivariate normal scalling factor = -0.5

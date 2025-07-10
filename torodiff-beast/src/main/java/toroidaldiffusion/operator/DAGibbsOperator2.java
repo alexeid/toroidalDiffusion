@@ -19,12 +19,12 @@ public class DAGibbsOperator2 extends Operator {
             new Input<>("parameter", "the parameter to operate a random walk on.",
                     Input.Validate.REQUIRED);
     final public Input<Double> varianceInflationInput =
-            new Input<>("varianceInflation", "", 100.0);
+            new Input<>("varianceInflation", "", 1.0);
 
     private DihedralAngleTreeModel daTreeModel;
     private WrappedBivariateDiffusion diff;
     private DihedralAngleGibbsSampler2 sampler;
-    private double varianceInflation = 100.0;
+    private double varianceInflation = 1.0;
 
     @Override
     public void initAndValidate() {
@@ -78,9 +78,6 @@ public class DAGibbsOperator2 extends Operator {
         double logHastingsRatio = sampler.getLogHastingsratio();
 
         return logHastingsRatio;
-
-
-        //todo: what to return? since we have calculated ratio for a list of angle
 
     }
 }
